@@ -44,3 +44,6 @@ test-results/
 
 # netlify
 .netlify/
+
+# functions build
+functions/lib/
