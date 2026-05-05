@@ -33,5 +33,86 @@
         "noRole": "Your account has no role assigned. Contact the administrator."
       }
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security",
+      "preferences": "Preferences",
+      "dangerZone": "Danger zone"
+    },
+    "profile": {
+      "title": "Personal information",
+      "subtitle": "This information is used for your bids and billing.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "documentType": "Document type",
+      "documentTypeCi": "National ID (CI)",
+      "documentTypeRuc": "RUC",
+      "documentNumber": "Document number",
+      "documentNumberPlaceholderCi": "e.g. 1234567",
+      "documentNumberPlaceholderRuc": "e.g. 80012345-3",
+      "phone": "Phone number",
+      "addressStreet": "Street address",
+      "addressCity": "City",
+      "addressPostalCode": "Postal code",
+      "avatar": "Profile photo",
+      "uploadAvatar": "Change photo",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "errors": {
+        "documentInvalid": "Invalid document for Paraguay.",
+        "generic": "Could not save. Please try again."
+      }
+    },
+    "security": {
+      "title": "Security",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "changePassword": "Change password",
+      "changing": "Changing…",
+      "passwordChanged": "Password updated.",
+      "revokeSessions": "Sign out of all devices",
+      "revoking": "Signing out…",
+      "revoked": "All your sessions have been signed out.",
+      "errors": {
+        "wrongCurrent": "Current password is incorrect.",
+        "passwordsDontMatch": "Passwords do not match.",
+        "tooShort": "Minimum 8 characters.",
+        "generic": "Could not change the password."
+      }
+    },
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "languageEs": "Español",
+      "languageEn": "English",
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "notifications": "Email notifications",
+      "notifOutbid": "When someone outbids me",
+      "notifWon": "When I win an auction",
+      "notifNew": "When a new auction is published",
+      "save": "Save",
+      "saved": "Preferences saved."
+    },
+    "dangerZone": {
+      "title": "Danger zone",
+      "subtitle": "These actions are irreversible.",
+      "deleteAccount": "Delete my account",
+      "deleteDescription": "Your account is deactivated immediately. Your personal data is deleted within 30 days. Bids and purchases remain in the auction history in anonymized form.",
+      "confirmText": "To confirm, type DELETE",
+      "confirmPlaceholder": "DELETE",
+      "confirmButton": "Permanently delete account",
+      "deleting": "Deleting…",
+      "staffNotAllowed": "Staff and administrator accounts cannot self-delete. Contact an administrator.",
+      "errors": { "generic": "Could not delete the account." }
+    }
   }
 }

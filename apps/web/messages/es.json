@@ -33,5 +33,86 @@
         "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador."
       }
     }
+  },
+  "settings": {
+    "title": "Configuración",
+    "tabs": {
+      "profile": "Perfil",
+      "security": "Seguridad",
+      "preferences": "Preferencias",
+      "dangerZone": "Zona de peligro"
+    },
+    "profile": {
+      "title": "Información personal",
+      "subtitle": "Estos datos se usan para tus pujas y facturación.",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo electrónico",
+      "documentType": "Tipo de documento",
+      "documentTypeCi": "Cédula (CI)",
+      "documentTypeRuc": "RUC",
+      "documentNumber": "Número de documento",
+      "documentNumberPlaceholderCi": "Ej: 1234567",
+      "documentNumberPlaceholderRuc": "Ej: 80012345-3",
+      "phone": "Teléfono",
+      "addressStreet": "Dirección",
+      "addressCity": "Ciudad",
+      "addressPostalCode": "Código postal",
+      "avatar": "Foto de perfil",
+      "uploadAvatar": "Cambiar foto",
+      "save": "Guardar cambios",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "errors": {
+        "documentInvalid": "Documento inválido para Paraguay.",
+        "generic": "No se pudo guardar. Reintenta."
+      }
+    },
+    "security": {
+      "title": "Seguridad",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Contraseña nueva",
+      "confirmPassword": "Confirmar contraseña",
+      "changePassword": "Cambiar contraseña",
+      "changing": "Cambiando…",
+      "passwordChanged": "Contraseña actualizada.",
+      "revokeSessions": "Cerrar sesión en todos los dispositivos",
+      "revoking": "Cerrando sesiones…",
+      "revoked": "Todas tus sesiones fueron cerradas.",
+      "errors": {
+        "wrongCurrent": "La contraseña actual es incorrecta.",
+        "passwordsDontMatch": "Las contraseñas no coinciden.",
+        "tooShort": "Mínimo 8 caracteres.",
+        "generic": "No se pudo cambiar la contraseña."
+      }
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "language": "Idioma",
+      "languageEs": "Español",
+      "languageEn": "English",
+      "theme": "Tema",
+      "themeLight": "Claro",
+      "themeDark": "Oscuro",
+      "themeSystem": "Sistema",
+      "notifications": "Notificaciones por email",
+      "notifOutbid": "Cuando alguien supere mi puja",
+      "notifWon": "Cuando gane una subasta",
+      "notifNew": "Cuando se publique una subasta nueva",
+      "save": "Guardar",
+      "saved": "Preferencias guardadas."
+    },
+    "dangerZone": {
+      "title": "Zona de peligro",
+      "subtitle": "Estas acciones son irreversibles.",
+      "deleteAccount": "Eliminar mi cuenta",
+      "deleteDescription": "Tu cuenta se desactiva inmediatamente. Tus datos personales se eliminan en 30 días. Las pujas y compras quedan en el historial de subastas anonimizadas.",
+      "confirmText": "Para confirmar, escribe ELIMINAR",
+      "confirmPlaceholder": "ELIMINAR",
+      "confirmButton": "Eliminar cuenta definitivamente",
+      "deleting": "Eliminando…",
+      "staffNotAllowed": "Las cuentas de staff y administrador no pueden auto-eliminarse. Contacta a un administrador.",
+      "errors": { "generic": "No se pudo eliminar la cuenta." }
+    }
   }
 }
