@@ -1,0 +1,116 @@
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import type { CallableRequest } from 'firebase-functions/v2/https';
+import { z } from 'zod';
+import { adminDb } from '../lib/admin.js';
+import { writeAuditLog } from '../lib/audit.js';
+import { requireAdmin } from '../lib/errors.js';
+import { FieldValue } from 'firebase-admin/firestore';
+
+const InputSchema = z.object({
+  currency: z
+    .object({
+      primary: z.enum(['USD', 'PYG']).optional(),
+      showSecondary: z.boolean().optional(),
+      pygPerUsd: z.number().positive().optional(),
+    })
+    .optional(),
+  bid: z
+    .object({
+      fixedIncrementUsd: z.number().positive().optional(),
+      allowManualIncrement: z.boolean().optional(),
+      antiSnipingSeconds: z.number().int().positive().optional(),
+    })
+    .optional(),
+  financing: z
+    .object({
+      enabled: z.boolean().optional(),
+      allowedTerms: z.array(z.number().int().positive()).optional(),
+      annualInterestRate: z.number().nonnegative().optional(),
+      downPaymentPercent: z.number().min(0).max(1).optional(),
+      minFinanceableUsd: z.number().nonnegative().optional(),
+      notes: z.object({ es: z.string(), en: z.string().optional() }).optional(),
+    })
+    .optional(),
+  emails: z
+    .object({
+      adminStaffDomain: z.string().min(3).optional(),
+      fromAddress: z.string().email().optional(),
+      fromName: z.string().min(1).optional(),
+    })
+    .optional(),
+});
+
+export interface UpdateGlobalConfigResult {
+  ok: true;
+}
+
+export async function updateGlobalConfigHandler(
+  req: CallableRequest,
+): Promise<UpdateGlobalConfigResult> {
+  const { uid: actorUid } = requireAdmin(req);
+  const parsed = InputSchema.safeParse(req.data);
+  if (!parsed.success) {
+    throw new HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
+  }
+  const v = parsed.data;
+
+  const ref = adminDb().doc('app_config/global');
+  const before = (await ref.get()).data() ?? {};
+
+  const update: Record<string, unknown> = {
+    updatedBy: actorUid,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  if (v.currency) {
+    if (v.currency.primary !== undefined) update['currency.primary'] = v.currency.primary;
+    if (v.currency.showSecondary !== undefined)
+      update['currency.showSecondary'] = v.currency.showSecondary;
+    if (v.currency.pygPerUsd !== undefined) {
+      update['currency.pygPerUsd'] = v.currency.pygPerUsd;
+      update['currency.pygPerUsdUpdatedAt'] = FieldValue.serverTimestamp();
+    }
+  }
+  if (v.bid) {
+    if (v.bid.fixedIncrementUsd !== undefined)
+      update['bid.fixedIncrementUsd'] = v.bid.fixedIncrementUsd;
+    if (v.bid.allowManualIncrement !== undefined)
+      update['bid.allowManualIncrement'] = v.bid.allowManualIncrement;
+    if (v.bid.antiSnipingSeconds !== undefined)
+      update['bid.antiSnipingSeconds'] = v.bid.antiSnipingSeconds;
+  }
+  if (v.financing) {
+    if (v.financing.enabled !== undefined) update['financing.enabled'] = v.financing.enabled;
+    if (v.financing.allowedTerms !== undefined)
+      update['financing.allowedTerms'] = v.financing.allowedTerms;
+    if (v.financing.annualInterestRate !== undefined)
+      update['financing.annualInterestRate'] = v.financing.annualInterestRate;
+    if (v.financing.downPaymentPercent !== undefined)
+      update['financing.downPaymentPercent'] = v.financing.downPaymentPercent;
+    if (v.financing.minFinanceableUsd !== undefined)
+      update['financing.minFinanceableUsd'] = v.financing.minFinanceableUsd;
+    if (v.financing.notes !== undefined) update['financing.notes'] = v.financing.notes;
+  }
+  if (v.emails) {
+    if (v.emails.adminStaffDomain !== undefined)
+      update['emails.adminStaffDomain'] = v.emails.adminStaffDomain;
+    if (v.emails.fromAddress !== undefined) update['emails.fromAddress'] = v.emails.fromAddress;
+    if (v.emails.fromName !== undefined) update['emails.fromName'] = v.emails.fromName;
+  }
+
+  // Ensure document exists (update() fails on non-existent docs)
+  await ref.set({}, { merge: true });
+  await ref.update(update);
+
+  await writeAuditLog({
+    actorUid,
+    action: 'app_config.update',
+    resourceType: 'app_config',
+    resourceId: 'global',
+    before,
+    after: v as Record<string, unknown>,
+  });
+
+  return { ok: true };
+}
+
+export const updateGlobalConfig = onCall({ region: 'us-central1' }, updateGlobalConfigHandler);
