@@ -40,7 +40,7 @@ export function initFirebaseClient(env: FirebaseEnv): {
       connectAuthEmulator(authInstance, 'http://127.0.0.1:9099', { disableWarnings: true });
       connectFirestoreEmulator(dbInstance, '127.0.0.1', 8080);
       connectStorageEmulator(storageInstance, '127.0.0.1', 9199);
-      connectFunctionsEmulator(functionsInstance, '127.0.0.1', 5001);
+      connectFunctionsEmulator(functionsInstance, '127.0.0.1', 5002);
     }
   }
   return {

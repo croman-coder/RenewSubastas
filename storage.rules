@@ -3,13 +3,17 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /vehicles/{vehicleId}/{file=**} {
       allow read:  if request.auth != null && request.auth.token.status == 'active';
-      allow write: if request.auth.token.role in ['staff', 'admin']
+      allow write: if request.auth != null
+                   && request.auth.token.status == 'active'
+                   && request.auth.token.role in ['staff', 'admin']
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
     match /avatars/{uid}/{file=**} {
       allow read:  if true;
-      allow write: if request.auth.uid == uid
+      allow write: if request.auth != null
+                   && request.auth.token.status == 'active'
+                   && request.auth.uid == uid
                    && request.resource.size < 2 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
