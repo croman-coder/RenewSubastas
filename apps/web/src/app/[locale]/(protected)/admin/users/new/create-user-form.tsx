@@ -1,0 +1,175 @@
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useTranslations } from 'next-intl';
+import { httpsCallable } from 'firebase/functions';
+import { toast } from 'sonner';
+import { fb } from '@/lib/firebase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+const Schema = z.object({
+  role: z.enum(['admin', 'staff', 'buyer']),
+  email: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  documentType: z.enum(['CI', 'RUC']),
+  documentNumber: z.string().min(1),
+  phone: z.string().optional(),
+});
+type FormValues = z.infer<typeof Schema>;
+
+export function CreateUserForm({ locale }: { locale: string }) {
+  const t = useTranslations('admin.users.create');
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [resetLink, setResetLink] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(Schema),
+    defaultValues: {
+      role: 'buyer',
+      email: '',
+      firstName: '',
+      lastName: '',
+      documentType: 'CI',
+      documentNumber: '',
+      phone: '',
+    },
+  });
+  const role = watch('role');
+  const docType = watch('documentType');
+
+  async function onSubmit(values: FormValues) {
+    setSubmitting(true);
+    setResetLink(null);
+    try {
+      const result = await httpsCallable<FormValues, { uid: string; resetLink: string }>(
+        fb.functions,
+        'createUser',
+      )(values);
+      setResetLink(result.data.resetLink);
+      toast.success(t('success'));
+    } catch (e) {
+      const msg = (e as Error).message ?? '';
+      if (msg.includes('CI') || msg.includes('RUC')) toast.error(t('errors.documentInvalid'));
+      else if (msg.includes('domain')) toast.error(t('errors.emailDomain'));
+      else if (msg.includes('already-exists') || msg.includes('email-already')) {
+        toast.error(t('errors.duplicate'));
+      } else {
+        toast.error(t('errors.generic'));
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label>{t('role')}</Label>
+        <Select
+          value={role}
+          onValueChange={(v) => setValue('role', v as 'admin' | 'staff' | 'buyer')}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="admin">admin</SelectItem>
+            <SelectItem value="staff">staff</SelectItem>
+            <SelectItem value="buyer">buyer</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">{t('email')}</Label>
+        <Input id="email" type="email" autoComplete="off" {...register('email')} />
+        {errors.email && <p className="text-sm text-danger">Invalid</p>}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">{t('firstName')}</Label>
+          <Input id="firstName" {...register('firstName')} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">{t('lastName')}</Label>
+          <Input id="lastName" {...register('lastName')} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>{t('documentType')}</Label>
+          <Select
+            value={docType}
+            onValueChange={(v) => setValue('documentType', v as 'CI' | 'RUC')}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CI">CI</SelectItem>
+              <SelectItem value="RUC">RUC</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="documentNumber">{t('documentNumber')}</Label>
+          <Input id="documentNumber" {...register('documentNumber')} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">{t('phone')}</Label>
+        <Input id="phone" type="tel" {...register('phone')} />
+      </div>
+      <Button type="submit" disabled={submitting}>
+        {submitting ? t('submitting') : t('submit')}
+      </Button>
+      {resetLink && (
+        <Alert>
+          <AlertDescription className="space-y-3">
+            <p className="text-sm">{t('success')}</p>
+            <code className="block text-xs bg-bg-deep p-2 rounded break-all">{resetLink}</code>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  navigator.clipboard.writeText(resetLink).then(() => toast.success(t('copy')))
+                }
+              >
+                {t('copy')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => router.push(`/${locale}/admin/users` as `/${string}`)}
+              >
+                {t('backToList')}
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+    </form>
+  );
+}
