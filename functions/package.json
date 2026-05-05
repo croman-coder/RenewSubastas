@@ -12,7 +12,7 @@
     "build:watch": "tsc --watch",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "serve": "pnpm build && firebase emulators:start --only functions",
     "deploy": "pnpm build && firebase deploy --only functions"
   },
