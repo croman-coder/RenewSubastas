@@ -4,3 +4,4 @@ export { updateUserRole } from './auth/updateUserRole.js';
 export { deleteUser } from './auth/deleteUser.js';
 export { onUserSync } from './auth/onUserSync.js';
 export { generatePasswordReset } from './auth/changePassword.js';
+export { revokeMySessions } from './auth/revokeMySessions.js';
