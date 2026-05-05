@@ -127,6 +127,54 @@
       "audit": "Audit",
       "config": "Configuration"
     },
+    "audit": {
+      "title": "Audit log",
+      "filters": { "action": "Action", "all": "All" },
+      "columns": {
+        "createdAt": "Date",
+        "actor": "Actor",
+        "action": "Action",
+        "resource": "Resource"
+      },
+      "empty": "No records found.",
+      "loadMore": "Load more"
+    },
+    "config": {
+      "title": "Global configuration",
+      "subtitle": "These settings affect the entire application.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "errors": { "generic": "Could not save." },
+      "currency": {
+        "title": "Currency",
+        "primary": "Primary currency",
+        "showSecondary": "Show secondary conversion",
+        "pygPerUsd": "PYG/USD exchange rate"
+      },
+      "bid": {
+        "title": "Bids",
+        "fixedIncrementUsd": "Fixed increment (USD)",
+        "allowManualIncrement": "Allow manual increment",
+        "antiSnipingSeconds": "Anti-sniping (seconds)"
+      },
+      "financing": {
+        "title": "Financing / Installments",
+        "enabled": "Enable installments",
+        "allowedTerms": "Allowed terms (comma-separated)",
+        "annualInterestRate": "Annual rate (0.18 = 18%)",
+        "downPaymentPercent": "Down payment (decimal, 0.2 = 20%)",
+        "minFinanceableUsd": "Minimum financeable amount (USD)",
+        "notesEs": "Legal notes (ES)",
+        "notesEn": "Legal notes (EN, optional)"
+      },
+      "emails": {
+        "title": "Emails",
+        "adminStaffDomain": "Admin/staff domain",
+        "fromAddress": "From email",
+        "fromName": "From name"
+      }
+    },
     "users": {
       "title": "Users",
       "createNew": "Create user",

@@ -127,6 +127,54 @@
       "audit": "Auditoría",
       "config": "Configuración"
     },
+    "audit": {
+      "title": "Auditoría",
+      "filters": { "action": "Acción", "all": "Todas" },
+      "columns": {
+        "createdAt": "Fecha",
+        "actor": "Actor",
+        "action": "Acción",
+        "resource": "Recurso"
+      },
+      "empty": "No hay registros.",
+      "loadMore": "Cargar más"
+    },
+    "config": {
+      "title": "Configuración global",
+      "subtitle": "Estos parámetros impactan en toda la app.",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "errors": { "generic": "No se pudo guardar." },
+      "currency": {
+        "title": "Moneda",
+        "primary": "Moneda primaria",
+        "showSecondary": "Mostrar conversión secundaria",
+        "pygPerUsd": "Tipo de cambio PYG/USD"
+      },
+      "bid": {
+        "title": "Pujas",
+        "fixedIncrementUsd": "Incremento fijo (USD)",
+        "allowManualIncrement": "Permitir incremento manual",
+        "antiSnipingSeconds": "Anti-sniping (segundos)"
+      },
+      "financing": {
+        "title": "Financiación / Cuotero",
+        "enabled": "Habilitar cuotas",
+        "allowedTerms": "Plazos permitidos (separados por coma)",
+        "annualInterestRate": "Tasa anual (0.18 = 18%)",
+        "downPaymentPercent": "Entrada (% como decimal, 0.2 = 20%)",
+        "minFinanceableUsd": "Monto mínimo financiable (USD)",
+        "notesEs": "Notas legales (ES)",
+        "notesEn": "Notas legales (EN, opcional)"
+      },
+      "emails": {
+        "title": "Emails",
+        "adminStaffDomain": "Dominio para admin/staff",
+        "fromAddress": "From email",
+        "fromName": "From nombre"
+      }
+    },
     "users": {
       "title": "Usuarios",
       "createNew": "Crear usuario",
