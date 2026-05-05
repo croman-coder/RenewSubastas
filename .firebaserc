@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "carbid-staging",
+    "production": "carbid-59ef5"
+  }
+}

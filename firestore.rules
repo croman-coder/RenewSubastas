@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function isActive()   { return request.auth.token.status == 'active'; }
+    function role()       { return request.auth.token.role; }
+    function isAdmin()    { return isSignedIn() && isActive() && role() == 'admin'; }
+    function isStaff()    { return isSignedIn() && isActive() && role() == 'staff'; }
+    function isBuyer()    { return isSignedIn() && isActive() && role() == 'buyer'; }
+
+    match /users/{uid} {
+      allow read:   if isAdmin() || request.auth.uid == uid;
+      allow update: if request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.status == resource.data.status
+                    && request.resource.data.createdBy == resource.data.createdBy;
+      allow create, delete: if false;
+    }
+
+    match /vehicles/{id} {
+      allow read:           if isSignedIn() && isActive();
+      allow create, update: if isStaff() || isAdmin();
+      allow delete:         if isAdmin();
+    }
+
+    match /auctions/{id} {
+      allow read: if isSignedIn() && isActive();
+      allow create, update, delete: if false;
+
+      match /bids/{bidId} {
+        allow read: if isSignedIn() && isActive();
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /app_config/{doc} {
+      allow read:  if isSignedIn() && isActive();
+      allow write: if false;
+    }
+
+    match /audit_logs/{id} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+  }
+}
