@@ -15,6 +15,7 @@
 ## Pre-flight
 
 The engineer must have:
+
 - Node 20+ (`node -v`)
 - pnpm 9+ (`pnpm -v`; install via `corepack enable && corepack prepare pnpm@latest --activate`)
 - Firebase CLI 13+ (`firebase --version`; `npm i -g firebase-tools`)
@@ -111,6 +112,7 @@ CARBID/
 ## Task 1: Initialize git, Node version, base files
 
 **Files:**
+
 - Create: `.gitignore`
 - Create: `.nvmrc`
 - Create: `README.md`
@@ -124,6 +126,7 @@ Expected: `Initialized empty Git repository in .../CARBID/.git/`
 - [ ] **Step 1.2: Pin Node version**
 
 Create `.nvmrc`:
+
 ```
 20
 ```
@@ -131,6 +134,7 @@ Create `.nvmrc`:
 - [ ] **Step 1.3: Create .gitignore**
 
 Create `.gitignore`:
+
 ```
 # deps
 node_modules/
@@ -181,6 +185,7 @@ test-results/
 - [ ] **Step 1.4: Create .env.example**
 
 Create `.env.example`:
+
 ```
 # Firebase web config (public)
 NEXT_PUBLIC_FIREBASE_API_KEY=
@@ -198,16 +203,20 @@ NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true
 - [ ] **Step 1.5: Create README.md (minimal)**
 
 Create `README.md`:
+
 ```markdown
 # CARBID
 
 Plataforma de subastas asincrónicas de vehículos.
 
 ## Setup
+
 \`\`\`bash
 pnpm install
 cp .env.example .env.local
+
 # rellenar valores
+
 pnpm dev
 \`\`\`
 
@@ -226,6 +235,7 @@ git commit -m "chore: initialize repo with base files"
 ## Task 2: pnpm workspaces + Turborepo
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `turbo.json`
@@ -234,6 +244,7 @@ git commit -m "chore: initialize repo with base files"
 - [ ] **Step 2.1: Create root package.json**
 
 Create `package.json`:
+
 ```json
 {
   "name": "carbid",
@@ -270,6 +281,7 @@ Create `package.json`:
 - [ ] **Step 2.2: Create pnpm-workspace.yaml**
 
 Create `pnpm-workspace.yaml`:
+
 ```yaml
 packages:
   - 'apps/*'
@@ -280,6 +292,7 @@ packages:
 - [ ] **Step 2.3: Create turbo.json**
 
 Create `turbo.json`:
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -299,6 +312,7 @@ Create `turbo.json`:
 - [ ] **Step 2.4: Create tsconfig.base.json**
 
 Create `tsconfig.base.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -337,6 +351,7 @@ git commit -m "chore: set up pnpm workspaces and turborepo"
 ## Task 3: ESLint + Prettier + Husky
 
 **Files:**
+
 - Create: `.eslintrc.cjs`
 - Create: `.prettierrc.json`
 - Create: `.prettierignore`
@@ -345,6 +360,7 @@ git commit -m "chore: set up pnpm workspaces and turborepo"
 - [ ] **Step 3.1: Create .prettierrc.json**
 
 Create `.prettierrc.json`:
+
 ```json
 {
   "semi": true,
@@ -360,6 +376,7 @@ Create `.prettierrc.json`:
 - [ ] **Step 3.2: Create .prettierignore**
 
 Create `.prettierignore`:
+
 ```
 node_modules
 .next
@@ -373,16 +390,13 @@ coverage
 - [ ] **Step 3.3: Create root ESLint config**
 
 Create `.eslintrc.cjs`:
+
 ```js
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier',
-  ],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   ignorePatterns: ['node_modules', '.next', 'dist', '.turbo', '.firebase'],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -403,6 +417,7 @@ Expected: creates `.husky/pre-commit` with default content.
 - [ ] **Step 3.6: Configure pre-commit hook**
 
 Edit `.husky/pre-commit` to:
+
 ```sh
 pnpm lint-staged
 ```
@@ -424,6 +439,7 @@ git commit -m "chore: configure eslint, prettier, husky"
 ## Task 4: packages/shared-types with Zod + Paraguay validators (TDD)
 
 **Files:**
+
 - Create: `packages/shared-types/package.json`
 - Create: `packages/shared-types/tsconfig.json`
 - Create: `packages/shared-types/src/index.ts`
@@ -433,6 +449,7 @@ git commit -m "chore: configure eslint, prettier, husky"
 - [ ] **Step 4.1: Create package.json**
 
 Create `packages/shared-types/package.json`:
+
 ```json
 {
   "name": "@carbid/shared-types",
@@ -459,6 +476,7 @@ Create `packages/shared-types/package.json`:
 - [ ] **Step 4.2: Create tsconfig.json**
 
 Create `packages/shared-types/tsconfig.json`:
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -478,6 +496,7 @@ Expected: `@carbid/shared-types` linked into workspace.
 - [ ] **Step 4.4: Write failing test for Paraguay RUC validator**
 
 Create `packages/shared-types/src/validators/paraguay.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { isValidRucPy, isValidCiPy, computeRucCheckDigit } from './paraguay';
@@ -533,6 +552,7 @@ Expected: FAIL — "Cannot find module './paraguay'".
 - [ ] **Step 4.6: Implement validators**
 
 Create `packages/shared-types/src/validators/paraguay.ts`:
+
 ```ts
 /**
  * Paraguay RUC check digit using mod 11.
@@ -585,6 +605,7 @@ Expected: all tests PASS.
 - [ ] **Step 4.8: Create index.ts barrel**
 
 Create `packages/shared-types/src/index.ts`:
+
 ```ts
 export * from './validators/paraguay';
 ```
@@ -601,6 +622,7 @@ git commit -m "feat(shared-types): add Paraguay CI/RUC validators with tests"
 ## Task 5: shared-types — domain Zod schemas
 
 **Files:**
+
 - Create: `packages/shared-types/src/user.ts`
 - Create: `packages/shared-types/src/vehicle.ts`
 - Create: `packages/shared-types/src/auction.ts`
@@ -611,6 +633,7 @@ git commit -m "feat(shared-types): add Paraguay CI/RUC validators with tests"
 - [ ] **Step 5.1: Create user.ts**
 
 Create `packages/shared-types/src/user.ts`:
+
 ```ts
 import { z } from 'zod';
 
@@ -669,16 +692,11 @@ export type User = z.infer<typeof UserSchema>;
 - [ ] **Step 5.2: Create vehicle.ts**
 
 Create `packages/shared-types/src/vehicle.ts`:
+
 ```ts
 import { z } from 'zod';
 
-export const VehicleStatusSchema = z.enum([
-  'draft',
-  'ready',
-  'in_auction',
-  'sold',
-  'archived',
-]);
+export const VehicleStatusSchema = z.enum(['draft', 'ready', 'in_auction', 'sold', 'archived']);
 export type VehicleStatus = z.infer<typeof VehicleStatusSchema>;
 
 export const TransmissionSchema = z.enum(['manual', 'automatic', 'cvt']);
@@ -715,22 +733,14 @@ export type Vehicle = z.infer<typeof VehicleSchema>;
 - [ ] **Step 5.3: Create auction.ts**
 
 Create `packages/shared-types/src/auction.ts`:
+
 ```ts
 import { z } from 'zod';
 
-export const AuctionStatusSchema = z.enum([
-  'scheduled',
-  'live',
-  'ended',
-  'cancelled',
-]);
+export const AuctionStatusSchema = z.enum(['scheduled', 'live', 'ended', 'cancelled']);
 export type AuctionStatus = z.infer<typeof AuctionStatusSchema>;
 
-export const AuctionOutcomeSchema = z.enum([
-  'sold',
-  'reserve_not_met',
-  'no_bids',
-]);
+export const AuctionOutcomeSchema = z.enum(['sold', 'reserve_not_met', 'no_bids']);
 
 export const VehicleSnapshotSchema = z.object({
   make: z.string(),
@@ -765,6 +775,7 @@ export type Auction = z.infer<typeof AuctionSchema>;
 - [ ] **Step 5.4: Create bid.ts**
 
 Create `packages/shared-types/src/bid.ts`:
+
 ```ts
 import { z } from 'zod';
 
@@ -791,6 +802,7 @@ export type Bid = z.infer<typeof BidSchema>;
 - [ ] **Step 5.5: Create app-config.ts**
 
 Create `packages/shared-types/src/app-config.ts`:
+
 ```ts
 import { z } from 'zod';
 
@@ -828,6 +840,7 @@ export type AppConfig = z.infer<typeof AppConfigSchema>;
 - [ ] **Step 5.6: Update index barrel**
 
 Replace `packages/shared-types/src/index.ts` with:
+
 ```ts
 export * from './validators/paraguay';
 export * from './user';
@@ -854,6 +867,7 @@ git commit -m "feat(shared-types): add Zod schemas for User, Vehicle, Auction, B
 ## Task 6: packages/firebase-client init
 
 **Files:**
+
 - Create: `packages/firebase-client/package.json`
 - Create: `packages/firebase-client/tsconfig.json`
 - Create: `packages/firebase-client/src/env.ts`
@@ -863,6 +877,7 @@ git commit -m "feat(shared-types): add Zod schemas for User, Vehicle, Auction, B
 - [ ] **Step 6.1: Create package.json**
 
 Create `packages/firebase-client/package.json`:
+
 ```json
 {
   "name": "@carbid/firebase-client",
@@ -884,6 +899,7 @@ Create `packages/firebase-client/package.json`:
 - [ ] **Step 6.2: Create tsconfig.json**
 
 Create `packages/firebase-client/tsconfig.json`:
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -895,6 +911,7 @@ Create `packages/firebase-client/tsconfig.json`:
 - [ ] **Step 6.3: Create env.ts**
 
 Create `packages/firebase-client/src/env.ts`:
+
 ```ts
 import { z } from 'zod';
 
@@ -930,6 +947,7 @@ export function loadFirebaseEnv(env: Record<string, string | undefined>): Fireba
 - [ ] **Step 6.4: Add zod and shared-types to deps**
 
 Edit `packages/firebase-client/package.json` `dependencies`:
+
 ```json
 "dependencies": {
   "firebase": "^10.12.0",
@@ -941,6 +959,7 @@ Edit `packages/firebase-client/package.json` `dependencies`:
 - [ ] **Step 6.5: Create client.ts (init + emulator wiring)**
 
 Create `packages/firebase-client/src/client.ts`:
+
 ```ts
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
@@ -963,15 +982,17 @@ export function initFirebaseClient(env: FirebaseEnv): {
   functions: Functions;
 } {
   if (!appInstance) {
-    appInstance = getApps().length ? getApp() : initializeApp({
-      apiKey: env.apiKey,
-      authDomain: env.authDomain,
-      projectId: env.projectId,
-      storageBucket: env.storageBucket,
-      messagingSenderId: env.messagingSenderId,
-      appId: env.appId,
-      measurementId: env.measurementId,
-    });
+    appInstance = getApps().length
+      ? getApp()
+      : initializeApp({
+          apiKey: env.apiKey,
+          authDomain: env.authDomain,
+          projectId: env.projectId,
+          storageBucket: env.storageBucket,
+          messagingSenderId: env.messagingSenderId,
+          appId: env.appId,
+          measurementId: env.measurementId,
+        });
 
     authInstance = getAuth(appInstance);
     dbInstance = getFirestore(appInstance);
@@ -998,6 +1019,7 @@ export function initFirebaseClient(env: FirebaseEnv): {
 - [ ] **Step 6.6: Create index.ts**
 
 Create `packages/firebase-client/src/index.ts`:
+
 ```ts
 export { loadFirebaseEnv, type FirebaseEnv } from './env';
 export { initFirebaseClient } from './client';
@@ -1020,6 +1042,7 @@ git commit -m "feat(firebase-client): initialize SDK with emulator wiring"
 ## Task 7: Next.js 14 web app skeleton
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/next.config.mjs`
@@ -1032,6 +1055,7 @@ git commit -m "feat(firebase-client): initialize SDK with emulator wiring"
 - [ ] **Step 7.1: Create apps/web/package.json**
 
 Create `apps/web/package.json`:
+
 ```json
 {
   "name": "@carbid/web",
@@ -1074,6 +1098,7 @@ Create `apps/web/package.json`:
 - [ ] **Step 7.2: Create tsconfig.json**
 
 Create `apps/web/tsconfig.json`:
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -1092,6 +1117,7 @@ Create `apps/web/tsconfig.json`:
 - [ ] **Step 7.3: Create next.config.mjs**
 
 Create `apps/web/next.config.mjs`:
+
 ```js
 import createNextIntlPlugin from 'next-intl/plugin';
 
@@ -1110,11 +1136,13 @@ export default withNextIntl(nextConfig);
 - [ ] **Step 7.4: Create postcss + tailwind configs**
 
 Create `apps/web/postcss.config.mjs`:
+
 ```js
 export default { plugins: { tailwindcss: {}, autoprefixer: {} } };
 ```
 
 Create `apps/web/tailwind.config.ts`:
+
 ```ts
 import type { Config } from 'tailwindcss';
 
@@ -1157,6 +1185,7 @@ export default config;
 - [ ] **Step 7.5: Create globals.css with OKLCH tokens**
 
 Create `apps/web/src/app/globals.css`:
+
 ```css
 @tailwind base;
 @tailwind components;
@@ -1168,13 +1197,13 @@ Create `apps/web/src/app/globals.css`:
     --bg-base: 0.98 0.005 290;
     --bg-elev: 0.96 0.005 290;
     --bg-deep: 0.94 0.005 290;
-    --text-strong: 0.20 0.01 290;
+    --text-strong: 0.2 0.01 290;
     --text-muted: 0.48 0.01 290;
     --text-subtle: 0.64 0.01 290;
     --ink: 0.28 0.04 290;
     --copper: 0.68 0.13 55;
-    --success: 0.60 0.13 155;
-    --warning: 0.70 0.14 75;
+    --success: 0.6 0.13 155;
+    --warning: 0.7 0.14 75;
     --danger: 0.55 0.18 25;
   }
 
@@ -1187,12 +1216,13 @@ Create `apps/web/src/app/globals.css`:
     --text-subtle: 0.58 0.01 290;
     --ink: 0.96 0.005 290;
     --copper: 0.75 0.13 55;
-    --success: 0.70 0.13 155;
+    --success: 0.7 0.13 155;
     --warning: 0.78 0.14 75;
     --danger: 0.65 0.18 25;
   }
 
-  html, body {
+  html,
+  body {
     background-color: oklch(var(--bg-base));
     color: oklch(var(--text-strong));
     font-feature-settings: 'cv11', 'ss01';
@@ -1212,6 +1242,7 @@ Create `apps/web/src/app/globals.css`:
 - [ ] **Step 7.6: Create lib/utils.ts**
 
 Create `apps/web/src/lib/utils.ts`:
+
 ```ts
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -1224,6 +1255,7 @@ export function cn(...inputs: ClassValue[]) {
 - [ ] **Step 7.7: Create root layout (no locale)**
 
 Create `apps/web/src/app/layout.tsx`:
+
 ```tsx
 import './globals.css';
 import { Inter, Bricolage_Grotesque } from 'next/font/google';
@@ -1259,6 +1291,7 @@ git commit -m "feat(web): scaffold Next.js 14 app with Tailwind + OKLCH design t
 ## Task 8: i18n with next-intl (es default + en)
 
 **Files:**
+
 - Create: `apps/web/src/i18n.ts`
 - Create: `apps/web/middleware.ts`
 - Create: `apps/web/messages/es.json`
@@ -1269,6 +1302,7 @@ git commit -m "feat(web): scaffold Next.js 14 app with Tailwind + OKLCH design t
 - [ ] **Step 8.1: Create i18n.ts**
 
 Create `apps/web/src/i18n.ts`:
+
 ```ts
 import { getRequestConfig } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -1289,6 +1323,7 @@ export { LOCALES };
 - [ ] **Step 8.2: Create middleware**
 
 Create `apps/web/middleware.ts`:
+
 ```ts
 import createMiddleware from 'next-intl/middleware';
 
@@ -1306,6 +1341,7 @@ export const config = {
 - [ ] **Step 8.3: Create messages/es.json**
 
 Create `apps/web/messages/es.json`:
+
 ```json
 {
   "common": {
@@ -1330,6 +1366,7 @@ Create `apps/web/messages/es.json`:
 - [ ] **Step 8.4: Create messages/en.json**
 
 Create `apps/web/messages/en.json`:
+
 ```json
 {
   "common": {
@@ -1354,6 +1391,7 @@ Create `apps/web/messages/en.json`:
 - [ ] **Step 8.5: Create [locale]/layout.tsx**
 
 Create `apps/web/src/app/[locale]/layout.tsx`:
+
 ```tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -1380,6 +1418,7 @@ export default async function LocaleLayout({
 - [ ] **Step 8.6: Create [locale]/page.tsx (placeholder home)**
 
 Create `apps/web/src/app/[locale]/page.tsx`:
+
 ```tsx
 import { useTranslations } from 'next-intl';
 import { CarbidWordmark } from '@/components/brand/carbid-wordmark';
@@ -1414,6 +1453,7 @@ git commit -m "feat(web): set up next-intl with es/en"
 ## Task 9: CARBID Wordmark + Theme Provider/Toggle
 
 **Files:**
+
 - Create: `apps/web/src/components/brand/carbid-wordmark.tsx`
 - Create: `apps/web/src/components/theme/theme-provider.tsx`
 - Create: `apps/web/src/components/theme/theme-toggle.tsx`
@@ -1421,6 +1461,7 @@ git commit -m "feat(web): set up next-intl with es/en"
 - [ ] **Step 9.1: Wordmark component**
 
 Create `apps/web/src/components/brand/carbid-wordmark.tsx`:
+
 ```tsx
 import { cn } from '@/lib/utils';
 
@@ -1457,6 +1498,7 @@ export function CarbidWordmark({ className, size = 'md' }: Props) {
 - [ ] **Step 9.2: Install next-themes (already in deps) and add provider**
 
 Create `apps/web/src/components/theme/theme-provider.tsx`:
+
 ```tsx
 'use client';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
@@ -1470,6 +1512,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 - [ ] **Step 9.3: Theme toggle component**
 
 Create `apps/web/src/components/theme/theme-toggle.tsx`:
+
 ```tsx
 'use client';
 import { useTheme } from 'next-themes';
@@ -1526,6 +1569,7 @@ export function ThemeToggle() {
 Run: `pnpm --filter @carbid/web dev`
 Open: `http://localhost:3000` (should redirect to `/es`)
 Expected:
+
 - Wordmark "CAR" en copper, "BID" en ink (oscuro)
 - Heading "Bienvenido a CARBID"
 - Theme toggle visible y funcional al cambiar light/dark/system
@@ -1544,6 +1588,7 @@ git commit -m "feat(web): add CARBID wordmark and theme provider/toggle"
 ## Task 10: functions/ scaffold + smoke health function
 
 **Files:**
+
 - Create: `functions/package.json`
 - Create: `functions/tsconfig.json`
 - Create: `functions/.eslintrc.cjs`
@@ -1553,6 +1598,7 @@ git commit -m "feat(web): add CARBID wordmark and theme provider/toggle"
 - [ ] **Step 10.1: Create functions/package.json**
 
 Create `functions/package.json`:
+
 ```json
 {
   "name": "@carbid/functions",
@@ -1586,6 +1632,7 @@ Create `functions/package.json`:
 - [ ] **Step 10.2: Create functions/tsconfig.json**
 
 Create `functions/tsconfig.json`:
+
 ```json
 {
   "extends": "../tsconfig.base.json",
@@ -1605,6 +1652,7 @@ Create `functions/tsconfig.json`:
 - [ ] **Step 10.3: Create eslint config**
 
 Create `functions/.eslintrc.cjs`:
+
 ```js
 module.exports = {
   extends: ['../.eslintrc.cjs'],
@@ -1615,6 +1663,7 @@ module.exports = {
 - [ ] **Step 10.4: Create health.ts**
 
 Create `functions/src/health.ts`:
+
 ```ts
 import { onCall } from 'firebase-functions/v2/https';
 
@@ -1626,6 +1675,7 @@ export const pingHealth = onCall({ region: 'us-central1' }, async () => {
 - [ ] **Step 10.5: Create index.ts**
 
 Create `functions/src/index.ts`:
+
 ```ts
 export { pingHealth } from './health';
 ```
@@ -1647,6 +1697,7 @@ git commit -m "feat(functions): scaffold Cloud Functions with smoke pingHealth"
 ## Task 11: Firebase config files (firebase.json, rules, indexes)
 
 **Files:**
+
 - Create: `firebase.json`
 - Create: `.firebaserc`
 - Create: `firestore.rules`
@@ -1656,6 +1707,7 @@ git commit -m "feat(functions): scaffold Cloud Functions with smoke pingHealth"
 - [ ] **Step 11.1: Create firebase.json**
 
 Create `firebase.json`:
+
 ```json
 {
   "functions": [
@@ -1685,6 +1737,7 @@ Create `firebase.json`:
 - [ ] **Step 11.2: Create .firebaserc**
 
 Create `.firebaserc`:
+
 ```json
 {
   "projects": {
@@ -1699,6 +1752,7 @@ Create `.firebaserc`:
 - [ ] **Step 11.3: Create baseline firestore.rules**
 
 Create `firestore.rules`:
+
 ```js
 rules_version = '2';
 service cloud.firestore {
@@ -1756,6 +1810,7 @@ service cloud.firestore {
 - [ ] **Step 11.4: Create firestore.indexes.json**
 
 Create `firestore.indexes.json`:
+
 ```json
 {
   "indexes": [
@@ -1809,6 +1864,7 @@ Create `firestore.indexes.json`:
 - [ ] **Step 11.5: Create storage.rules**
 
 Create `storage.rules`:
+
 ```js
 rules_version = '2';
 service firebase.storage {
@@ -1850,6 +1906,7 @@ Expected: project created. If the ID is taken, choose `carbid-staging-<your-suff
 - [ ] **Step 12.2: Enable required APIs (auth, firestore, storage, functions)**
 
 Manual: open https://console.firebase.google.com/project/carbid-staging
+
 - Build → Authentication → Get started → enable **Email/Password**
 - Build → Firestore Database → Create database (Native, region nam5 or southamerica-east1)
 - Build → Storage → Get started (default region as Firestore)
@@ -1861,6 +1918,7 @@ In Console: Project settings → Your apps → Web app → register app `CARBID 
 - [ ] **Step 12.4: Populate .env.local**
 
 Create `apps/web/.env.local` (gitignored at repo root level via `.env.local`; if the wildcard doesn't catch it, add `apps/**/.env.local` to `.gitignore`):
+
 ```
 NEXT_PUBLIC_FIREBASE_API_KEY=<from console>
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=carbid-staging.firebaseapp.com
@@ -1875,6 +1933,7 @@ NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true
 
 Run: `grep -n "env" .gitignore`
 If output does not include `.env*` patterns covering `apps/**/.env.local`, append:
+
 ```
 apps/**/.env.local
 apps/**/.env.*.local
@@ -1917,17 +1976,20 @@ Expected: home page renders with wordmark and theme toggle.
 - [ ] **Step 13.4: Smoke-call pingHealth from devtools**
 
 In the browser devtools console of the home page, run:
+
 ```js
 const { initFirebaseClient, loadFirebaseEnv } = await import('/_next/static/chunks/...');
 // (Skipped — not exposed yet. Quick alternative: curl the emulator endpoint)
 ```
 
 Alternative via curl:
+
 ```bash
 curl -s -X POST 'http://127.0.0.1:5001/carbid-staging/us-central1/pingHealth' \
   -H 'Content-Type: application/json' \
   -d '{"data":{}}'
 ```
+
 Expected: JSON response with `{ "result": { "status": "ok", "timestamp": "..." } }`.
 
 - [ ] **Step 13.5: Stop emulators and dev server**
@@ -1947,11 +2009,13 @@ git status
 ## Task 14: Netlify deploy config
 
 **Files:**
+
 - Create: `netlify.toml`
 
 - [ ] **Step 14.1: Create netlify.toml**
 
 Create `netlify.toml`:
+
 ```toml
 [build]
   base = "."
@@ -2004,6 +2068,7 @@ Expected: a sequence of conventional commits matching the tasks above.
 - [ ] **Step 15.4 (optional): Create GitHub remote and push**
 
 (Manual; user must create the GitHub repo first.)
+
 ```bash
 git remote add origin git@github.com:<owner>/carbid.git
 git push -u origin main
@@ -2014,6 +2079,7 @@ git push -u origin main
 ## Self-Review
 
 **Spec coverage** (against `2026-05-05-carbid-mvp-design.md`):
+
 - Sections 3 (Stack & monorepo): Tasks 1, 2, 7, 10 ✅
 - Section 4 (Data model): Task 5 (Zod schemas) ✅; full collections come in later plans
 - Section 5 (Security): Task 11 (baseline rules + storage rules) ✅; full Cloud Functions in plans 2-7
