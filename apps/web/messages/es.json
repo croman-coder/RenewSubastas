@@ -28,7 +28,9 @@
         "accountDisabled": "Cuenta desactivada. Contacta al administrador.",
         "generic": "Error al iniciar sesión. Intenta nuevamente.",
         "emailInvalid": "Email inválido.",
-        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres."
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+        "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
+        "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador."
       }
     }
   }

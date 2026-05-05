@@ -42,15 +42,23 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err) {
-    return NextResponse.json(
-      { error: 'invalid_token', detail: String((err as Error).message ?? err) },
-      { status: 401 },
-    );
+    // Log server-side for ops; never leak Firebase error details to the client.
+    console.error('[session POST] invalid token', err);
+    return NextResponse.json({ error: 'invalid_token' }, { status: 401 });
   }
 }
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
-  res.cookies.set({ name: SESSION_COOKIE_NAME, value: '', maxAge: 0, path: '/' });
+  // Mirror POST attributes so CDNs and strict cookie parsers correctly invalidate.
+  res.cookies.set({
+    name: SESSION_COOKIE_NAME,
+    value: '',
+    maxAge: 0,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
   return res;
 }

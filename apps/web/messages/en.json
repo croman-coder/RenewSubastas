@@ -28,7 +28,9 @@
         "accountDisabled": "Account disabled. Contact the administrator.",
         "generic": "Sign-in failed. Please try again.",
         "emailInvalid": "Invalid email.",
-        "passwordTooShort": "Password must be at least 6 characters."
+        "passwordTooShort": "Password must be at least 6 characters.",
+        "sessionExpired": "Your session has expired. Please sign in again.",
+        "noRole": "Your account has no role assigned. Contact the administrator."
       }
     }
   }
