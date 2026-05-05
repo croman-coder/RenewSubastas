@@ -1,0 +1,18 @@
+{
+  "common": {
+    "appName": "CARBID",
+    "tagline": "Subastas de vehículos",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "settings": "Configuración",
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema"
+  },
+  "home": {
+    "title": "Bienvenido a CARBID",
+    "subtitle": "Subastas asincrónicas de vehículos en Paraguay"
+  }
+}

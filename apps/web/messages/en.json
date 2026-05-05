@@ -1,0 +1,18 @@
+{
+  "common": {
+    "appName": "CARBID",
+    "tagline": "Vehicle auctions",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "settings": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "home": {
+    "title": "Welcome to CARBID",
+    "subtitle": "Asynchronous vehicle auctions in Paraguay"
+  }
+}

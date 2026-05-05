@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* light theme — values are "L C H" (no parens) for tailwind oklch(var(--token)) */
+    --bg-base: 0.98 0.005 290;
+    --bg-elev: 0.96 0.005 290;
+    --bg-deep: 0.94 0.005 290;
+    --text-strong: 0.2 0.01 290;
+    --text-muted: 0.48 0.01 290;
+    --text-subtle: 0.64 0.01 290;
+    --ink: 0.28 0.04 290;
+    --copper: 0.68 0.13 55;
+    --success: 0.6 0.13 155;
+    --warning: 0.7 0.14 75;
+    --danger: 0.55 0.18 25;
+  }
+
+  .dark {
+    --bg-base: 0.18 0.01 290;
+    --bg-elev: 0.22 0.01 290;
+    --bg-deep: 0.26 0.01 290;
+    --text-strong: 0.96 0.005 290;
+    --text-muted: 0.72 0.01 290;
+    --text-subtle: 0.58 0.01 290;
+    --ink: 0.96 0.005 290;
+    --copper: 0.75 0.13 55;
+    --success: 0.7 0.13 155;
+    --warning: 0.78 0.14 75;
+    --danger: 0.65 0.18 25;
+  }
+
+  html,
+  body {
+    background-color: oklch(var(--bg-base));
+    color: oklch(var(--text-strong));
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  body {
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+
+  .num-tab {
+    font-variant-numeric: tabular-nums;
+  }
+}
