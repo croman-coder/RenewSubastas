@@ -117,5 +117,79 @@
       "staffNotAllowed": "Las cuentas de staff y administrador no pueden auto-eliminarse. Contacta a un administrador.",
       "errors": { "generic": "No se pudo eliminar la cuenta." }
     }
+  },
+  "admin": {
+    "nav": {
+      "home": "Inicio",
+      "users": "Usuarios",
+      "vehicles": "Vehículos",
+      "auctions": "Subastas",
+      "audit": "Auditoría",
+      "config": "Configuración"
+    },
+    "users": {
+      "title": "Usuarios",
+      "createNew": "Crear usuario",
+      "filters": {
+        "search": "Buscar por nombre, email o documento",
+        "role": "Rol",
+        "status": "Estado",
+        "all": "Todos"
+      },
+      "columns": {
+        "name": "Nombre",
+        "email": "Email",
+        "role": "Rol",
+        "status": "Estado",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "active": "Activo",
+        "disabled": "Desactivado"
+      },
+      "actions": {
+        "viewEdit": "Ver / editar",
+        "changeRole": "Cambiar rol",
+        "disable": "Desactivar",
+        "enable": "Reactivar",
+        "delete": "Eliminar",
+        "resetPassword": "Generar link de reseteo"
+      },
+      "empty": "No hay usuarios que coincidan con los filtros.",
+      "loadMore": "Cargar más",
+      "create": {
+        "title": "Crear usuario",
+        "subtitle": "Los usuarios admin/staff deben usar email de @santarosa.com.py.",
+        "role": "Rol",
+        "email": "Correo",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "documentType": "Tipo de documento",
+        "documentNumber": "Número",
+        "phone": "Teléfono",
+        "submit": "Crear y enviar link",
+        "submitting": "Creando…",
+        "success": "Usuario creado. Link de reseteo:",
+        "copy": "Copiar",
+        "backToList": "Volver a la lista",
+        "errors": {
+          "documentInvalid": "Documento inválido para Paraguay.",
+          "emailDomain": "Los usuarios admin y staff deben usar @santarosa.com.py.",
+          "duplicate": "Ya existe un usuario con ese email.",
+          "generic": "No se pudo crear el usuario."
+        }
+      },
+      "detail": {
+        "back": "← Volver a la lista",
+        "actionsTitle": "Acciones de administración",
+        "changeRoleTitle": "Cambiar rol o estado",
+        "saveChanges": "Guardar cambios",
+        "saving": "Guardando…",
+        "saved": "Cambios guardados.",
+        "deleteAccount": "Eliminar cuenta",
+        "deleteConfirmText": "Esta acción es irreversible. ¿Eliminar este usuario?",
+        "errors": { "generic": "Error al ejecutar la acción." }
+      }
+    }
   }
 }

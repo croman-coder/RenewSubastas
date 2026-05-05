@@ -117,5 +117,79 @@
       "staffNotAllowed": "Staff and administrator accounts cannot self-delete. Contact an administrator.",
       "errors": { "generic": "Could not delete the account." }
     }
+  },
+  "admin": {
+    "nav": {
+      "home": "Home",
+      "users": "Users",
+      "vehicles": "Vehicles",
+      "auctions": "Auctions",
+      "audit": "Audit",
+      "config": "Configuration"
+    },
+    "users": {
+      "title": "Users",
+      "createNew": "Create user",
+      "filters": {
+        "search": "Search by name, email or document",
+        "role": "Role",
+        "status": "Status",
+        "all": "All"
+      },
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "actions": {
+        "viewEdit": "View / edit",
+        "changeRole": "Change role",
+        "disable": "Disable",
+        "enable": "Enable",
+        "delete": "Delete",
+        "resetPassword": "Generate reset link"
+      },
+      "empty": "No users match the current filters.",
+      "loadMore": "Load more",
+      "create": {
+        "title": "Create user",
+        "subtitle": "Admin/staff users must use an @santarosa.com.py email.",
+        "role": "Role",
+        "email": "Email",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "documentType": "Document type",
+        "documentNumber": "Number",
+        "phone": "Phone",
+        "submit": "Create and send link",
+        "submitting": "Creating…",
+        "success": "User created. Reset link:",
+        "copy": "Copy",
+        "backToList": "Back to list",
+        "errors": {
+          "documentInvalid": "Invalid document for Paraguay.",
+          "emailDomain": "Admin and staff users must use @santarosa.com.py.",
+          "duplicate": "A user with that email already exists.",
+          "generic": "Could not create the user."
+        }
+      },
+      "detail": {
+        "back": "← Back to list",
+        "actionsTitle": "Administration actions",
+        "changeRoleTitle": "Change role or status",
+        "saveChanges": "Save changes",
+        "saving": "Saving…",
+        "saved": "Changes saved.",
+        "deleteAccount": "Delete account",
+        "deleteConfirmText": "This action is irreversible. Delete this user?",
+        "errors": { "generic": "Error executing the action." }
+      }
+    }
   }
 }
