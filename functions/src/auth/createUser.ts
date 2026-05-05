@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
@@ -56,7 +57,7 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
     }
   }
 
-  const tempPassword = Math.random().toString(36).slice(2) + 'Aa1!';
+  const tempPassword = randomBytes(16).toString('base64url') + 'Aa1!';
   const authUser = await adminAuth().createUser({
     email: input.email,
     password: tempPassword,

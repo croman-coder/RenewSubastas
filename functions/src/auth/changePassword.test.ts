@@ -73,6 +73,6 @@ describe('generatePasswordReset', () => {
   it('returns not-found for unknown user', async () => {
     await expect(
       generatePasswordResetHandler(asAdmin('admin-uid', { uid: 'ghost' })),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: 'not-found' });
   });
 });

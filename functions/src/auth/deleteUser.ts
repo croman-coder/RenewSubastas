@@ -30,8 +30,15 @@ export async function deleteUserHandler(req: CallableRequest): Promise<DeleteUse
     throw new HttpsError('permission-denied', 'Not authorized to delete this user');
   }
 
-  await adminAuth().updateUser(targetUid, { disabled: true });
-  await adminAuth().setCustomUserClaims(targetUid, null);
+  try {
+    await adminAuth().revokeRefreshTokens(targetUid);
+    await adminAuth().updateUser(targetUid, { disabled: true });
+    await adminAuth().setCustomUserClaims(targetUid, null);
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code !== 'auth/user-not-found') throw err;
+    // Auth user already gone — proceed with Firestore-only soft delete.
+  }
   await ref.update({
     status: 'disabled',
     deletedAt: FieldValue.serverTimestamp(),

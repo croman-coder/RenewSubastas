@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { adminAuth, adminDb } from '../src/lib/admin.js';
 import { setUserClaims } from '../src/lib/claims.js';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -17,7 +18,7 @@ async function main() {
   } catch {
     user = await adminAuth().createUser({
       email,
-      password: Math.random().toString(36).slice(2) + 'Aa1!',
+      password: randomBytes(16).toString('base64url') + 'Aa1!',
       displayName: `${firstName} ${lastName}`,
       emailVerified: false,
     });

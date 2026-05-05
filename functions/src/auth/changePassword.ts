@@ -18,7 +18,15 @@ export async function generatePasswordResetHandler(
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) throw new HttpsError('invalid-argument', 'Invalid input');
 
-  const user = await adminAuth().getUser(parsed.data.uid);
+  let user;
+  try {
+    user = await adminAuth().getUser(parsed.data.uid);
+  } catch (err) {
+    if ((err as { code?: string }).code === 'auth/user-not-found') {
+      throw new HttpsError('not-found', 'User not found');
+    }
+    throw err;
+  }
   if (!user.email) throw new HttpsError('failed-precondition', 'User has no email');
 
   const resetLink = await adminAuth().generatePasswordResetLink(user.email);

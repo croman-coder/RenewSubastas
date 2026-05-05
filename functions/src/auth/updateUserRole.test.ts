@@ -36,15 +36,17 @@ async function seedUser(
   uid: string,
   role: 'admin' | 'staff' | 'buyer',
   status: 'active' | 'disabled' = 'active',
+  email?: string,
 ) {
-  await adminAuth().createUser({ uid, email: `${uid}@example.com`, password: 'Aa1!aaaa' });
+  const userEmail = email ?? `${uid}@example.com`;
+  await adminAuth().createUser({ uid, email: userEmail, password: 'Aa1!aaaa' });
   await adminAuth().setCustomUserClaims(uid, { role, status });
   await adminDb()
     .doc(`users/${uid}`)
     .set({
       uid,
       role,
-      email: `${uid}@example.com`,
+      email: userEmail,
       status,
       profile: { firstName: 'F', lastName: 'L', documentType: 'CI', documentNumber: '1234567' },
       preferences: {
@@ -81,7 +83,7 @@ describe('updateUserRole', () => {
   });
 
   it('updates role and Auth custom claims', async () => {
-    await seedUser('target', 'buyer');
+    await seedUser('target', 'buyer', 'active', 'target@santarosa.com.py');
     const req = asAdmin('admin-uid', { uid: 'target', role: 'staff' });
     await updateUserRoleHandler(req);
     const doc = await adminDb().doc('users/target').get();
@@ -101,7 +103,7 @@ describe('updateUserRole', () => {
   });
 
   it('writes audit log with before/after', async () => {
-    await seedUser('target', 'buyer');
+    await seedUser('target', 'buyer', 'active', 'target@santarosa.com.py');
     await updateUserRoleHandler(asAdmin('admin-1', { uid: 'target', role: 'staff' }));
     const logs = await adminDb()
       .collection('audit_logs')
@@ -111,5 +113,35 @@ describe('updateUserRole', () => {
     const log = logs.docs[0]!.data();
     expect(log['before']).toMatchObject({ role: 'buyer' });
     expect(log['after']).toMatchObject({ role: 'staff' });
+  });
+
+  it('rejects promoting buyer with non-santarosa email to staff', async () => {
+    // seedUser uses `${uid}@example.com` so this is never santarosa.com.py
+    await seedUser('victim', 'buyer');
+    await expect(
+      updateUserRoleHandler(asAdmin('admin-uid', { uid: 'victim', role: 'staff' })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('rejects admin disabling themselves', async () => {
+    await seedUser('admin-uid', 'admin');
+    await expect(
+      updateUserRoleHandler(asAdmin('admin-uid', { uid: 'admin-uid', status: 'disabled' })),
+    ).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+
+  it('rejects demoting last active admin', async () => {
+    await seedUser('admin-uid', 'admin');
+    await expect(
+      updateUserRoleHandler(asAdmin('admin-uid', { uid: 'admin-uid', role: 'staff' })),
+    ).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+
+  it('allows demoting an admin to buyer when another active admin exists', async () => {
+    await seedUser('admin-uid', 'admin');
+    await seedUser('admin-2', 'admin');
+    await updateUserRoleHandler(asAdmin('admin-uid', { uid: 'admin-2', role: 'buyer' }));
+    const doc = await adminDb().doc('users/admin-2').get();
+    expect(doc.data()?.['role']).toBe('buyer');
   });
 });

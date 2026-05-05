@@ -6,7 +6,7 @@ export const onUserSync = onDocumentWritten(
   async (event) => {
     const after = event.data?.after.data();
     const uid = event.params['uid'] as string;
-    if (!after) {
+    if (!after || after['deletedAt']) {
       await clearUserClaims(uid);
       return;
     }

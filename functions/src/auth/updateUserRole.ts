@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { RoleSchema, UserStatusSchema } from '@carbid/shared-types';
 import { adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
+import { loadAppConfig } from '../lib/config.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireAdmin } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -37,6 +38,45 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
 
   const nextRole = (input.role ?? before['role']) as 'admin' | 'staff' | 'buyer';
   const nextStatus = (input.status ?? before['status']) as 'active' | 'disabled';
+
+  // Self-protection: admin cannot disable themselves or demote themselves
+  if (input.uid === actorUid) {
+    if (input.status === 'disabled') {
+      throw new HttpsError('permission-denied', 'Cannot disable your own account');
+    }
+    if (input.role !== undefined && input.role !== 'admin') {
+      throw new HttpsError('permission-denied', 'Cannot demote your own admin account');
+    }
+  }
+
+  // Re-enforce email domain when promoting to admin/staff
+  if (input.role !== undefined && input.role !== 'buyer') {
+    const config = await loadAppConfig();
+    const email = before['email'] as string | undefined;
+    const domain = email?.split('@')[1] ?? '';
+    if (domain.toLowerCase() !== config.emails.adminStaffDomain.toLowerCase()) {
+      throw new HttpsError(
+        'invalid-argument',
+        `Cannot promote to ${input.role}: email must use domain ${config.emails.adminStaffDomain}`,
+      );
+    }
+  }
+
+  // Last-admin guard: don't allow this update to leave zero active admins
+  const willBeNonAdminOrInactive =
+    (input.role !== undefined && input.role !== 'admin') ||
+    (input.status === 'disabled' && before['role'] === 'admin');
+  if (willBeNonAdminOrInactive && before['role'] === 'admin') {
+    const activeAdmins = await adminDb()
+      .collection('users')
+      .where('role', '==', 'admin')
+      .where('status', '==', 'active')
+      .get();
+    const otherActiveAdmins = activeAdmins.docs.filter((d) => d.id !== input.uid);
+    if (otherActiveAdmins.length === 0) {
+      throw new HttpsError('failed-precondition', 'Cannot remove the last active admin');
+    }
+  }
 
   await setUserClaims(input.uid, { role: nextRole, status: nextStatus });
   await ref.update({
