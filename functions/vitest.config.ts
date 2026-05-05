@@ -9,5 +9,9 @@ export default defineConfig({
     hookTimeout: 15000,
     include: ['src/**/*.test.ts'],
     exclude: ['lib/**', 'node_modules/**'],
+    // Test files share a single Firebase emulator instance; run them
+    // sequentially so each file's beforeEach clearEmulators() call does
+    // not race with seedUser() calls in other concurrently-running files.
+    fileParallelism: false,
   },
 });
