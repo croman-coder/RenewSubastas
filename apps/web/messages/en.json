@@ -118,6 +118,73 @@
       "errors": { "generic": "Could not delete the account." }
     }
   },
+  "staff": {
+    "nav": {
+      "home": "Home",
+      "vehicles": "My vehicles",
+      "auctions": "My auctions"
+    },
+    "vehicles": {
+      "title": "My vehicles",
+      "createNew": "New vehicle",
+      "filters": { "status": "Status", "all": "All" },
+      "columns": {
+        "vehicle": "Vehicle",
+        "year": "Year",
+        "status": "Status",
+        "createdAt": "Created"
+      },
+      "status": {
+        "draft": "Draft",
+        "ready": "Ready",
+        "in_auction": "In auction",
+        "sold": "Sold",
+        "archived": "Archived"
+      },
+      "empty": "You haven't uploaded any vehicles yet.",
+      "loadMore": "Load more",
+      "form": {
+        "title": "Vehicle details",
+        "make": "Make",
+        "model": "Model",
+        "year": "Year",
+        "vin": "VIN (optional)",
+        "mileage": "Mileage",
+        "transmission": "Transmission",
+        "transmissionManual": "Manual",
+        "transmissionAutomatic": "Automatic",
+        "transmissionCvt": "CVT",
+        "fuelType": "Fuel type",
+        "fuelGasoline": "Gasoline",
+        "fuelDiesel": "Diesel",
+        "fuelHybrid": "Hybrid",
+        "fuelElectric": "Electric",
+        "color": "Color",
+        "condition": "Condition",
+        "conditionNew": "New",
+        "conditionUsed": "Used",
+        "conditionDamaged": "Damaged",
+        "descriptionEs": "Description (Spanish)",
+        "descriptionEn": "Description (English, optional)",
+        "images": "Photos",
+        "imagesHint": "Up to 20 images. First = main.",
+        "addImages": "Add images",
+        "uploading": "Uploading…",
+        "removeImage": "Remove",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved.",
+        "publishToAuction": "Mark as ready (publishable)",
+        "backToDraft": "Back to draft",
+        "backToList": "← My vehicles",
+        "errors": {
+          "generic": "Could not save.",
+          "imageTooLarge": "Image exceeds 10 MB.",
+          "imageWrongType": "Only images are accepted."
+        }
+      }
+    }
+  },
   "admin": {
     "nav": {
       "home": "Home",

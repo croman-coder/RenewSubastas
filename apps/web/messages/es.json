@@ -118,6 +118,73 @@
       "errors": { "generic": "No se pudo eliminar la cuenta." }
     }
   },
+  "staff": {
+    "nav": {
+      "home": "Inicio",
+      "vehicles": "Mis vehículos",
+      "auctions": "Mis subastas"
+    },
+    "vehicles": {
+      "title": "Mis vehículos",
+      "createNew": "Nuevo vehículo",
+      "filters": { "status": "Estado", "all": "Todos" },
+      "columns": {
+        "vehicle": "Vehículo",
+        "year": "Año",
+        "status": "Estado",
+        "createdAt": "Creado"
+      },
+      "status": {
+        "draft": "Borrador",
+        "ready": "Listo",
+        "in_auction": "En subasta",
+        "sold": "Vendido",
+        "archived": "Archivado"
+      },
+      "empty": "Aún no has cargado vehículos.",
+      "loadMore": "Cargar más",
+      "form": {
+        "title": "Datos del vehículo",
+        "make": "Marca",
+        "model": "Modelo",
+        "year": "Año",
+        "vin": "VIN (opcional)",
+        "mileage": "Kilometraje",
+        "transmission": "Transmisión",
+        "transmissionManual": "Manual",
+        "transmissionAutomatic": "Automática",
+        "transmissionCvt": "CVT",
+        "fuelType": "Combustible",
+        "fuelGasoline": "Nafta",
+        "fuelDiesel": "Diésel",
+        "fuelHybrid": "Híbrido",
+        "fuelElectric": "Eléctrico",
+        "color": "Color",
+        "condition": "Condición",
+        "conditionNew": "Nuevo",
+        "conditionUsed": "Usado",
+        "conditionDamaged": "Dañado",
+        "descriptionEs": "Descripción (Español)",
+        "descriptionEn": "Descripción (Inglés, opcional)",
+        "images": "Fotos",
+        "imagesHint": "Hasta 20 imágenes. Primera = principal.",
+        "addImages": "Agregar imágenes",
+        "uploading": "Subiendo…",
+        "removeImage": "Quitar",
+        "save": "Guardar",
+        "saving": "Guardando…",
+        "saved": "Guardado.",
+        "publishToAuction": "Marcar como listo (publicable)",
+        "backToDraft": "Volver a borrador",
+        "backToList": "← Mis vehículos",
+        "errors": {
+          "generic": "No se pudo guardar.",
+          "imageTooLarge": "Imagen mayor a 10 MB.",
+          "imageWrongType": "Solo se aceptan imágenes."
+        }
+      }
+    }
+  },
   "admin": {
     "nav": {
       "home": "Inicio",
