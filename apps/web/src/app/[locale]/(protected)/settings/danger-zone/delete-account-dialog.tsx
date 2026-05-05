@@ -39,6 +39,9 @@ export function DeleteAccountDialog({ uid, locale }: { uid: string; locale: stri
     }
   }
 
+  // Use the i18n placeholder as the confirmation word so es shows ELIMINAR and en shows DELETE.
+  const confirmWord = t('confirmPlaceholder');
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -51,14 +54,10 @@ export function DeleteAccountDialog({ uid, locale }: { uid: string; locale: stri
         </DialogHeader>
         <div className="space-y-2">
           <p className="text-sm">{t('confirmText')}</p>
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={t('confirmPlaceholder')}
-          />
+          <Input value={text} onChange={(e) => setText(e.target.value)} placeholder={confirmWord} />
         </div>
         <DialogFooter>
-          <Button variant="destructive" onClick={onConfirm} disabled={busy || text !== 'ELIMINAR'}>
+          <Button variant="destructive" onClick={onConfirm} disabled={busy || text !== confirmWord}>
             {busy ? t('deleting') : t('confirmButton')}
           </Button>
         </DialogFooter>
