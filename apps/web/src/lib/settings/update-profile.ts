@@ -48,7 +48,10 @@ export async function updateProfileAction(
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (v.phone !== undefined) update['profile.phone'] = v.phone;
-  if (v.addressStreet ?? v.addressCity ?? v.addressPostalCode) {
+  // Use `||` (not `??`): RHF sends empty strings (not undefined) for blank optional fields.
+  // With `??`, "" is treated as "present" and we'd never enter the block when the user
+  // clears a previously saved address.
+  if (v.addressStreet || v.addressCity || v.addressPostalCode) {
     update['profile.address'] = {
       street: v.addressStreet ?? '',
       city: v.addressCity ?? '',

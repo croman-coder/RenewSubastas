@@ -100,7 +100,10 @@
       "notifWon": "When I win an auction",
       "notifNew": "When a new auction is published",
       "save": "Save",
-      "saved": "Preferences saved."
+      "saved": "Preferences saved.",
+      "errors": {
+        "generic": "Could not save preferences."
+      }
     },
     "dangerZone": {
       "title": "Danger zone",

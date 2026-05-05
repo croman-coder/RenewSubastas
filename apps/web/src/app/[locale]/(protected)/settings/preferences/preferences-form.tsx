@@ -25,7 +25,6 @@ interface Initial {
 
 export function PreferencesForm({ initial }: { initial: Initial }) {
   const t = useTranslations('settings.preferences');
-  const tErr = useTranslations('settings.profile.errors');
   const { setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -39,7 +38,7 @@ export function PreferencesForm({ initial }: { initial: Initial }) {
     const res = await updatePreferencesAction(values);
     setSubmitting(false);
     if (!res.ok) {
-      toast.error(tErr('generic'));
+      toast.error(t('errors.generic'));
       return;
     }
     toast.success(t('saved'));

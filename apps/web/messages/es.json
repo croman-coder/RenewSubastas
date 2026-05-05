@@ -100,7 +100,10 @@
       "notifWon": "Cuando gane una subasta",
       "notifNew": "Cuando se publique una subasta nueva",
       "save": "Guardar",
-      "saved": "Preferencias guardadas."
+      "saved": "Preferencias guardadas.",
+      "errors": {
+        "generic": "No se pudieron guardar las preferencias."
+      }
     },
     "dangerZone": {
       "title": "Zona de peligro",
