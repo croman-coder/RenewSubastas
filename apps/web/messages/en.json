@@ -14,5 +14,22 @@
   "home": {
     "title": "Welcome to CARBID",
     "subtitle": "Asynchronous vehicle auctions in Paraguay"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Sign in with your CARBID account",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "errors": {
+        "invalidCredentials": "Invalid email or password.",
+        "accountDisabled": "Account disabled. Contact the administrator.",
+        "generic": "Sign-in failed. Please try again.",
+        "emailInvalid": "Invalid email.",
+        "passwordTooShort": "Password must be at least 6 characters."
+      }
+    }
   }
 }

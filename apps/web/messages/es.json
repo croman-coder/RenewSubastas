@@ -14,5 +14,22 @@
   "home": {
     "title": "Bienvenido a CARBID",
     "subtitle": "Subastas asincrónicas de vehículos en Paraguay"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Ingresa con tu cuenta CARBID",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "errors": {
+        "invalidCredentials": "Correo o contraseña inválidos.",
+        "accountDisabled": "Cuenta desactivada. Contacta al administrador.",
+        "generic": "Error al iniciar sesión. Intenta nuevamente.",
+        "emailInvalid": "Email inválido.",
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres."
+      }
+    }
   }
 }
