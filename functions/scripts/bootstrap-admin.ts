@@ -8,8 +8,13 @@ async function main() {
   const firstName = process.argv[3] ?? 'Admin';
   const lastName = process.argv[4] ?? 'CARBID';
   const documentNumber = process.argv[5] ?? '0000000';
+  // Optional 6th arg: password. If provided, sets it directly (no reset link round-trip).
+  const password = process.argv[6];
+
   if (!email) {
-    throw new Error('Usage: bootstrap-admin <email> [firstName] [lastName] [documentNumber]');
+    throw new Error(
+      'Usage: bootstrap-admin <email> [firstName] [lastName] [documentNumber] [password]',
+    );
   }
 
   let user;
@@ -18,10 +23,15 @@ async function main() {
   } catch {
     user = await adminAuth().createUser({
       email,
-      password: randomBytes(16).toString('base64url') + 'Aa1!',
+      password: password ?? randomBytes(16).toString('base64url') + 'Aa1!',
       displayName: `${firstName} ${lastName}`,
-      emailVerified: false,
+      emailVerified: true,
     });
+  }
+
+  // If user already existed and a password was provided, update it.
+  if (password) {
+    await adminAuth().updateUser(user.uid, { password, emailVerified: true });
   }
 
   await setUserClaims(user.uid, { role: 'admin', status: 'active' });
@@ -47,8 +57,12 @@ async function main() {
       { merge: true },
     );
 
-  const link = await adminAuth().generatePasswordResetLink(email);
-  console.log('Admin bootstrapped. Reset link:', link);
+  if (password) {
+    console.log(`Admin ready. Login: ${email} / ${password}`);
+  } else {
+    const link = await adminAuth().generatePasswordResetLink(email);
+    console.log('Admin bootstrapped. Reset link:', link);
+  }
 }
 
 main()
