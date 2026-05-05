@@ -6,3 +6,4 @@ export { onUserSync } from './auth/onUserSync.js';
 export { generatePasswordReset } from './auth/changePassword.js';
 export { revokeMySessions } from './auth/revokeMySessions.js';
 export { updateGlobalConfig } from './config/updateGlobalConfig.js';
+export { createAuction } from './auctions/createAuction.js';
