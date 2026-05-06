@@ -6,6 +6,7 @@ export interface UserListItem {
   uid: string;
   email: string;
   role: 'admin' | 'staff' | 'buyer';
+  audience: 'retail' | 'wholesale' | null;
   status: 'active' | 'disabled';
   firstName: string;
   lastName: string;
@@ -46,10 +47,17 @@ export async function listUsers(filter: ListUsersFilter): Promise<ListUsersResul
     const profile = (data['profile'] ?? {}) as Record<string, unknown>;
     const createdAt =
       (data['createdAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+    const role = (data['role'] as 'admin' | 'staff' | 'buyer') ?? 'buyer';
     return {
       uid: d.id,
       email: (data['email'] as string) ?? '',
-      role: (data['role'] as 'admin' | 'staff' | 'buyer') ?? 'buyer',
+      role,
+      // Audience only carries meaning for buyers. For admin/staff we explicitly
+      // expose null so the table can render "—" instead of a stale value.
+      audience:
+        role === 'buyer'
+          ? ((profile['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail')
+          : null,
       status: (data['status'] as 'active' | 'disabled') ?? 'active',
       firstName: (profile['firstName'] as string) ?? '',
       lastName: (profile['lastName'] as string) ?? '',

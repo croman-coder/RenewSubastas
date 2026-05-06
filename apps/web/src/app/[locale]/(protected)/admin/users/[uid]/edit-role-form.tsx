@@ -15,24 +15,50 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+type Kind = 'admin' | 'staff' | 'retail' | 'wholesale';
+type Role = 'admin' | 'staff' | 'buyer';
+
 interface Props {
   uid: string;
   locale: string;
-  initialRole: 'admin' | 'staff' | 'buyer';
+  initialRole: Role;
+  initialAudience: 'retail' | 'wholesale';
   initialStatus: 'active' | 'disabled';
 }
 
-export function EditRoleForm({ uid, locale, initialRole, initialStatus }: Props) {
+// Folds (role, audience) into the operator-facing "kind" so the dropdown
+// reads in plain Spanish: Retail, Wholesale, Staff, Admin.
+function toKind(role: Role, audience: 'retail' | 'wholesale'): Kind {
+  if (role === 'admin') return 'admin';
+  if (role === 'staff') return 'staff';
+  return audience;
+}
+
+interface UpdatePayload {
+  uid: string;
+  role: Role;
+  status: 'active' | 'disabled';
+  audience?: 'retail' | 'wholesale';
+}
+
+function fromKind(kind: Kind, uid: string, status: 'active' | 'disabled'): UpdatePayload {
+  if (kind === 'admin' || kind === 'staff') {
+    return { uid, role: kind, status };
+  }
+  return { uid, role: 'buyer', status, audience: kind };
+}
+
+export function EditRoleForm({ uid, locale, initialRole, initialAudience, initialStatus }: Props) {
   const t = useTranslations('admin.users.detail');
   const router = useRouter();
-  const [role, setRole] = useState(initialRole);
+  const [kind, setKind] = useState<Kind>(toKind(initialRole, initialAudience));
   const [status, setStatus] = useState(initialStatus);
   const [busy, setBusy] = useState(false);
 
   async function save() {
     setBusy(true);
     try {
-      await httpsCallable(fb.functions, 'updateUserRole')({ uid, role, status });
+      await httpsCallable(fb.functions, 'updateUserRole')(fromKind(kind, uid, status));
       toast.success(t('saved'));
       router.refresh();
     } catch (e) {
@@ -58,19 +84,26 @@ export function EditRoleForm({ uid, locale, initialRole, initialStatus }: Props)
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Rol</Label>
-          <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+          <Label>Tipo de cuenta</Label>
+          <Select value={kind} onValueChange={(v) => setKind(v as Kind)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="admin">admin</SelectItem>
-              <SelectItem value="staff">staff</SelectItem>
-              <SelectItem value="buyer">buyer</SelectItem>
+              <SelectItem value="retail">Retail (público general)</SelectItem>
+              <SelectItem value="wholesale">Wholesale (mayorista)</SelectItem>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-text-muted">
+            {kind === 'retail' && 'Ve solo el catálogo público de retail.'}
+            {kind === 'wholesale' && 'Ve únicamente subastas mayoristas.'}
+            {kind === 'staff' && 'Carga vehículos y subastas. Email @santarosa.com.py.'}
+            {kind === 'admin' && 'Acceso total. Email @santarosa.com.py.'}
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Estado</Label>

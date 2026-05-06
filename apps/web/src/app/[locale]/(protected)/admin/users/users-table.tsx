@@ -22,6 +22,14 @@ import {
 import { UserRowActions } from './user-row-actions';
 import type { UserListItem } from '@/lib/admin/list-users';
 
+// Translates the (role, audience) pair into the operator-facing label so
+// the table shows "Retail" / "Wholesale" instead of the technical "buyer".
+function kindLabel(role: UserListItem['role'], audience: UserListItem['audience']): string {
+  if (role === 'admin') return 'Admin';
+  if (role === 'staff') return 'Staff';
+  return audience === 'wholesale' ? 'Wholesale' : 'Retail';
+}
+
 interface Props {
   locale: string;
   items: UserListItem[];
@@ -68,9 +76,9 @@ export function UsersTable({ locale, items, nextCursor, currentRole, currentStat
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('filters.all')}</SelectItem>
-            <SelectItem value="admin">admin</SelectItem>
-            <SelectItem value="staff">staff</SelectItem>
-            <SelectItem value="buyer">buyer</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
+            <SelectItem value="buyer">Buyers (retail + wholesale)</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -119,7 +127,7 @@ export function UsersTable({ locale, items, nextCursor, currentRole, currentStat
                 </TableCell>
                 <TableCell className="text-text-muted">{u.email}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{u.role}</Badge>
+                  <Badge variant="secondary">{kindLabel(u.role, u.audience)}</Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant={u.status === 'active' ? 'default' : 'outline'}>

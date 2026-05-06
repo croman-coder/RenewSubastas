@@ -21,11 +21,23 @@ export default async function UserDetailPage({ params: { locale, uid } }: Props)
       <a href={`/${locale}/admin/users`} className="text-sm text-text-muted hover:text-text-strong">
         {t('back')}
       </a>
-      <header>
+      <header className="space-y-1">
         <h1 className="text-2xl font-semibold text-text-strong">
           {profile['firstName']} {profile['lastName']}
         </h1>
         <p className="text-text-muted text-sm">{data['email'] as string}</p>
+        <p className="text-xs text-text-muted">
+          Tipo actual:{' '}
+          <span className="text-text-strong font-medium">
+            {data['role'] === 'admin'
+              ? 'Admin'
+              : data['role'] === 'staff'
+                ? 'Staff'
+                : (profile['audience'] as string | undefined) === 'wholesale'
+                  ? 'Wholesale'
+                  : 'Retail'}
+          </span>
+        </p>
       </header>
       <Separator />
       <section className="space-y-4">
@@ -34,6 +46,7 @@ export default async function UserDetailPage({ params: { locale, uid } }: Props)
           uid={uid}
           locale={locale}
           initialRole={data['role'] as 'admin' | 'staff' | 'buyer'}
+          initialAudience={(profile['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail'}
           initialStatus={data['status'] as 'active' | 'disabled'}
         />
       </section>
