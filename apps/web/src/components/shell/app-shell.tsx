@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth/server';
 import { getTranslations } from 'next-intl/server';
 import { Topbar } from './topbar';
 import { SidebarNav } from './sidebar-nav';
+import { RouteProgress } from './route-progress';
 import { getNavItems, type Role } from './nav-config';
 
 interface Props {
@@ -43,6 +44,7 @@ export async function AppShell({ locale, children }: Props) {
 
   return (
     <div className="min-h-screen bg-bg-base">
+      <RouteProgress />
       <Topbar
         locale={locale}
         email={user.email}

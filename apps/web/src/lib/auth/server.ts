@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -23,7 +24,13 @@ export interface CurrentUser {
   audience: 'retail' | 'wholesale' | undefined;
 }
 
-export async function getCurrentUser(locale: string): Promise<CurrentUser> {
+/**
+ * React.cache() memoises this for the lifetime of a single render so multiple
+ * components in the same request (layout + page + nested server components)
+ * share one Firestore read + one verifySessionCookie call instead of N. Cache
+ * is per-request, so it doesn't cross users.
+ */
+export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser> => {
   const cookie = cookies().get(SESSION_COOKIE_NAME)?.value;
   if (!cookie) redirect(`/${locale}/login`);
   try {
@@ -63,7 +70,7 @@ export async function getCurrentUser(locale: string): Promise<CurrentUser> {
   } catch {
     redirect(`/${locale}/login`);
   }
-}
+});
 
 export async function requireRole(locale: string, allowed: Role[]): Promise<CurrentUser> {
   const user = await getCurrentUser(locale);

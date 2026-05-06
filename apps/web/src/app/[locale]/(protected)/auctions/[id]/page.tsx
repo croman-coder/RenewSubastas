@@ -9,10 +9,15 @@ interface Props {
 }
 
 export default async function BuyerAuctionDetail({ params: { locale, id } }: Props) {
-  const auction = await loadAuction(id);
+  // Run all three reads in parallel — they're independent and the page
+  // can't render until all of them land anyway. Halves the perceived
+  // load time on the slowest cold-start case.
+  const [auction, user, config] = await Promise.all([
+    loadAuction(id),
+    getCurrentUser(locale),
+    loadAppConfigSnapshot(),
+  ]);
   if (!auction) notFound();
-  const user = await getCurrentUser(locale);
-  const config = await loadAppConfigSnapshot();
   return (
     <AuctionDetailView
       locale={locale}

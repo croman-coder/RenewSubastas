@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -36,7 +37,12 @@ const DEFAULTS: AppConfigSnapshot = {
   },
 };
 
-export async function loadAppConfigSnapshot(): Promise<AppConfigSnapshot> {
+/**
+ * Per-request cache so layout + page + nested components share the same
+ * Firestore read on app_config/global. Configuration is small enough that
+ * holding it in memory for the duration of one render is essentially free.
+ */
+export const loadAppConfigSnapshot = cache(async (): Promise<AppConfigSnapshot> => {
   const snap = await getFirestore(getAdminApp()).doc('app_config/global').get();
   if (!snap.exists) return DEFAULTS;
   const data = snap.data() ?? {};
@@ -74,4 +80,4 @@ export async function loadAppConfigSnapshot(): Promise<AppConfigSnapshot> {
       fromName: (e['fromName'] as string) ?? DEFAULTS.emails.fromName,
     },
   };
-}
+});

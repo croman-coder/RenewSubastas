@@ -15,17 +15,25 @@ export default async function BuyerAuctionsCatalog({
   const user = await getCurrentUser(locale);
   const tab: CatalogTab =
     searchParams?.tab === 'closing' || searchParams?.tab === 'favorites' ? searchParams.tab : 'all';
-
-  const favorites = await loadFavorites(user.uid);
   // Admin/staff can browse the catalog too — let them see retail by default
   // (the staff/admin views in /staff/auctions already cover the unfiltered
   // operator perspective). Buyers always see only their own audience.
   const audience = user.audience ?? 'retail';
-  const items = await listPublicAuctions({
-    tab,
-    audience,
-    ...(tab === 'favorites' && { favorites }),
-  });
+
+  // Favorites and the catalog query are independent on the 'all' / 'closing'
+  // tabs; run them in parallel. Only the 'favorites' tab needs to know
+  // favorites first to filter.
+  let favorites: string[];
+  let items;
+  if (tab === 'favorites') {
+    favorites = await loadFavorites(user.uid);
+    items = await listPublicAuctions({ tab, audience, favorites });
+  } else {
+    [favorites, items] = await Promise.all([
+      loadFavorites(user.uid),
+      listPublicAuctions({ tab, audience }),
+    ]);
+  }
 
   return (
     <AuctionsGrid
