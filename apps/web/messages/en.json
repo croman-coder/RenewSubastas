@@ -331,6 +331,22 @@
     }
   },
   "admin": {
+    "home": {
+      "title": "Home",
+      "kpis": {
+        "activeUsers": "Active users",
+        "liveAuctions": "Live auctions",
+        "gmv": "GMV (USD)",
+        "bidsToday": "Bids today"
+      },
+      "auctionsByStatus": "Auctions by status",
+      "bidsPerDay": "Bids per day (30d)",
+      "closingSoon": "Closing in the next 24 hours",
+      "recentAudit": "Recent activity",
+      "noClosingSoon": "No auctions closing within 24h.",
+      "noAudit": "No recent activity.",
+      "viewAll": "View all"
+    },
     "nav": {
       "home": "Home",
       "users": "Users",

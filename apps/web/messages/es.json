@@ -331,6 +331,22 @@
     }
   },
   "admin": {
+    "home": {
+      "title": "Inicio",
+      "kpis": {
+        "activeUsers": "Usuarios activos",
+        "liveAuctions": "Subastas en curso",
+        "gmv": "GMV (USD)",
+        "bidsToday": "Pujas hoy"
+      },
+      "auctionsByStatus": "Subastas por estado",
+      "bidsPerDay": "Pujas por día (30d)",
+      "closingSoon": "Cierran en las próximas 24 horas",
+      "recentAudit": "Últimas acciones",
+      "noClosingSoon": "Ninguna subasta cerrando en 24h.",
+      "noAudit": "Sin actividad reciente.",
+      "viewAll": "Ver todas"
+    },
     "nav": {
       "home": "Inicio",
       "users": "Usuarios",
