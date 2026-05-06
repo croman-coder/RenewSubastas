@@ -1,8 +1,32 @@
-export default function StaffAuctionsHome() {
+import { getCurrentUser } from '@/lib/auth/server';
+import { listAuctions } from '@/lib/staff/list-auctions';
+import { AuctionsTable } from './auctions-table';
+
+interface PageProps {
+  params: { locale: string };
+  searchParams?: { status?: string; cursor?: string };
+}
+
+export default async function StaffAuctionsList({ params: { locale }, searchParams }: PageProps) {
+  const user = await getCurrentUser(locale);
+  const status =
+    searchParams?.status === 'scheduled' ||
+    searchParams?.status === 'live' ||
+    searchParams?.status === 'ended' ||
+    searchParams?.status === 'cancelled'
+      ? searchParams.status
+      : undefined;
+  const data = await listAuctions({
+    ...(user.role === 'staff' ? { scopedToUid: user.uid } : {}),
+    ...(status && { status }),
+    ...(searchParams?.cursor && { cursor: searchParams.cursor }),
+  });
   return (
-    <main className="space-y-2">
-      <h1 className="text-2xl font-semibold text-text-strong">Mis subastas</h1>
-      <p className="text-text-muted">Llega en el Plan 4b.</p>
-    </main>
+    <AuctionsTable
+      locale={locale}
+      items={data.items}
+      nextCursor={data.nextCursor}
+      currentStatus={status ?? null}
+    />
   );
 }

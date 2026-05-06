@@ -124,6 +124,47 @@
       "vehicles": "My vehicles",
       "auctions": "My auctions"
     },
+    "auctions": {
+      "title": "My auctions",
+      "createNew": "Create auction",
+      "filters": { "status": "Status", "all": "All" },
+      "columns": {
+        "vehicle": "Vehicle",
+        "currentBid": "Current bid",
+        "bidCount": "Bids",
+        "status": "Status",
+        "endsAt": "Closes"
+      },
+      "status": {
+        "scheduled": "Scheduled",
+        "live": "Live",
+        "ended": "Ended",
+        "cancelled": "Cancelled"
+      },
+      "empty": "No auctions yet. Create one from a vehicle in \"Ready\" status.",
+      "loadMore": "Load more",
+      "create": {
+        "title": "Create auction",
+        "vehicle": "Vehicle (must be in \"Ready\" status)",
+        "noReadyVehicles": "You have no vehicles in \"Ready\" status. Mark one as ready first.",
+        "startingPrice": "Starting price (USD)",
+        "reservePrice": "Reserve price (USD, optional)",
+        "bidIncrement": "Minimum increment (USD)",
+        "startsAt": "Start",
+        "endsAt": "End",
+        "submit": "Create auction",
+        "submitting": "Creating…",
+        "errors": { "generic": "Could not create the auction." }
+      },
+      "detail": {
+        "back": "← My auctions",
+        "vehicle": "Vehicle",
+        "currentBid": "Current bid",
+        "noBidsYet": "No bids yet.",
+        "bidsTitle": "Bid history (live)",
+        "ends": "Closes"
+      }
+    },
     "vehicles": {
       "title": "My vehicles",
       "createNew": "New vehicle",
