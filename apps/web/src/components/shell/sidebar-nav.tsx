@@ -1,7 +1,29 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { NavItem } from './nav-config';
+import {
+  Home,
+  Users,
+  Car,
+  Gavel,
+  ClipboardList,
+  Settings,
+  Heart,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react';
+import type { IconKey, NavItem } from './nav-config';
+
+const ICON_MAP: Record<IconKey, LucideIcon> = {
+  home: Home,
+  users: Users,
+  car: Car,
+  gavel: Gavel,
+  audit: ClipboardList,
+  settings: Settings,
+  heart: Heart,
+  trophy: Trophy,
+};
 
 interface Props {
   items: NavItem[];
@@ -15,7 +37,7 @@ export function SidebarNav({ items, onNavigate }: Props) {
     <nav aria-label="Principal" className="space-y-1">
       {items.map((it) => {
         const active = isActive(pathname, it.href, it.exact);
-        const Icon = it.icon;
+        const Icon = ICON_MAP[it.icon];
         return (
           <Link
             key={it.href}
