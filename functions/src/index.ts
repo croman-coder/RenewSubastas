@@ -9,3 +9,4 @@ export { updateGlobalConfig } from './config/updateGlobalConfig.js';
 export { createAuction } from './auctions/createAuction.js';
 export { placeBid } from './auctions/placeBid.js';
 export { tickAuctions } from './auctions/tickAuctions.js';
+export { sendBidOutbid } from './notifications/sendBidOutbid.js';

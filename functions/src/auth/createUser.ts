@@ -9,6 +9,7 @@ import { writeAuditLog } from '../lib/audit.js';
 import { loadAppConfig } from '../lib/config.js';
 import { requireAdmin } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
+import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 
 const InputSchema = z.object({
   role: RoleSchema,
@@ -105,7 +106,23 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
   });
 
   const resetLink = await adminAuth().generatePasswordResetLink(input.email);
+
+  await sendEmail({
+    to: input.email,
+    subject: 'Bienvenido a CARBID',
+    html: `<p>Hola ${input.firstName},</p>
+    <p>Se creó tu cuenta CARBID con rol <b>${input.role}</b>.</p>
+    <p>Configura tu contraseña aquí:</p>
+    <p><a href="${resetLink}">Configurar contraseña</a></p>
+    <p>— CARBID Subastas</p>`,
+  }).catch((err) => {
+    console.error('[createUser] welcome email failed', err);
+  });
+
   return { uid: authUser.uid, resetLink };
 }
 
-export const createUser = onCall({ region: 'us-central1' }, createUserHandler);
+export const createUser = onCall(
+  { region: 'us-central1', secrets: [RESEND_API_KEY] },
+  createUserHandler,
+);
