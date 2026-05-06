@@ -1,10 +1,9 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calculator, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -57,8 +56,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
 
   // Guaraníes are the operative currency for buyer financing in Paraguay even
   // though the auction is priced in USD. Fall back to a 1:1 placeholder rate
-  // if the admin hasn't configured pygPerUsd yet — better to show something
-  // than to render a blank card.
+  // if the admin hasn't configured pygPerUsd yet.
   const pygPerUsd = currency.pygPerUsd && currency.pygPerUsd > 0 ? currency.pygPerUsd : 1;
   const usingPlaceholder = !currency.pygPerUsd || currency.pygPerUsd <= 0;
   const pricePyg = priceUsd * pygPerUsd;
@@ -75,16 +73,12 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
 
   if (priceUsd < config.minFinanceableUsd) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-text-muted">
-            {t('minNotReached', { amount: config.minFinanceableUsd.toLocaleString() })}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+        <Header />
+        <p className="text-sm text-text-muted">
+          {t('minNotReached', { amount: config.minFinanceableUsd.toLocaleString() })}
+        </p>
+      </div>
     );
   }
 
@@ -93,106 +87,134 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
   const cappedDown = Math.min(down, pricePyg);
   const principal = pricePyg - cappedDown;
   const monthly = amortize(principal, term, config.annualInterestRate);
-  const totalToPay = monthly * term + cappedDown;
-  // totalInterest intentionally not displayed — operator preference.
 
   const notes = locale === 'en' && config.notesEn ? config.notesEn : config.notesEs;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t('title')}</CardTitle>
-        <p className="text-xs text-text-muted">{t('subtitle')}</p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Plazo</Label>
-          <Select value={String(term)} onValueChange={(v) => setTerm(Number(v))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortedTerms.map((months) => (
-                <SelectItem key={months} value={String(months)}>
-                  {months} meses
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-5">
+      <Header subtitle={t('subtitle')} />
 
-        <div className="space-y-2">
-          <Label htmlFor="downPayment">Entrega inicial (Gs.)</Label>
-          <Input
-            id="downPayment"
-            type="text"
-            inputMode="numeric"
-            value={fmtPyg(down)}
-            onChange={(e) => setDownPyg(e.target.value.replace(/[^0-9]/g, ''))}
-            className="num-tab"
-          />
-          <p className="text-xs text-text-muted">
-            Sugerido: Gs. {fmtPyg(defaultDownPyg)} ({Math.round(config.downPaymentPercent * 100)}%
-            del precio)
+      <div className="space-y-2">
+        <Label className="text-[11px] uppercase tracking-[0.1em] font-semibold text-text-muted">
+          Plazo
+        </Label>
+        <Select value={String(term)} onValueChange={(v) => setTerm(Number(v))}>
+          <SelectTrigger className="h-11 rounded-xl bg-bg-deep/60 border-text-subtle/20 hover:border-copper/40 focus:ring-copper/30 transition-colors text-base font-medium num-tab">
+            <SelectValue />
+            <ChevronDown className="w-4 h-4 opacity-60" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            {sortedTerms.map((months) => (
+              <SelectItem
+                key={months}
+                value={String(months)}
+                className="text-base num-tab cursor-pointer"
+              >
+                {months} meses
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          htmlFor="downPayment"
+          className="text-[11px] uppercase tracking-[0.1em] font-semibold text-text-muted"
+        >
+          Entrega inicial · Gs.
+        </Label>
+        <Input
+          id="downPayment"
+          type="text"
+          inputMode="numeric"
+          value={fmtPyg(down)}
+          onChange={(e) => setDownPyg(e.target.value.replace(/[^0-9]/g, ''))}
+          className="h-11 rounded-xl bg-bg-deep/60 border-text-subtle/20 text-base font-semibold num-tab tracking-tight focus:border-copper/40 focus:ring-copper/30"
+        />
+        <p className="text-[11px] text-text-muted">
+          Sugerido:{' '}
+          <span className="num-tab text-text-strong font-medium">Gs. {fmtPyg(defaultDownPyg)}</span>{' '}
+          ({Math.round(config.downPaymentPercent * 100)}% del precio)
+        </p>
+      </div>
+
+      {/* Highlighted monthly payment */}
+      <div className="relative overflow-hidden rounded-2xl border border-copper/30 bg-gradient-to-br from-copper/[0.08] via-copper/[0.04] to-transparent p-5">
+        <div
+          aria-hidden
+          className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-copper/10 blur-3xl pointer-events-none"
+        />
+        <div className="relative">
+          <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-copper/80">
+            Cuota mensual
+          </p>
+          <p
+            className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight num-tab text-copper leading-tight"
+            style={{ textShadow: '0 0 20px rgba(205,155,79,0.3)' }}
+          >
+            <span className="text-base font-semibold mr-1 opacity-80">Gs.</span>
+            {fmtPyg(monthly)}
+          </p>
+          <p className="mt-1 text-xs text-text-muted num-tab">
+            × {term} {term === 1 ? 'mes' : 'meses'}
           </p>
         </div>
+      </div>
 
-        <Separator />
+      <dl className="space-y-2.5 pt-1">
+        <Row
+          label="Precio"
+          value={`Gs. ${fmtPyg(pricePyg)}`}
+          subvalue={`USD ${fmtUsd(priceUsd)}`}
+        />
+        <Row label="Entrega inicial" value={`Gs. ${fmtPyg(cappedDown)}`} />
+      </dl>
 
-        <dl className="space-y-2 text-sm">
-          <Row
-            label="Precio"
-            value={`Gs. ${fmtPyg(pricePyg)}`}
-            subvalue={`USD ${fmtUsd(priceUsd)}`}
-          />
-          <Row label="Entrega inicial" value={`Gs. ${fmtPyg(cappedDown)}`} />
-          <Row
-            label="Cuota mensual"
-            value={`Gs. ${fmtPyg(monthly)}`}
-            subvalue={`× ${term} meses`}
-            emphasis
-          />
-          <Row label="Total a pagar" value={`Gs. ${fmtPyg(totalToPay)}`} />
-        </dl>
+      {usingPlaceholder && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          El admin todavía no configuró el tipo de cambio Gs./USD. La calculadora muestra valores
+          1:1 hasta que se cargue.
+        </div>
+      )}
 
-        {usingPlaceholder && (
-          <p className="text-xs text-warning">
-            ⚠ El admin todavía no configuró el tipo de cambio Gs./USD. La calculadora muestra
-            valores 1:1 hasta que se cargue.
+      {notes && (
+        <details className="border-t border-text-subtle/15 pt-3">
+          <summary className="text-[11px] uppercase tracking-[0.1em] font-semibold text-text-muted cursor-pointer hover:text-text-strong transition-colors">
+            {t('notes')}
+          </summary>
+          <p className="text-xs text-text-muted mt-2 whitespace-pre-line leading-relaxed">
+            {notes}
           </p>
-        )}
-
-        {notes && (
-          <>
-            <Separator />
-            <details>
-              <summary className="text-xs text-text-muted cursor-pointer">{t('notes')}</summary>
-              <p className="text-xs text-text-muted mt-2 whitespace-pre-line">{notes}</p>
-            </details>
-          </>
-        )}
-      </CardContent>
-    </Card>
+        </details>
+      )}
+    </div>
   );
 }
 
-function Row({
-  label,
-  value,
-  subvalue,
-  emphasis,
-}: {
-  label: string;
-  value: string;
-  subvalue?: string;
-  emphasis?: boolean;
-}) {
+function Header({ subtitle }: { subtitle?: string }) {
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex items-start gap-2.5">
+      <span className="w-7 h-7 rounded-md bg-copper/15 text-copper grid place-items-center shrink-0">
+        <Calculator className="w-4 h-4" strokeWidth={2.5} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold tracking-tight text-text-strong">
+          Calculadora de cuotas
+        </h3>
+        {subtitle && <p className="text-[11px] text-text-muted mt-0.5">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value, subvalue }: { label: string; value: string; subvalue?: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="text-text-muted">{label}</dt>
       <dd className="text-right">
-        <div className={emphasis ? 'text-lg font-semibold num-tab' : 'num-tab'}>{value}</div>
-        {subvalue && <div className="text-xs text-text-muted num-tab">{subvalue}</div>}
+        <div className="text-text-strong num-tab font-medium tracking-tight">{value}</div>
+        {subvalue && <div className="text-[11px] text-text-muted num-tab">{subvalue}</div>}
       </dd>
     </div>
   );
