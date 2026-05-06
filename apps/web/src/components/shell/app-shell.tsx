@@ -46,6 +46,7 @@ export async function AppShell({ locale, children }: Props) {
       <Topbar
         locale={locale}
         email={user.email}
+        firstName={user.firstName}
         uid={user.uid}
         role={role}
         navItems={navItems}

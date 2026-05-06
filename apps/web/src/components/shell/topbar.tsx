@@ -32,6 +32,7 @@ const ROLE_TONE: Record<Role, string> = {
 interface Props {
   locale: string;
   email: string;
+  firstName: string;
   uid: string;
   role: Role;
   navItems: NavItem[];
@@ -39,10 +40,19 @@ interface Props {
   settingsLabel: string;
 }
 
-export function Topbar({ locale, email, uid, role, navItems, signOutLabel, settingsLabel }: Props) {
+export function Topbar({
+  locale,
+  email,
+  firstName,
+  uid,
+  role,
+  navItems,
+  signOutLabel,
+  settingsLabel,
+}: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const initial = email.slice(0, 1).toUpperCase();
+  const initial = (firstName || email).slice(0, 1).toUpperCase();
 
   async function handleSignOut() {
     await fetch('/api/session', { method: 'DELETE' });
@@ -106,14 +116,16 @@ export function Topbar({ locale, email, uid, role, navItems, signOutLabel, setti
               >
                 {initial}
               </span>
-              <span className="hidden sm:block truncate text-xs num-tab">{email}</span>
+              <span className="hidden sm:block truncate text-sm font-medium">{firstName}</span>
               <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-60" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-xs text-text-muted">Sesión iniciada como</span>
-                  <span className="text-sm text-text-strong truncate">{email}</span>
+                  <span className="text-sm text-text-strong truncate font-semibold">
+                    {firstName || 'Usuario'}
+                  </span>
+                  <span className="text-xs text-text-muted truncate">{email}</span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -144,6 +156,7 @@ export function Topbar({ locale, email, uid, role, navItems, signOutLabel, setti
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         navItems={navItems}
+        firstName={firstName}
         email={email}
         role={role}
       />
@@ -155,12 +168,14 @@ function MobileDrawer({
   open,
   onClose,
   navItems,
+  firstName,
   email,
   role,
 }: {
   open: boolean;
   onClose: () => void;
   navItems: NavItem[];
+  firstName: string;
   email: string;
   role: Role;
 }) {
@@ -207,13 +222,16 @@ function MobileDrawer({
               aria-hidden
               className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-copper/30 to-violet-500/20 grid place-items-center text-text-strong text-sm font-semibold"
             >
-              {email.slice(0, 1).toUpperCase()}
+              {(firstName || email).slice(0, 1).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <p className="text-sm text-text-strong truncate">{email}</p>
+              <p className="text-sm text-text-strong truncate font-semibold">
+                {firstName || 'Usuario'}
+              </p>
+              <p className="text-[11px] text-text-muted truncate">{email}</p>
               <span
                 className={
-                  'inline-flex items-center text-[10px] uppercase font-semibold tracking-[0.08em] rounded-md px-1.5 py-0.5 ring-1 ring-inset ' +
+                  'mt-1 inline-flex items-center text-[10px] uppercase font-semibold tracking-[0.08em] rounded-md px-1.5 py-0.5 ring-1 ring-inset ' +
                   ROLE_TONE[role]
                 }
               >

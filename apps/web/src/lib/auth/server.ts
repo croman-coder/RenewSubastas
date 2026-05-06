@@ -1,13 +1,21 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getFirestore } from 'firebase-admin/firestore';
 import { adminAuth } from '@/lib/firebase/admin';
+import { getAdminApp } from '@/lib/firebase/admin';
 import { SESSION_COOKIE_NAME, ROLE_HOME, type Role } from './constants';
 
 export interface CurrentUser {
   uid: string;
   role: Role;
   email: string;
+  /**
+   * Friendly first name. Pulled from the user's Firestore profile when
+   * available, or derived from the email local-part as a fallback so the UI
+   * always has something nicer than the full email to display.
+   */
+  firstName: string;
 }
 
 export async function getCurrentUser(locale: string): Promise<CurrentUser> {
@@ -19,7 +27,20 @@ export async function getCurrentUser(locale: string): Promise<CurrentUser> {
     if (status !== 'active') redirect(`/${locale}/login?error=disabled`);
     const role = (decoded as { role?: Role }).role;
     if (!role) redirect(`/${locale}/login?error=no_role`);
-    return { uid: decoded.uid, role, email: decoded.email ?? '' };
+    const email = decoded.email ?? '';
+    // Best-effort friendly name lookup. We deliberately don't fail the whole
+    // page render if the profile fetch errors out — the email-derived
+    // fallback is acceptable for the topbar and audit displays.
+    let firstName = '';
+    try {
+      const snap = await getFirestore(getAdminApp()).doc(`users/${decoded.uid}`).get();
+      const profile = snap.data() ?? {};
+      firstName = (profile['firstName'] as string | undefined)?.trim() ?? '';
+    } catch {
+      /* swallow — fallback below */
+    }
+    if (!firstName) firstName = friendlyFromEmail(email);
+    return { uid: decoded.uid, role, email, firstName };
   } catch {
     redirect(`/${locale}/login`);
   }
@@ -29,4 +50,14 @@ export async function requireRole(locale: string, allowed: Role[]): Promise<Curr
   const user = await getCurrentUser(locale);
   if (!allowed.includes(user.role)) redirect(`/${locale}${ROLE_HOME[user.role]}`);
   return user;
+}
+
+function friendlyFromEmail(email: string): string {
+  const local = email.split('@')[0] ?? '';
+  if (!local) return 'Usuario';
+  // Strip digits and trailing punctuation, take first segment of dot/underscore
+  // separated handles ("juan.perez" -> "juan", "rey_asocia" -> "rey").
+  const first = local.split(/[._-]/)[0]?.replace(/\d+$/, '') ?? local;
+  if (!first) return 'Usuario';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
