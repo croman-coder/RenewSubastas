@@ -59,11 +59,21 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   }
 }
 
-export async function loadBuyerStats(uid: string): Promise<BuyerStats> {
+export async function loadBuyerStats(
+  uid: string,
+  audience: 'retail' | 'wholesale',
+): Promise<BuyerStats> {
   const db = getFirestore(getAdminApp());
 
+  // Every auction count is scoped to the buyer's audience so a wholesale
+  // user never sees retail inventory in their dashboard (and vice-versa).
   const a = (status: string) =>
-    db.collection('auctions').where('status', '==', status).count().get();
+    db
+      .collection('auctions')
+      .where('audience', '==', audience)
+      .where('status', '==', status)
+      .count()
+      .get();
 
   const [liveAuctions, scheduledAuctions, endedAuctions, myWinningCount, myWonCount] =
     await Promise.all([
@@ -113,9 +123,8 @@ export async function loadBuyerStats(uid: string): Promise<BuyerStats> {
     0,
   );
 
-  // Favorites still live: read user.favorites, fetch each auction, count
-  // those whose status is currently 'live'. Avoids any composite-index
-  // gymnastics for what is at most ~30 favorites in practice.
+  // Favorites still live AND in the buyer's own audience. Bookmarks of
+  // auctions that crossed audiences shouldn't keep counting.
   const myFavoritesLiveCount = await safe(
     (async () => {
       const userSnap = await db.doc(`users/${uid}`).get();
@@ -123,17 +132,25 @@ export async function loadBuyerStats(uid: string): Promise<BuyerStats> {
       if (fav.length === 0) return 0;
       const refs = fav.map((id) => db.doc(`auctions/${id}`));
       const docs = await db.getAll(...refs);
-      return docs.filter((d) => d.exists && d.data()?.['status'] === 'live').length;
+      return docs.filter((d) => {
+        if (!d.exists) return false;
+        const data = d.data() ?? {};
+        const docAudience = (data['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+        return data['status'] === 'live' && docAudience === audience;
+      }).length;
     })(),
     0,
   );
 
   // Closing-soon: live auctions ending in next 24h, max 3 (lighter than admin).
+  // Filtered to the buyer's audience so wholesale buyers don't see retail
+  // closings and vice-versa.
   const now = Date.now();
   const in24h = Timestamp.fromMillis(now + 24 * 3600_000);
   const closingSoon = await safe(
     db
       .collection('auctions')
+      .where('audience', '==', audience)
       .where('status', '==', 'live')
       .where('endsAt', '<=', in24h)
       .orderBy('endsAt', 'asc')

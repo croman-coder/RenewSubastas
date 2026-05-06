@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { ROLE_HOME, type Role } from '@/lib/auth/constants';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -75,30 +77,96 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       {error && (
-        <Alert variant="destructive">
+        <Alert
+          variant="destructive"
+          className="animate-in fade-in slide-in-from-top-1 duration-300"
+        >
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <div className="space-y-2">
-        <Label htmlFor="email">{t('email')}</Label>
-        <Input id="email" type="email" autoComplete="email" {...register('email')} />
-        {errors.email && <p className="text-sm text-danger">{t('errors.emailInvalid')}</p>}
+
+      <div className="space-y-1.5">
+        <Label htmlFor="email" className="text-xs uppercase tracking-[0.08em] text-text-muted">
+          {t('email')}
+        </Label>
+        <div className="relative">
+          <Mail
+            aria-hidden
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/70 pointer-events-none"
+            strokeWidth={2}
+          />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="vos@ejemplo.com"
+            className="h-11 pl-10 rounded-xl bg-bg-deep/40 border-text-subtle/20 focus:border-copper/50 focus:ring-copper/30 transition-colors"
+            {...register('email')}
+          />
+        </div>
+        {errors.email && <p className="text-xs text-danger pl-1">{t('errors.emailInvalid')}</p>}
       </div>
-      <div className="space-y-2">
+
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">{t('password')}</Label>
+          <Label htmlFor="password" className="text-xs uppercase tracking-[0.08em] text-text-muted">
+            {t('password')}
+          </Label>
           <ForgotPasswordDialog />
         </div>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          {...register('password')}
-        />
-        {errors.password && <p className="text-sm text-danger">{t('errors.passwordTooShort')}</p>}
+        <div className="relative">
+          <Lock
+            aria-hidden
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted/70 pointer-events-none"
+            strokeWidth={2}
+          />
+          <Input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            placeholder="••••••••"
+            className="h-11 pl-10 pr-10 rounded-xl bg-bg-deep/40 border-text-subtle/20 focus:border-copper/50 focus:ring-copper/30 transition-colors"
+            {...register('password')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 grid place-items-center rounded-md text-text-muted hover:text-text-strong hover:bg-bg-elev/60 transition-colors"
+          >
+            {showPassword ? (
+              <EyeOff className="w-4 h-4" strokeWidth={2} />
+            ) : (
+              <Eye className="w-4 h-4" strokeWidth={2} />
+            )}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="text-xs text-danger pl-1">{t('errors.passwordTooShort')}</p>
+        )}
       </div>
-      <Button type="submit" disabled={submitting} className="w-full">
-        {submitting ? t('submitting') : t('submit')}
+
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="group relative w-full h-11 rounded-xl text-sm font-semibold tracking-tight overflow-hidden"
+      >
+        <span className="inline-flex items-center justify-center gap-2">
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
+              {t('submitting')}
+            </>
+          ) : (
+            <>
+              {t('submit')}
+              <ArrowRight
+                className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                strokeWidth={2.5}
+              />
+            </>
+          )}
+        </span>
       </Button>
     </form>
   );

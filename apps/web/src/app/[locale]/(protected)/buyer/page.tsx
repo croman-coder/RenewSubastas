@@ -19,7 +19,11 @@ interface PageProps {
 
 export default async function BuyerHome({ params: { locale } }: PageProps) {
   const user = await getCurrentUser(locale);
-  const s = await loadBuyerStats(user.uid);
+  // Stats always scoped to the buyer's audience — wholesale users only see
+  // wholesale auctions, retail only see retail. Default 'retail' for the
+  // edge case of admin/staff opening the buyer dashboard.
+  const audience = user.audience ?? 'retail';
+  const s = await loadBuyerStats(user.uid, audience);
 
   const dateStr = new Date().toLocaleDateString(locale, {
     weekday: 'long',
