@@ -15,11 +15,13 @@ export default async function ProfilePage({ params: { locale } }: { params: { lo
         firstName: (profile['firstName'] as string) ?? '',
         lastName: (profile['lastName'] as string) ?? '',
         email: user.email,
-        documentType: (profile['documentType'] as 'CI' | 'RUC') ?? 'CI',
+        documentType: (profile['documentType'] as 'CI' | 'RUC' | 'PASSPORT' | undefined) ?? 'CI',
         documentNumber: (profile['documentNumber'] as string) ?? '',
         phone: (profile['phone'] as string) ?? '',
         addressStreet: (address['street'] as string) ?? '',
+        addressDepartment: (address['department'] as string) ?? '',
         addressCity: (address['city'] as string) ?? '',
+        addressBarrio: (address['barrio'] as string) ?? '',
         addressPostalCode: (address['postalCode'] as string) ?? '',
       }}
     />

@@ -7,15 +7,27 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/constants';
 
+// Document type covers Paraguay's standard CI / RUC plus Pasaporte for
+// foreign buyers. Numeric-only with max 7 for CI / max 11 for RUC, but
+// alphanumeric up to 15 for passports (Latin letters and digits, no spaces).
 const Input = z.object({
   firstName: z.string().min(1).max(80),
   lastName: z.string().min(1).max(80),
-  documentType: z.enum(['CI', 'RUC']),
-  documentNumber: z.string().min(1).max(20),
-  phone: z.string().max(30).optional(),
-  addressStreet: z.string().max(120).optional(),
+  documentType: z.enum(['CI', 'RUC', 'PASSPORT']),
+  documentNumber: z.string().min(1).max(15),
+  // Phone is stored as a single E.164-ish string with the country prefix
+  // already applied (e.g. "+595981123456"). The form is responsible for
+  // assembling it from the country picker + the local digits.
+  phone: z.string().max(20).optional(),
+  addressStreet: z.string().max(130).optional(),
+  addressDepartment: z.string().max(80).optional(),
   addressCity: z.string().max(80).optional(),
-  addressPostalCode: z.string().max(20).optional(),
+  addressBarrio: z.string().max(80).optional(),
+  addressPostalCode: z
+    .string()
+    .regex(/^\d{4}$/, 'Código postal inválido')
+    .optional()
+    .or(z.literal('')),
 });
 
 export type UpdateProfileResult = { ok: true } | { ok: false; error: string };
@@ -26,9 +38,8 @@ export async function updateProfileAction(
   const parsed = Input.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'invalid' };
   const v = parsed.data;
-  const ok =
-    v.documentType === 'CI' ? isValidCiPy(v.documentNumber) : isValidRucPy(v.documentNumber);
-  if (!ok) return { ok: false, error: 'documentInvalid' };
+  const docOk = validateDocument(v.documentType, v.documentNumber);
+  if (!docOk) return { ok: false, error: 'documentInvalid' };
 
   const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value;
   if (!sessionCookie) return { ok: false, error: 'unauthenticated' };
@@ -48,18 +59,29 @@ export async function updateProfileAction(
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (v.phone !== undefined) update['profile.phone'] = v.phone;
-  // Use `||` (not `??`): RHF sends empty strings (not undefined) for blank optional fields.
-  // With `??`, "" is treated as "present" and we'd never enter the block when the user
-  // clears a previously saved address.
-  if (v.addressStreet || v.addressCity || v.addressPostalCode) {
+
+  // Address: persist the cascading geography pieces individually so we can
+  // filter later (e.g. "buyers in Asunción"). Empty fields collapse the
+  // address to nothing rather than half-populated junk.
+  const hasAddress = v.addressStreet || v.addressDepartment || v.addressCity || v.addressPostalCode;
+  if (hasAddress) {
     update['profile.address'] = {
       street: v.addressStreet ?? '',
+      department: v.addressDepartment ?? '',
       city: v.addressCity ?? '',
+      barrio: v.addressBarrio ?? '',
       country: 'PY' as const,
-      ...(v.addressPostalCode !== undefined && { postalCode: v.addressPostalCode }),
+      ...(v.addressPostalCode ? { postalCode: v.addressPostalCode } : {}),
     };
   }
 
   await getFirestore(getAdminApp()).doc(`users/${uid}`).update(update);
   return { ok: true };
+}
+
+function validateDocument(type: 'CI' | 'RUC' | 'PASSPORT', number: string): boolean {
+  if (type === 'CI') return isValidCiPy(number);
+  if (type === 'RUC') return isValidRucPy(number);
+  // Passport: alphanumeric (Latin letters + digits), 5–15 chars.
+  return /^[A-Za-z0-9]{5,15}$/.test(number);
 }
