@@ -10,6 +10,7 @@ interface LayoutProps {
 export default async function ProtectedLayout({ children, params: { locale } }: LayoutProps) {
   const user = await getCurrentUser(locale);
   const t = await getTranslations('common');
+  const tBuyer = await getTranslations('buyer');
 
   return (
     <div className="min-h-screen flex flex-col bg-bg-base">
@@ -24,6 +25,16 @@ export default async function ProtectedLayout({ children, params: { locale } }: 
           </span>
         </div>
         <div className="flex items-center gap-3 text-sm">
+          {user.role === 'buyer' && (
+            <>
+              <a href={`/${locale}/buyer/bids`} className="text-text-muted hover:text-text-strong">
+                {tBuyer('navBids')}
+              </a>
+              <a href={`/${locale}/buyer/won`} className="text-text-muted hover:text-text-strong">
+                {tBuyer('navWon')}
+              </a>
+            </>
+          )}
           <a
             href={`/${locale}/settings/profile`}
             className="text-text-muted hover:text-text-strong"
