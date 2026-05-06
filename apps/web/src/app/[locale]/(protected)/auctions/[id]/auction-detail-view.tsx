@@ -110,12 +110,12 @@ export function AuctionDetailView({
     locale === 'en' && initial.descriptionEn ? initial.descriptionEn : initial.descriptionEs;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <a href={`/${locale}/auctions`} className="text-sm text-text-muted hover:text-text-strong">
         {t('back')}
       </a>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:gap-8">
         <div className="space-y-6">
           {/* Photo gallery */}
           <div className="space-y-2">

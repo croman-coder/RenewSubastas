@@ -49,18 +49,20 @@ export function AuctionsTable({ locale, items, nextCursor, currentStatus }: Prop
   }
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
-        <Link href={`/${locale}/staff/auctions/new` as `/${string}`}>
-          <Button>{t('createNew')}</Button>
-        </Link>
+    <div className="space-y-5">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
+          {t('title')}
+        </h1>
+        <Button asChild className="self-start sm:self-auto">
+          <Link href={`/${locale}/staff/auctions/new` as `/${string}`}>{t('createNew')}</Link>
+        </Button>
       </header>
       <Select
         value={currentStatus ?? 'all'}
         onValueChange={(v) => setParam('status', v === 'all' ? null : v)}
       >
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder={t('filters.status')} />
         </SelectTrigger>
         <SelectContent>
@@ -71,7 +73,7 @@ export function AuctionsTable({ locale, items, nextCursor, currentStatus }: Prop
           <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
         </SelectContent>
       </Select>
-      <div className="border border-text-subtle/20 rounded">
+      <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev/40">
         <Table>
           <TableHeader>
             <TableRow>

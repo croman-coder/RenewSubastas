@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { Heart, Clock, Gavel } from 'lucide-react';
 import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { fb } from '@/lib/firebase/client';
-import { Badge } from '@/components/ui/badge';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 
 interface Props {
@@ -13,13 +13,15 @@ interface Props {
   auction: PublicAuction;
   isFavorite: boolean;
   buyerUid: string;
+  index?: number;
 }
 
-export function AuctionCard({ locale, auction, isFavorite, buyerUid }: Props) {
+export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }: Props) {
   const t = useTranslations('buyer.auctions');
   const tStatus = useTranslations('buyer.auctions.status');
   const router = useRouter();
   const [fav, setFav] = useState(isFavorite);
+  const [favBusy, setFavBusy] = useState(false);
 
   // countdown re-renders every second
   const [now, setNow] = useState(Date.now());
@@ -31,6 +33,8 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid }: Props) {
   async function toggleFav(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (favBusy) return;
+    setFavBusy(true);
     const ref = doc(fb.db, 'users', buyerUid);
     try {
       if (fav) {
@@ -42,63 +46,130 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid }: Props) {
       }
       router.refresh();
     } catch {
-      // silent fail
+      // silent fail; user will see no change
+    } finally {
+      setFavBusy(false);
     }
   }
 
   const remainingMs = auction.endsAtMs - now;
   const displayPrice = auction.currentBid > 0 ? auction.currentBid : auction.startingPrice;
   const isUrgent = remainingMs > 0 && remainingMs < 60 * 60 * 1000;
+  const isLive = auction.status === 'live';
 
   return (
     <Link
       href={`/${locale}/auctions/${auction.id}` as `/${string}`}
-      className="block group rounded-lg border border-text-subtle/20 overflow-hidden bg-bg-elev hover:border-copper hover:shadow-lg transition-all duration-200 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-1 duration-300"
+      className={
+        'group block rounded-xl overflow-hidden border border-text-subtle/15 bg-bg-elev/40 ' +
+        'transition-all duration-300 hover:border-copper/40 hover:bg-bg-elev/70 ' +
+        'hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.5)] ' +
+        'active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-copper/40 focus:ring-offset-2 focus:ring-offset-bg-base ' +
+        'animate-in fade-in slide-in-from-bottom-2 duration-300'
+      }
+      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
     >
       <div className="relative aspect-[4/3] bg-bg-deep overflow-hidden">
         {auction.thumbnailUrl ? (
           <img
             src={auction.thumbnailUrl}
             alt=""
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         ) : (
-          <div className="w-full h-full grid place-items-center text-text-subtle text-sm">
-            sin foto
+          <div className="w-full h-full grid place-items-center text-text-subtle text-xs">
+            <Gavel className="w-8 h-8 opacity-40" strokeWidth={1.5} />
           </div>
         )}
+        {/* Subtle bottom gradient */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none"
+        />
         <button
           type="button"
           onClick={toggleFav}
           aria-label={fav ? t('removeFavorite') : t('addFavorite')}
-          className="absolute top-2 right-2 w-9 h-9 rounded-full bg-bg-base/80 backdrop-blur grid place-items-center text-lg"
+          aria-pressed={fav}
+          className={
+            'absolute top-2.5 right-2.5 w-9 h-9 rounded-full grid place-items-center ' +
+            'bg-black/40 backdrop-blur-md ring-1 ring-white/10 ' +
+            'transition-all duration-200 hover:bg-black/60 hover:scale-105 active:scale-95 ' +
+            (fav ? 'text-rose-400' : 'text-white/80 hover:text-rose-300')
+          }
         >
-          {fav ? '♥' : '♡'}
+          <Heart className="w-4 h-4" fill={fav ? 'currentColor' : 'transparent'} strokeWidth={2} />
         </button>
-        <div className="absolute top-2 left-2">
-          <Badge variant={auction.status === 'live' ? 'default' : 'secondary'}>
-            {tStatus(auction.status)}
-          </Badge>
+        <div className="absolute top-2.5 left-2.5">
+          <StatusBadge status={auction.status} label={tStatus(auction.status)} />
+        </div>
+        <div
+          className={
+            'absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 ' +
+            'rounded-md px-2 py-1 text-xs font-medium num-tab backdrop-blur-md ' +
+            (isUrgent
+              ? 'bg-rose-500/90 text-white animate-pulse'
+              : 'bg-black/55 text-white ring-1 ring-white/10')
+          }
+        >
+          <Clock className="w-3 h-3" strokeWidth={2.5} />
+          {formatRemaining(remainingMs)}
         </div>
       </div>
-      <div className="p-3 space-y-1">
-        <h3 className="font-medium text-text-strong">
+      <div className="p-3.5 space-y-2">
+        <h3 className="font-medium text-text-strong tracking-tight truncate">
           {auction.make} {auction.model}{' '}
-          <span className="num-tab text-text-muted">{auction.year}</span>
+          <span className="num-tab text-text-muted font-normal">{auction.year}</span>
         </h3>
-        <div className="flex items-baseline justify-between">
-          <span className="text-lg font-semibold num-tab">USD {displayPrice.toLocaleString()}</span>
-          <span className="text-xs text-text-muted">
+        <div className="flex items-end justify-between gap-2">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.06em] text-text-muted">
+              {auction.currentBid > 0 ? 'Puja actual' : 'Precio inicial'}
+            </p>
+            <p
+              className={
+                'text-lg font-semibold num-tab tracking-tight ' +
+                (isLive ? 'text-text-strong' : 'text-text-muted')
+              }
+            >
+              USD {displayPrice.toLocaleString()}
+            </p>
+          </div>
+          <span className="text-[11px] text-text-muted shrink-0 num-tab">
             {t('bidCount', { count: auction.bidCount })}
           </span>
         </div>
-        <p
-          className={`text-xs num-tab ${isUrgent ? 'text-danger animate-pulse font-medium' : 'text-copper'}`}
-        >
-          {formatRemaining(remainingMs)}
-        </p>
       </div>
     </Link>
+  );
+}
+
+function StatusBadge({ status, label }: { status: string; label: string }) {
+  const map: Record<string, string> = {
+    live: 'bg-emerald-500/90 text-white ring-emerald-400/30',
+    scheduled: 'bg-amber-500/90 text-white ring-amber-400/30',
+    ended: 'bg-zinc-700/85 text-zinc-200 ring-zinc-500/30',
+    cancelled: 'bg-rose-600/90 text-white ring-rose-400/30',
+  };
+  const cls = map[status] ?? map['ended']!;
+  return (
+    <span
+      className={
+        'inline-flex items-center gap-1.5 rounded-md px-2 py-1 ' +
+        'text-[10px] uppercase tracking-[0.08em] font-semibold ' +
+        'backdrop-blur-md ring-1 ring-inset ' +
+        cls
+      }
+    >
+      {status === 'live' && (
+        <span className="relative flex w-1.5 h-1.5">
+          <span className="absolute inline-flex w-full h-full rounded-full bg-white/70 animate-ping" />
+          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-white" />
+        </span>
+      )}
+      {label}
+    </span>
   );
 }
 
@@ -110,6 +181,6 @@ function formatRemaining(ms: number): string {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   const pad = (n: number) => String(n).padStart(2, '0');
-  if (days > 0) return `${days}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+  if (days > 0) return `${days}d ${pad(h)}:${pad(m)}`;
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }

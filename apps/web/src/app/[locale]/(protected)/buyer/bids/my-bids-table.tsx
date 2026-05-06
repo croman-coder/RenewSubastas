@@ -32,10 +32,14 @@ export function MyBidsTable({ locale, items, currentTab }: Props) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
+    <div className="space-y-5">
+      <header className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
+          {t('title')}
+        </h1>
+      </header>
       <Tabs value={currentTab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList className="overflow-x-auto scrollbar-none">
           <TabsTrigger value="winning">{t('tabs.winning')}</TabsTrigger>
           <TabsTrigger value="outbid">{t('tabs.outbid')}</TabsTrigger>
           <TabsTrigger value="won">{t('tabs.won')}</TabsTrigger>
@@ -43,11 +47,11 @@ export function MyBidsTable({ locale, items, currentTab }: Props) {
         </TabsList>
       </Tabs>
       {items.length === 0 ? (
-        <div className="border border-text-subtle/20 rounded-lg p-12 text-center text-text-muted">
+        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center text-sm text-text-muted">
           {t('empty')}
         </div>
       ) : (
-        <div className="border border-text-subtle/20 rounded">
+        <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev/40">
           <Table>
             <TableHeader>
               <TableRow>

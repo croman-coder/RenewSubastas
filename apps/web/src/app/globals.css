@@ -92,3 +92,15 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+@layer utilities {
+  /* Hide scrollbar but keep scroll on horizontal nav strips, used for tab
+     overflow on narrow screens. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
