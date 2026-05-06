@@ -314,6 +314,18 @@
             "rateLimit": "Demasiadas pujas. Espera un momento.",
             "generic": "No se pudo registrar la puja."
           }
+        },
+        "financing": {
+          "title": "Calculadora de cuotas",
+          "subtitle": "Simulación, sujeta a aprobación.",
+          "term": "Plazo",
+          "termMonths": "{count} meses",
+          "downPayment": "Entrada",
+          "monthly": "Cuota mensual",
+          "totalToPay": "Total a pagar",
+          "totalInterest": "Intereses",
+          "minNotReached": "Disponible para montos desde USD {amount}.",
+          "notes": "Notas legales"
         }
       }
     }

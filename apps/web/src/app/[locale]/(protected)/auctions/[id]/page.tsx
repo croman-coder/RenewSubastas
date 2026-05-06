@@ -19,6 +19,7 @@ export default async function BuyerAuctionDetail({ params: { locale, id } }: Pro
       initial={auction}
       myUid={user.uid}
       allowManualIncrement={config.bid.allowManualIncrement}
+      financingConfig={config.financing}
     />
   );
 }

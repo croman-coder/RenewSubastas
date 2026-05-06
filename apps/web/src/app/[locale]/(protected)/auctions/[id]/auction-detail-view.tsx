@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
+import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { BidPanel } from './bid-panel';
+import { FinancingCalculator } from './financing-calculator';
 
 interface BidEntry {
   id: string;
@@ -21,11 +23,13 @@ export function AuctionDetailView({
   initial,
   myUid,
   allowManualIncrement,
+  financingConfig,
 }: {
   locale: string;
   initial: AuctionDetail;
   myUid: string;
   allowManualIncrement: boolean;
+  financingConfig: AppConfigSnapshot['financing'];
 }) {
   const t = useTranslations('buyer.auctions.detail');
   const tStatus = useTranslations('buyer.auctions.status');
@@ -211,6 +215,7 @@ export function AuctionDetailView({
             myUid={myUid}
             allowManualIncrement={allowManualIncrement}
           />
+          <FinancingCalculator priceUsd={displayPrice} config={financingConfig} locale={locale} />
         </aside>
       </div>
 

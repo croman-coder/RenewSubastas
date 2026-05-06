@@ -314,6 +314,18 @@
             "rateLimit": "Too many bids. Please wait a moment.",
             "generic": "Could not place the bid."
           }
+        },
+        "financing": {
+          "title": "Installment calculator",
+          "subtitle": "Simulation, subject to approval.",
+          "term": "Term",
+          "termMonths": "{count} months",
+          "downPayment": "Down payment",
+          "monthly": "Monthly installment",
+          "totalToPay": "Total to pay",
+          "totalInterest": "Total interest",
+          "minNotReached": "Available for amounts from USD {amount}.",
+          "notes": "Legal notes"
         }
       }
     }
