@@ -10,6 +10,7 @@ import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Schema = z
   .object({
@@ -26,6 +27,7 @@ type FormValues = z.infer<typeof Schema>;
 export function ChangePasswordForm() {
   const t = useTranslations('settings.security');
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const {
     register,
     handleSubmit,
@@ -42,6 +44,8 @@ export function ChangePasswordForm() {
       await reauthenticateWithCredential(user, cred);
       await updatePassword(user, values.newPassword);
       toast.success(t('passwordChanged'));
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
       reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (e) {
       const code = (e as { code?: string }).code;
@@ -76,6 +80,14 @@ export function ChangePasswordForm() {
       <Button type="submit" disabled={submitting}>
         {submitting ? t('changing') : t('changePassword')}
       </Button>
+      {showSuccess && (
+        <Alert className="border-success/40 bg-success/5 animate-in fade-in slide-in-from-top-2 duration-300">
+          <AlertDescription className="flex items-center gap-2 text-success">
+            <span aria-hidden>✓</span>
+            <span>{t('passwordChanged')}</span>
+          </AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }
