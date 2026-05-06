@@ -81,8 +81,17 @@ export function CreateUserForm({ locale }: { locale: string }) {
     }
   }
 
+  const hasErrors = Object.keys(errors).length > 0;
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      {hasErrors && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Revisa los campos marcados: {Object.keys(errors).join(', ')}
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="space-y-2">
         <Label>{t('role')}</Label>
         <Select
@@ -102,16 +111,18 @@ export function CreateUserForm({ locale }: { locale: string }) {
       <div className="space-y-2">
         <Label htmlFor="email">{t('email')}</Label>
         <Input id="email" type="email" autoComplete="off" {...register('email')} />
-        {errors.email && <p className="text-sm text-danger">Invalid</p>}
+        {errors.email && <p className="text-sm text-danger">Email inválido</p>}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">{t('firstName')}</Label>
           <Input id="firstName" {...register('firstName')} />
+          {errors.firstName && <p className="text-sm text-danger">Requerido</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastName">{t('lastName')}</Label>
           <Input id="lastName" {...register('lastName')} />
+          {errors.lastName && <p className="text-sm text-danger">Requerido</p>}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -133,6 +144,7 @@ export function CreateUserForm({ locale }: { locale: string }) {
         <div className="space-y-2">
           <Label htmlFor="documentNumber">{t('documentNumber')}</Label>
           <Input id="documentNumber" {...register('documentNumber')} />
+          {errors.documentNumber && <p className="text-sm text-danger">Requerido</p>}
         </div>
       </div>
       <div className="space-y-2">
