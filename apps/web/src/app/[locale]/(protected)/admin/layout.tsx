@@ -13,6 +13,8 @@ export default async function AdminLayout({
   const items = [
     { href: `/${locale}/admin`, label: t('home') },
     { href: `/${locale}/admin/users`, label: t('users') },
+    { href: `/${locale}/staff/vehicles`, label: t('vehicles') },
+    { href: `/${locale}/staff/auctions`, label: t('auctions') },
     { href: `/${locale}/admin/audit`, label: t('audit') },
     { href: `/${locale}/admin/config`, label: t('config') },
   ];
