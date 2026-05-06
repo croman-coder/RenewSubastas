@@ -16,6 +16,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "emulators": "firebase emulators:start --only auth,firestore,functions,storage --import=./.emulator-data --export-on-exit=./.emulator-data --project carbid-staging",
     "seed": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=carbid-staging pnpm --filter @carbid/functions exec tsx scripts/bootstrap-admin.ts admin@santarosa.com.py Test Admin 1234567 Carbid123!",
+    "seed:demo": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=carbid-staging pnpm --filter @carbid/functions exec tsx scripts/seed-demo.ts",
     "dev:web": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 NEXT_PUBLIC_FIREBASE_PROJECT_ID=carbid-staging pnpm --filter @carbid/web exec next dev --port 3100",
     "prepare": "husky"
   },
