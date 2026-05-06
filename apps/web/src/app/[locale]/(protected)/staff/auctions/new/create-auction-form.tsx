@@ -21,14 +21,29 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ReadyVehicleOption } from '@/lib/staff/list-ready-vehicles';
 
-const Schema = z.object({
-  vehicleId: z.string().min(1),
-  startingPrice: z.coerce.number().positive(),
-  reservePrice: z.coerce.number().positive().optional(),
-  bidIncrement: z.coerce.number().positive(),
-  startsAt: z.string().min(1),
-  endsAt: z.string().min(1),
-});
+const Schema = z
+  .object({
+    vehicleId: z.string().min(1),
+    startingPrice: z.coerce.number().positive(),
+    reservePrice: z.coerce.number().optional(),
+    bidIncrement: z.coerce.number().positive(),
+    startsAt: z.string().min(1),
+    endsAt: z.string().min(1),
+  })
+  .refine(
+    (v) =>
+      v.reservePrice === undefined ||
+      Number.isNaN(v.reservePrice) ||
+      v.reservePrice >= v.startingPrice,
+    {
+      message: 'El precio de reserva debe ser mayor o igual al inicial',
+      path: ['reservePrice'],
+    },
+  )
+  .refine((v) => new Date(v.endsAt).getTime() > new Date(v.startsAt).getTime() + 60_000, {
+    message: 'La fecha de fin debe ser al menos 1 minuto después del inicio',
+    path: ['endsAt'],
+  });
 type FormValues = z.infer<typeof Schema>;
 
 interface Props {
@@ -41,7 +56,13 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
-  const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
       vehicleId: vehicles[0]?.id ?? '',
@@ -79,7 +100,13 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: new Date(values.endsAt).toISOString(),
       };
-      if (values.reservePrice) payload['reservePrice'] = values.reservePrice;
+      if (
+        values.reservePrice !== undefined &&
+        !Number.isNaN(values.reservePrice) &&
+        values.reservePrice > 0
+      ) {
+        payload['reservePrice'] = values.reservePrice;
+      }
       const result = await httpsCallable<typeof payload, { auctionId: string }>(
         fb.functions,
         'createAuction',
@@ -124,15 +151,27 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
         <div className="space-y-2">
           <Label htmlFor="startingPrice">{t('startingPrice')}</Label>
           <Input id="startingPrice" type="number" step="1" {...register('startingPrice')} />
+          {errors.startingPrice && (
+            <p className="text-sm text-danger">{errors.startingPrice.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="reservePrice">{t('reservePrice')}</Label>
           <Input id="reservePrice" type="number" step="1" {...register('reservePrice')} />
+          <p className="text-xs text-text-muted">
+            Precio mínimo aceptable. Debe ser ≥ al precio inicial. Dejá vacío si no usás reserva.
+          </p>
+          {errors.reservePrice && (
+            <p className="text-sm text-danger">{errors.reservePrice.message}</p>
+          )}
         </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="bidIncrement">{t('bidIncrement')}</Label>
         <Input id="bidIncrement" type="number" step="1" {...register('bidIncrement')} />
+        {errors.bidIncrement && (
+          <p className="text-sm text-danger">{errors.bidIncrement.message}</p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -142,6 +181,7 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
         <div className="space-y-2">
           <Label htmlFor="endsAt">{t('endsAt')}</Label>
           <Input id="endsAt" type="datetime-local" {...register('endsAt')} />
+          {errors.endsAt && <p className="text-sm text-danger">{errors.endsAt.message}</p>}
         </div>
       </div>
       <Button type="submit" disabled={submitting}>
