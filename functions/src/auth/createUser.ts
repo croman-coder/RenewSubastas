@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
-import { isValidCiPy, isValidRucPy, RoleSchema, DocumentTypeSchema } from '@carbid/shared-types';
+import { isValidCiPy, isValidRucPy, RoleSchema, DocumentTypeSchema } from '../_shared/index.js';
 import { adminAuth, adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { writeAuditLog } from '../lib/audit.js';
@@ -126,7 +126,7 @@ export const createUser = onCall(
   {
     region: 'us-central1',
     secrets: [RESEND_API_KEY],
-    enforceAppCheck: process.env['NODE_ENV'] === 'production',
+    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true',
   },
   createUserHandler,
 );

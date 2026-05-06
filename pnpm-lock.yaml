@@ -159,9 +159,6 @@ importers:
 
   functions:
     dependencies:
-      '@carbid/shared-types':
-        specifier: workspace:*
-        version: link:../packages/shared-types
       '@sentry/node':
         specifier: ^10.51.0
         version: 10.51.0

@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
-import { RoleSchema, UserStatusSchema } from '@carbid/shared-types';
+import { RoleSchema, UserStatusSchema } from '../_shared/index.js';
 import { adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { loadAppConfig } from '../lib/config.js';
@@ -98,6 +98,6 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
 }
 
 export const updateUserRole = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
   updateUserRoleHandler,
 );

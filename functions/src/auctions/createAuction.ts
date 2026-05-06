@@ -104,6 +104,6 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
 }
 
 export const createAuction = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
   createAuctionHandler,
 );

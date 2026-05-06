@@ -128,6 +128,6 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
 }
 
 export const placeBid = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
   placeBidHandler,
 );
