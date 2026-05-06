@@ -1,6 +1,7 @@
 [build]
   base = "."
-  command = "pnpm install --frozen-lockfile && pnpm --filter @carbid/web build"
+  # shared-types must compile to dist/ before web can resolve it via package.json main.
+  command = "pnpm install --frozen-lockfile && pnpm --filter @carbid/shared-types build && pnpm --filter @carbid/web build"
   publish = "apps/web/.next"
 
 [build.environment]
