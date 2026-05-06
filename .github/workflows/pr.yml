@@ -1,0 +1,43 @@
+name: PR Checks
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with: { version: 9.0.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build shared packages
+        run: pnpm --filter @carbid/shared-types build
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Test (no emulators)
+        run: |
+          pnpm --filter @carbid/shared-types test
+      - name: Web build
+        run: pnpm --filter @carbid/web build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci-fake
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-project
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '0'
+          NEXT_PUBLIC_FIREBASE_APP_ID: '1:0:web:ci'
+      - name: Functions build
+        run: pnpm --filter @carbid/functions build
+      - name: Format check
+        run: pnpm format:check
