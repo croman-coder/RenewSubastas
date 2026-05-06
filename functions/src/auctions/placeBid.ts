@@ -72,9 +72,10 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     if (endsAt.toMillis() <= now) {
       throw new HttpsError('failed-precondition', 'Auction has ended');
     }
-    if (a['currentBidderUid'] === uid) {
-      throw new HttpsError('failed-precondition', 'Cannot outbid yourself');
-    }
+    // Self-outbid is intentionally allowed: a buyer who is already winning can
+    // raise their own bid above the current top to defend it preemptively or
+    // to register a higher proxy ceiling. The minRequired check below still
+    // enforces a strictly increasing bid amount.
 
     const currentBid = (a['currentBid'] as number) ?? 0;
     const startingPrice = (a['startingPrice'] as number) ?? 0;

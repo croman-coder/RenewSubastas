@@ -50,8 +50,6 @@ export function BidPanel({
       const code = (e as { code?: string }).code ?? '';
       if (code.includes('resource-exhausted') || msg.includes('rate limit')) {
         toast.error(t('errors.rateLimit'));
-      } else if (msg.includes('outbid yourself') || msg.includes('Cannot outbid')) {
-        toast.error(t('errors.selfOutbid'));
       } else if (msg.includes('at least') || msg.includes('below')) {
         toast.error(t('errors.tooLow'));
       } else if (msg.includes('ended') || msg.includes('not live')) {
@@ -97,7 +95,7 @@ export function BidPanel({
               type="button"
               variant="outline"
               size="sm"
-              disabled={busy || isWinning}
+              disabled={busy}
               onClick={() => placeBid(amt)}
               className="num-tab"
             >
@@ -119,7 +117,7 @@ export function BidPanel({
               />
               <Button
                 type="button"
-                disabled={busy || isWinning}
+                disabled={busy}
                 onClick={() => {
                   const n = Number(manual);
                   if (Number.isFinite(n)) placeBid(n);

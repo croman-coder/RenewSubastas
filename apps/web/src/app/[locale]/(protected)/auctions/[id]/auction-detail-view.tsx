@@ -24,12 +24,14 @@ export function AuctionDetailView({
   myUid,
   allowManualIncrement,
   financingConfig,
+  currencyConfig,
 }: {
   locale: string;
   initial: AuctionDetail;
   myUid: string;
   allowManualIncrement: boolean;
   financingConfig: AppConfigSnapshot['financing'];
+  currencyConfig: AppConfigSnapshot['currency'];
 }) {
   const t = useTranslations('buyer.auctions.detail');
   const tStatus = useTranslations('buyer.auctions.status');
@@ -215,7 +217,12 @@ export function AuctionDetailView({
             myUid={myUid}
             allowManualIncrement={allowManualIncrement}
           />
-          <FinancingCalculator priceUsd={displayPrice} config={financingConfig} locale={locale} />
+          <FinancingCalculator
+            priceUsd={displayPrice}
+            config={financingConfig}
+            currency={currencyConfig}
+            locale={locale}
+          />
         </aside>
       </div>
 
