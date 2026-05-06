@@ -20,8 +20,11 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// "kind" is the operator-facing concept: Admin / Staff / Retail / Wholesale.
+// Internally we still split into role + audience because that's how Firebase
+// custom claims and Firestore rules are structured.
 const Schema = z.object({
-  role: z.enum(['admin', 'staff', 'buyer']),
+  kind: z.enum(['admin', 'staff', 'retail', 'wholesale']),
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -30,6 +33,43 @@ const Schema = z.object({
   phone: z.string().optional(),
 });
 type FormValues = z.infer<typeof Schema>;
+
+interface CreateUserPayload {
+  role: 'admin' | 'staff' | 'buyer';
+  email: string;
+  firstName: string;
+  lastName: string;
+  documentType: 'CI' | 'RUC';
+  documentNumber: string;
+  phone?: string;
+  audience?: 'retail' | 'wholesale';
+}
+
+function payloadFromKind(values: FormValues): CreateUserPayload {
+  if (values.kind === 'admin' || values.kind === 'staff') {
+    const base: CreateUserPayload = {
+      role: values.kind,
+      email: values.email,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      documentType: values.documentType,
+      documentNumber: values.documentNumber,
+    };
+    if (values.phone) base.phone = values.phone;
+    return base;
+  }
+  const base: CreateUserPayload = {
+    role: 'buyer',
+    email: values.email,
+    firstName: values.firstName,
+    lastName: values.lastName,
+    documentType: values.documentType,
+    documentNumber: values.documentNumber,
+    audience: values.kind,
+  };
+  if (values.phone) base.phone = values.phone;
+  return base;
+}
 
 export function CreateUserForm({ locale }: { locale: string }) {
   const t = useTranslations('admin.users.create');
@@ -45,7 +85,7 @@ export function CreateUserForm({ locale }: { locale: string }) {
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
-      role: 'buyer',
+      kind: 'retail',
       email: '',
       firstName: '',
       lastName: '',
@@ -54,17 +94,18 @@ export function CreateUserForm({ locale }: { locale: string }) {
       phone: '',
     },
   });
-  const role = watch('role');
+  const kind = watch('kind');
   const docType = watch('documentType');
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     setResetLink(null);
     try {
-      const result = await httpsCallable<FormValues, { uid: string; resetLink: string }>(
+      const payload = payloadFromKind(values);
+      const result = await httpsCallable<CreateUserPayload, { uid: string; resetLink: string }>(
         fb.functions,
         'createUser',
-      )(values);
+      )(payload);
       setResetLink(result.data.resetLink);
       toast.success(t('success'));
     } catch (e) {
@@ -94,19 +135,23 @@ export function CreateUserForm({ locale }: { locale: string }) {
       )}
       <div className="space-y-2">
         <Label>{t('role')}</Label>
-        <Select
-          value={role}
-          onValueChange={(v) => setValue('role', v as 'admin' | 'staff' | 'buyer')}
-        >
+        <Select value={kind} onValueChange={(v) => setValue('kind', v as FormValues['kind'])}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="admin">admin</SelectItem>
-            <SelectItem value="staff">staff</SelectItem>
-            <SelectItem value="buyer">buyer</SelectItem>
+            <SelectItem value="retail">Retail (público general)</SelectItem>
+            <SelectItem value="wholesale">Wholesale (mayorista)</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-text-muted">
+          {kind === 'retail' && 'Ve el catálogo público.'}
+          {kind === 'wholesale' && 'Ve únicamente subastas marcadas como mayoristas.'}
+          {kind === 'staff' && 'Carga vehículos y subastas. Email @santarosa.com.py.'}
+          {kind === 'admin' && 'Acceso total a la plataforma. Email @santarosa.com.py.'}
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">{t('email')}</Label>

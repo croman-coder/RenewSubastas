@@ -23,6 +23,7 @@ import {
 import { ImageUploader, type UploadedImage } from '../_components/image-uploader';
 
 const Schema = z.object({
+  audience: z.enum(['retail', 'wholesale']),
   make: z.string().min(1),
   model: z.string().min(1),
   year: z.coerce.number().int().min(1900).max(2100),
@@ -38,6 +39,7 @@ const Schema = z.object({
 type FormValues = z.infer<typeof Schema>;
 
 interface Initial {
+  audience: 'retail' | 'wholesale';
   make: string;
   model: string;
   year: number;
@@ -82,6 +84,7 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
+      audience: initial.audience,
       make: initial.make,
       model: initial.model,
       year: initial.year,
@@ -97,9 +100,13 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
       descriptionEn: initial.descriptionEn,
     },
   });
+  const audience = watch('audience');
   const transmission = watch('transmission');
   const fuelType = watch('fuelType');
   const condition = watch('condition');
+  // Audience can only be changed while still editable (draft/ready); once
+  // the auction has started we honour the segment buyers have already seen.
+  const audienceLocked = status === 'in_auction' || status === 'sold' || status === 'archived';
 
   async function onSubmit(values: FormValues) {
     if (isLocked) return;
@@ -107,6 +114,9 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
     try {
       const ref = doc(fb.db, 'vehicles', vehicleId);
       const payload: Record<string, unknown> = {
+        // Audience changes only persist if not locked; the UI input is also
+        // disabled, but the server-side check stays defensive.
+        ...(audienceLocked ? {} : { audience: values.audience }),
         make: values.make,
         model: values.model,
         year: values.year,
@@ -182,6 +192,30 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
           </p>
         </div>
       )}
+
+      <div className="space-y-2 rounded-lg border border-text-subtle/15 bg-bg-elev/40 p-4">
+        <Label>Audiencia</Label>
+        <Select
+          value={audience}
+          onValueChange={(v) => setValue('audience', v as FormValues['audience'])}
+          disabled={audienceLocked}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="retail">Retail · Público general</SelectItem>
+            <SelectItem value="wholesale">Wholesale · Sólo mayoristas</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-text-muted">
+          {audienceLocked
+            ? 'Una vez que el vehículo entró en subasta, la audiencia queda fija.'
+            : audience === 'retail'
+              ? 'Visible en el catálogo público para buyers retail.'
+              : 'Visible únicamente para usuarios con rol Wholesale.'}
+        </p>
+      </div>
 
       <fieldset disabled={isLocked} className="space-y-6 contents">
         <div className="grid grid-cols-2 gap-4">

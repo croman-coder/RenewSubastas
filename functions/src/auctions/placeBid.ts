@@ -91,6 +91,20 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     if (a['status'] !== 'live') {
       throw new HttpsError('failed-precondition', `Auction is ${a['status']}, not live`);
     }
+    // Audience gate: a retail buyer cannot bid on a wholesale auction and
+    // vice-versa. Admins are allowed through (cross-audience review). Legacy
+    // auctions without audience default to retail to preserve old behavior.
+    const auctionAudience = (a['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+    if (role === 'buyer') {
+      const buyerAudience =
+        (req.auth?.token['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+      if (buyerAudience !== auctionAudience) {
+        throw new HttpsError(
+          'permission-denied',
+          'Esta subasta no está disponible para tu cuenta.',
+        );
+      }
+    }
     const endsAt = a['endsAt'] as Timestamp;
     if (endsAt.toMillis() <= now) {
       throw new HttpsError('failed-precondition', 'Auction has ended');

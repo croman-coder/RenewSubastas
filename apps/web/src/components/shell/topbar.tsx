@@ -17,17 +17,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const ROLE_LABEL: Record<Role, string> = {
-  admin: 'Admin',
-  staff: 'Staff',
-  buyer: 'Buyer',
-};
+type AudienceLabel = 'retail' | 'wholesale' | undefined;
 
-const ROLE_TONE: Record<Role, string> = {
-  admin: 'bg-copper/15 text-copper ring-copper/20',
-  staff: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/20',
-  buyer: 'bg-violet-500/15 text-violet-300 ring-violet-500/20',
-};
+function roleLabel(role: Role, audience: AudienceLabel): string {
+  if (role === 'admin') return 'Admin';
+  if (role === 'staff') return 'Staff';
+  if (audience === 'wholesale') return 'Wholesale';
+  return 'Retail';
+}
+
+function roleTone(role: Role, audience: AudienceLabel): string {
+  if (role === 'admin') return 'bg-copper/15 text-copper ring-copper/20';
+  if (role === 'staff') return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/20';
+  if (audience === 'wholesale') return 'bg-amber-500/15 text-amber-300 ring-amber-500/20';
+  return 'bg-violet-500/15 text-violet-300 ring-violet-500/20';
+}
 
 interface Props {
   locale: string;
@@ -35,6 +39,7 @@ interface Props {
   firstName: string;
   uid: string;
   role: Role;
+  audience?: 'retail' | 'wholesale';
   navItems: NavItem[];
   signOutLabel: string;
   settingsLabel: string;
@@ -46,6 +51,7 @@ export function Topbar({
   firstName,
   uid,
   role,
+  audience,
   navItems,
   signOutLabel,
   settingsLabel,
@@ -93,10 +99,10 @@ export function Topbar({
             className={
               'hidden sm:inline-flex items-center gap-1 text-[10px] uppercase font-semibold ' +
               'tracking-[0.08em] rounded-md px-2 py-0.5 ring-1 ring-inset ' +
-              ROLE_TONE[role]
+              roleTone(role, audience)
             }
           >
-            {ROLE_LABEL[role]}
+            {roleLabel(role, audience)}
           </span>
         </div>
 
@@ -159,6 +165,7 @@ export function Topbar({
         firstName={firstName}
         email={email}
         role={role}
+        {...(audience ? { audience } : {})}
       />
     </>
   );
@@ -171,6 +178,7 @@ function MobileDrawer({
   firstName,
   email,
   role,
+  audience,
 }: {
   open: boolean;
   onClose: () => void;
@@ -178,6 +186,7 @@ function MobileDrawer({
   firstName: string;
   email: string;
   role: Role;
+  audience?: 'retail' | 'wholesale';
 }) {
   return (
     <>
@@ -232,10 +241,10 @@ function MobileDrawer({
               <span
                 className={
                   'mt-1 inline-flex items-center text-[10px] uppercase font-semibold tracking-[0.08em] rounded-md px-1.5 py-0.5 ring-1 ring-inset ' +
-                  ROLE_TONE[role]
+                  roleTone(role, audience)
                 }
               >
-                {ROLE_LABEL[role]}
+                {roleLabel(role, audience)}
               </span>
             </div>
           </div>

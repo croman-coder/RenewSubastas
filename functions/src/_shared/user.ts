@@ -3,6 +3,10 @@ import { z } from 'zod';
 export const RoleSchema = z.enum(['admin', 'staff', 'buyer']);
 export type Role = z.infer<typeof RoleSchema>;
 
+export const AudienceSchema = z.enum(['retail', 'wholesale']);
+export type Audience = z.infer<typeof AudienceSchema>;
+export const DEFAULT_AUDIENCE: Audience = 'retail';
+
 export const UserStatusSchema = z.enum(['active', 'disabled']);
 export type UserStatus = z.infer<typeof UserStatusSchema>;
 
@@ -24,6 +28,7 @@ export const UserProfileSchema = z.object({
   phone: z.string().optional(),
   address: AddressSchema.optional(),
   avatarUrl: z.string().url().optional(),
+  audience: AudienceSchema.optional(),
 });
 
 export const UserPreferencesSchema = z.object({

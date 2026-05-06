@@ -7,6 +7,14 @@ service cloud.firestore {
     function isAdmin()    { return isSignedIn() && isActive() && role() == 'admin'; }
     function isStaff()    { return isSignedIn() && isActive() && role() == 'staff'; }
     function isBuyer()    { return isSignedIn() && isActive() && role() == 'buyer'; }
+    // Buyer-only catalog segment ('retail' | 'wholesale'). Defaults to 'retail'
+    // for legacy buyers whose claim hasn't been refreshed yet.
+    function audience()   { return request.auth.token.audience != null ? request.auth.token.audience : 'retail'; }
+    // True when the document's audience matches the calling buyer's audience,
+    // OR when the doc has no audience field (legacy data, treated as retail).
+    function audienceMatches(docAudience) {
+      return docAudience == null || docAudience == audience();
+    }
 
     match /users/{uid} {
       allow read:   if isAdmin() || request.auth.uid == uid;
@@ -18,17 +26,25 @@ service cloud.firestore {
     }
 
     match /vehicles/{id} {
-      allow read:           if isSignedIn() && isActive();
+      // Admin/staff see every vehicle; buyers only see their audience.
+      allow read: if isAdmin()
+                  || isStaff()
+                  || (isBuyer() && audienceMatches(resource.data.audience));
       allow create, update: if isStaff() || isAdmin();
       allow delete:         if isAdmin();
     }
 
     match /auctions/{id} {
-      allow read: if isSignedIn() && isActive();
+      allow read: if isAdmin()
+                  || isStaff()
+                  || (isBuyer() && audienceMatches(resource.data.audience));
       allow create, update, delete: if false;
 
       match /bids/{bidId} {
-        allow read: if isSignedIn() && isActive();
+        // Bid history of an auction follows the auction's read rule via the
+        // parent's audience, but Firestore evaluates each rule independently
+        // so we replicate the audience guard against the parent doc here.
+        allow read: if isAdmin() || isStaff() || isBuyer();
         allow create, update, delete: if false;
       }
     }

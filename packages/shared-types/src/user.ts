@@ -3,6 +3,14 @@ import { z } from 'zod';
 export const RoleSchema = z.enum(['admin', 'staff', 'buyer']);
 export type Role = z.infer<typeof RoleSchema>;
 
+/**
+ * Buyers split into two non-overlapping audiences. Retail = public market,
+ * wholesale = dealer-only catalog. Admin and staff bypass the segmentation.
+ */
+export const AudienceSchema = z.enum(['retail', 'wholesale']);
+export type Audience = z.infer<typeof AudienceSchema>;
+export const DEFAULT_AUDIENCE: Audience = 'retail';
+
 export const UserStatusSchema = z.enum(['active', 'disabled']);
 export type UserStatus = z.infer<typeof UserStatusSchema>;
 
@@ -24,6 +32,8 @@ export const UserProfileSchema = z.object({
   phone: z.string().optional(),
   address: AddressSchema.optional(),
   avatarUrl: z.string().url().optional(),
+  /** Only meaningful when role === 'buyer'. Defaults to 'retail' on legacy docs. */
+  audience: AudienceSchema.optional(),
 });
 
 export const UserPreferencesSchema = z.object({

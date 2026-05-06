@@ -17,8 +17,13 @@ export default async function BuyerAuctionsCatalog({
     searchParams?.tab === 'closing' || searchParams?.tab === 'favorites' ? searchParams.tab : 'all';
 
   const favorites = await loadFavorites(user.uid);
+  // Admin/staff can browse the catalog too — let them see retail by default
+  // (the staff/admin views in /staff/auctions already cover the unfiltered
+  // operator perspective). Buyers always see only their own audience.
+  const audience = user.audience ?? 'retail';
   const items = await listPublicAuctions({
     tab,
+    audience,
     ...(tab === 'favorites' && { favorites }),
   });
 

@@ -13,6 +13,17 @@ export const onUserSync = onDocumentWritten(
     const role = after['role'] as 'admin' | 'staff' | 'buyer' | undefined;
     const status = after['status'] as 'active' | 'disabled' | undefined;
     if (!role || !status) return;
-    await setUserClaims(uid, { role, status });
+    // For buyers, mirror profile.audience into the JWT so the client and
+    // Firestore rules can filter by audience without extra reads.
+    const profile = (after['profile'] ?? {}) as Record<string, unknown>;
+    const audience =
+      role === 'buyer'
+        ? ((profile['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail')
+        : undefined;
+    await setUserClaims(uid, {
+      role,
+      status,
+      ...(audience ? { audience } : {}),
+    });
   },
 );

@@ -2,7 +2,13 @@ import { randomBytes } from 'crypto';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
-import { isValidCiPy, isValidRucPy, RoleSchema, DocumentTypeSchema } from '../_shared/index.js';
+import {
+  isValidCiPy,
+  isValidRucPy,
+  RoleSchema,
+  DocumentTypeSchema,
+  AudienceSchema,
+} from '../_shared/index.js';
 import { adminAuth, adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { writeAuditLog } from '../lib/audit.js';
@@ -19,6 +25,8 @@ const InputSchema = z.object({
   documentType: DocumentTypeSchema,
   documentNumber: z.string().min(1),
   phone: z.string().optional(),
+  /** Required when role === 'buyer'; ignored otherwise. */
+  audience: AudienceSchema.optional(),
 });
 
 export interface CreateUserResult {
@@ -67,7 +75,14 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
     disabled: false,
   });
 
-  await setUserClaims(authUser.uid, { role: input.role, status: 'active' });
+  // Audience only applies to buyers; default to retail when missing.
+  const audience = input.role === 'buyer' ? (input.audience ?? 'retail') : null;
+
+  await setUserClaims(authUser.uid, {
+    role: input.role,
+    status: 'active',
+    ...(audience ? { audience } : {}),
+  });
 
   await adminDb()
     .doc(`users/${authUser.uid}`)
@@ -82,6 +97,7 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
         documentType: input.documentType,
         documentNumber: input.documentNumber,
         ...(input.phone !== undefined && { phone: input.phone }),
+        ...(audience ? { audience } : {}),
       },
       preferences: {
         locale: 'es',

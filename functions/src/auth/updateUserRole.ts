@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
-import { RoleSchema, UserStatusSchema } from '../_shared/index.js';
+import { RoleSchema, UserStatusSchema, AudienceSchema } from '../_shared/index.js';
 import { adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { loadAppConfig } from '../lib/config.js';
@@ -14,9 +14,10 @@ const InputSchema = z
     uid: z.string().min(1),
     role: RoleSchema.optional(),
     status: UserStatusSchema.optional(),
+    audience: AudienceSchema.optional(),
   })
-  .refine((v) => v.role !== undefined || v.status !== undefined, {
-    message: 'role or status must be provided',
+  .refine((v) => v.role !== undefined || v.status !== undefined || v.audience !== undefined, {
+    message: 'role, status, or audience must be provided',
   });
 
 export interface UpdateUserRoleResult {
@@ -78,10 +79,26 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
     }
   }
 
-  await setUserClaims(input.uid, { role: nextRole, status: nextStatus });
+  // Audience is buyer-only; wipe it when role moves away from buyer.
+  const beforeAudience = ((before['profile'] as Record<string, unknown> | undefined)?.[
+    'audience'
+  ] ?? undefined) as 'retail' | 'wholesale' | undefined;
+  const nextAudience: 'retail' | 'wholesale' | undefined =
+    nextRole === 'buyer' ? (input.audience ?? beforeAudience ?? 'retail') : undefined;
+
+  await setUserClaims(input.uid, {
+    role: nextRole,
+    status: nextStatus,
+    ...(nextAudience ? { audience: nextAudience } : {}),
+  });
   await ref.update({
     ...(input.role !== undefined && { role: input.role }),
     ...(input.status !== undefined && { status: input.status }),
+    ...(nextRole === 'buyer' && nextAudience
+      ? { 'profile.audience': nextAudience }
+      : nextRole !== 'buyer'
+        ? { 'profile.audience': FieldValue.delete() }
+        : {}),
     updatedAt: FieldValue.serverTimestamp(),
   });
 

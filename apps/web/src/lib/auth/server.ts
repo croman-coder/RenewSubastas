@@ -16,6 +16,11 @@ export interface CurrentUser {
    * always has something nicer than the full email to display.
    */
   firstName: string;
+  /**
+   * Buyer-only catalog segment. Defaults to 'retail' for legacy buyers that
+   * predate the audience split. Always undefined for admin/staff.
+   */
+  audience: 'retail' | 'wholesale' | undefined;
 }
 
 export async function getCurrentUser(locale: string): Promise<CurrentUser> {
@@ -34,6 +39,7 @@ export async function getCurrentUser(locale: string): Promise<CurrentUser> {
     // not firstName at the root. Falls back to the email local-part if the
     // profile fetch errors out so the topbar always has something to show.
     let firstName = '';
+    let audience: 'retail' | 'wholesale' | undefined;
     try {
       const snap = await getFirestore(getAdminApp()).doc(`users/${decoded.uid}`).get();
       const data = snap.data() ?? {};
@@ -42,11 +48,18 @@ export async function getCurrentUser(locale: string): Promise<CurrentUser> {
         ((profile['firstName'] as string | undefined) ?? (data['firstName'] as string | undefined))
           ?.toString()
           .trim() ?? '';
+      if (role === 'buyer') {
+        audience =
+          (profile['audience'] as 'retail' | 'wholesale' | undefined) ??
+          (decoded as { audience?: 'retail' | 'wholesale' }).audience ??
+          'retail';
+      }
     } catch {
       /* swallow — fallback below */
     }
     if (!firstName) firstName = friendlyFromEmail(email);
-    return { uid: decoded.uid, role, email, firstName };
+    if (role === 'buyer' && !audience) audience = 'retail';
+    return { uid: decoded.uid, role, email, firstName, audience };
   } catch {
     redirect(`/${locale}/login`);
   }

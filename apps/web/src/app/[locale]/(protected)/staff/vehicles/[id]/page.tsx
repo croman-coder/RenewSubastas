@@ -31,6 +31,7 @@ export default async function VehicleDetailPage({ params: { locale, id } }: Prop
       locale={locale}
       vehicleId={id}
       initial={{
+        audience: (data['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail',
         make: (data['make'] as string) ?? '',
         model: (data['model'] as string) ?? '',
         year: (data['year'] as number) ?? new Date().getFullYear(),

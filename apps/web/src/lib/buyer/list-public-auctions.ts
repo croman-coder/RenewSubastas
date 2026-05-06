@@ -21,12 +21,15 @@ export type CatalogTab = 'all' | 'closing' | 'favorites';
 
 export interface ListPublicAuctionsArgs {
   tab: CatalogTab;
+  /** Filter to a single audience. Buyers always pass their own audience here. */
+  audience: 'retail' | 'wholesale';
   favorites?: string[];
   pageSize?: number;
 }
 
 export async function listPublicAuctions({
   tab,
+  audience,
   favorites = [],
   pageSize = 50,
 }: ListPublicAuctionsArgs): Promise<PublicAuction[]> {
@@ -34,7 +37,6 @@ export async function listPublicAuctions({
 
   if (tab === 'favorites') {
     if (favorites.length === 0) return [];
-    // Firestore `in` accepts up to 30 ids; chunk if needed.
     const chunks: string[][] = [];
     for (let i = 0; i < favorites.length; i += 30) {
       chunks.push(favorites.slice(i, i + 30));
@@ -45,24 +47,34 @@ export async function listPublicAuctions({
       const docs = await db.getAll(...refs);
       docs
         .filter((d) => d.exists)
-        .forEach((d) => results.push(toItem(d as FirebaseFirestore.QueryDocumentSnapshot)));
+        .forEach((d) => {
+          // Even favorites are filtered by audience: a buyer who bookmarked an
+          // auction that later got moved to the other segment shouldn't keep
+          // seeing it.
+          const docAudience =
+            (d.data()?.['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+          if (docAudience !== audience) return;
+          results.push(toItem(d as FirebaseFirestore.QueryDocumentSnapshot));
+        });
     }
     return results.sort((a, b) => a.endsAtMs - b.endsAtMs);
   }
 
-  // 'all' and 'closing' both filter to live + scheduled auctions, ordered by endsAt asc.
-  let q: Query = db
-    .collection('auctions')
-    .where('status', 'in', ['live', 'scheduled'])
-    .orderBy('endsAt', 'asc')
-    .limit(pageSize);
-
+  let q: Query;
   if (tab === 'closing') {
     const in24h = new Date(Date.now() + 24 * 3600_000);
     q = db
       .collection('auctions')
+      .where('audience', '==', audience)
       .where('status', '==', 'live')
       .where('endsAt', '<=', in24h)
+      .orderBy('endsAt', 'asc')
+      .limit(pageSize);
+  } else {
+    q = db
+      .collection('auctions')
+      .where('audience', '==', audience)
+      .where('status', 'in', ['live', 'scheduled'])
       .orderBy('endsAt', 'asc')
       .limit(pageSize);
   }

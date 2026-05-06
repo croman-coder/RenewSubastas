@@ -63,9 +63,14 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
     const images = (vData['images'] as Array<{ thumbnailUrl?: string; url?: string }>) ?? [];
     const firstImg = images[0];
 
+    // Inherit the vehicle's audience so the auction is visible to the same
+    // buyer segment. Legacy vehicles without `audience` default to retail.
+    const audience = (vData['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+
     tx.set(auctionRef, {
       id: auctionRef.id,
       vehicleId: v.vehicleId,
+      audience,
       vehicleSnapshot: {
         make: vData['make'],
         model: vData['model'],

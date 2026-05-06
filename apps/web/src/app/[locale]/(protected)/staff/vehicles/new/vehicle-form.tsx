@@ -22,6 +22,7 @@ import {
 import { ImageUploader, type UploadedImage } from '../_components/image-uploader';
 
 const Schema = z.object({
+  audience: z.enum(['retail', 'wholesale']),
   make: z.string().min(1),
   model: z.string().min(1),
   year: z.coerce.number().int().min(1900).max(2100),
@@ -57,6 +58,7 @@ export function VehicleForm({ locale, actorUid }: Props) {
   } = useForm<FormValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
+      audience: 'retail',
       make: '',
       model: '',
       year: new Date().getFullYear(),
@@ -69,6 +71,7 @@ export function VehicleForm({ locale, actorUid }: Props) {
       descriptionEn: '',
     },
   });
+  const audience = watch('audience');
   const transmission = watch('transmission');
   const fuelType = watch('fuelType');
   const condition = watch('condition');
@@ -79,6 +82,7 @@ export function VehicleForm({ locale, actorUid }: Props) {
       const ref = doc(fb.db, 'vehicles', vehicleId);
       const payload: Record<string, unknown> = {
         id: vehicleId,
+        audience: values.audience,
         make: values.make,
         model: values.model,
         year: values.year,
@@ -121,6 +125,27 @@ export function VehicleForm({ locale, actorUid }: Props) {
         {t('backToList')}
       </a>
       <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
+
+      <div className="space-y-2 rounded-lg border border-text-subtle/15 bg-bg-elev/40 p-4">
+        <Label>Audiencia</Label>
+        <Select
+          value={audience}
+          onValueChange={(v) => setValue('audience', v as FormValues['audience'])}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="retail">Retail · Público general</SelectItem>
+            <SelectItem value="wholesale">Wholesale · Sólo mayoristas</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-text-muted">
+          {audience === 'retail'
+            ? 'Visible en el catálogo público para todos los buyers retail.'
+            : 'Visible únicamente para usuarios con rol Wholesale.'}
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

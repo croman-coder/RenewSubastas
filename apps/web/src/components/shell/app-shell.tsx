@@ -49,6 +49,7 @@ export async function AppShell({ locale, children }: Props) {
         firstName={user.firstName}
         uid={user.uid}
         role={role}
+        {...(user.audience ? { audience: user.audience } : {})}
         navItems={navItems}
         signOutLabel={tCommon('signOut')}
         settingsLabel={tCommon('settings')}
