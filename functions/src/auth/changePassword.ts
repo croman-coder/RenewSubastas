@@ -42,6 +42,6 @@ export async function generatePasswordResetHandler(
 }
 
 export const generatePasswordReset = onCall(
-  { region: 'us-central1' },
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
   generatePasswordResetHandler,
 );

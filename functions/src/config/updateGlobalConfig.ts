@@ -113,4 +113,7 @@ export async function updateGlobalConfigHandler(
   return { ok: true };
 }
 
-export const updateGlobalConfig = onCall({ region: 'us-central1' }, updateGlobalConfigHandler);
+export const updateGlobalConfig = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  updateGlobalConfigHandler,
+);

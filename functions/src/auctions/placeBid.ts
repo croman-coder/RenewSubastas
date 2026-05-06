@@ -127,4 +127,7 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
   return result;
 }
 
-export const placeBid = onCall({ region: 'us-central1' }, placeBidHandler);
+export const placeBid = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  placeBidHandler,
+);

@@ -22,4 +22,7 @@ export async function revokeMySessionsHandler(
   return { ok: true };
 }
 
-export const revokeMySessions = onCall({ region: 'us-central1' }, revokeMySessionsHandler);
+export const revokeMySessions = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  revokeMySessionsHandler,
+);

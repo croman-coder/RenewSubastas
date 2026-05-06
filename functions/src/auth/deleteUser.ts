@@ -57,4 +57,7 @@ export async function deleteUserHandler(req: CallableRequest): Promise<DeleteUse
   return { ok: true };
 }
 
-export const deleteUser = onCall({ region: 'us-central1' }, deleteUserHandler);
+export const deleteUser = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  deleteUserHandler,
+);

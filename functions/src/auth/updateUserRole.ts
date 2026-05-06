@@ -97,4 +97,7 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
   return { ok: true };
 }
 
-export const updateUserRole = onCall({ region: 'us-central1' }, updateUserRoleHandler);
+export const updateUserRole = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['NODE_ENV'] === 'production' },
+  updateUserRoleHandler,
+);

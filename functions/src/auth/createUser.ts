@@ -123,6 +123,10 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
 }
 
 export const createUser = onCall(
-  { region: 'us-central1', secrets: [RESEND_API_KEY] },
+  {
+    region: 'us-central1',
+    secrets: [RESEND_API_KEY],
+    enforceAppCheck: process.env['NODE_ENV'] === 'production',
+  },
   createUserHandler,
 );
