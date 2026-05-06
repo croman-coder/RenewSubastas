@@ -38,6 +38,9 @@ yarn-debug.log*
 .idea/
 .DS_Store
 
+# LibreOffice/OpenOffice lock files
+.~lock.*#
+
 # tests
 coverage/
 playwright-report/
