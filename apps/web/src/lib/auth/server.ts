@@ -28,14 +28,20 @@ export async function getCurrentUser(locale: string): Promise<CurrentUser> {
     const role = (decoded as { role?: Role }).role;
     if (!role) redirect(`/${locale}/login?error=no_role`);
     const email = decoded.email ?? '';
-    // Best-effort friendly name lookup. We deliberately don't fail the whole
-    // page render if the profile fetch errors out — the email-derived
-    // fallback is acceptable for the topbar and audit displays.
+    // Best-effort friendly name lookup. The user document stores name fields
+    // under a nested `profile` map (createUser, bootstrap-admin both do
+    // `profile: { firstName, lastName, ... }`), so we read profile.firstName,
+    // not firstName at the root. Falls back to the email local-part if the
+    // profile fetch errors out so the topbar always has something to show.
     let firstName = '';
     try {
       const snap = await getFirestore(getAdminApp()).doc(`users/${decoded.uid}`).get();
-      const profile = snap.data() ?? {};
-      firstName = (profile['firstName'] as string | undefined)?.trim() ?? '';
+      const data = snap.data() ?? {};
+      const profile = (data['profile'] ?? {}) as Record<string, unknown>;
+      firstName =
+        ((profile['firstName'] as string | undefined) ?? (data['firstName'] as string | undefined))
+          ?.toString()
+          .trim() ?? '';
     } catch {
       /* swallow — fallback below */
     }

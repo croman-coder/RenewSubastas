@@ -33,6 +33,14 @@ service cloud.firestore {
       }
     }
 
+    // Collection group rule: enables collectionGroup('bids') queries (used
+    // by the admin/staff notification bell to surface every new bid across
+    // all auctions in real time). Without this wildcard, Firestore rejects
+    // collection group reads even though the per-document rule allows them.
+    match /{path=**}/bids/{bidId} {
+      allow read: if isSignedIn() && isActive();
+    }
+
     match /app_config/{doc} {
       allow read:  if isSignedIn() && isActive();
       allow write: if false;
