@@ -266,7 +266,25 @@
         "bidPlaceholderTitle": "Pujar (próximamente)",
         "bidPlaceholderBody": "El sistema de pujas se habilita en el Plan 6.",
         "timeLeft": "Tiempo restante",
-        "startingPrice": "Precio inicial"
+        "startingPrice": "Precio inicial",
+        "bidPanel": {
+          "title": "Pujar",
+          "minRequired": "Mínimo: USD {amount}",
+          "increment": "Incremento: USD {amount}",
+          "amount": "Monto (USD)",
+          "submit": "Pujar",
+          "submitting": "Pujando…",
+          "success": "Puja registrada por USD {amount}",
+          "winning": "Estás ganando.",
+          "errors": {
+            "notLive": "La subasta no está activa.",
+            "ended": "La subasta ya cerró.",
+            "tooLow": "El monto es menor al mínimo requerido.",
+            "selfOutbid": "Ya tienes la puja ganadora.",
+            "rateLimit": "Demasiadas pujas. Espera un momento.",
+            "generic": "No se pudo registrar la puja."
+          }
+        }
       }
     }
   },

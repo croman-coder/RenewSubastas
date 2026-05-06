@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
+import { BidPanel } from './bid-panel';
 
 interface BidEntry {
   id: string;
@@ -15,7 +16,17 @@ interface BidEntry {
   createdAt: number;
 }
 
-export function AuctionDetailView({ locale, initial }: { locale: string; initial: AuctionDetail }) {
+export function AuctionDetailView({
+  locale,
+  initial,
+  myUid,
+  allowManualIncrement,
+}: {
+  locale: string;
+  initial: AuctionDetail;
+  myUid: string;
+  allowManualIncrement: boolean;
+}) {
   const t = useTranslations('buyer.auctions.detail');
   const tStatus = useTranslations('buyer.auctions.status');
   const [activeImg, setActiveImg] = useState(0);
@@ -25,11 +36,13 @@ export function AuctionDetailView({ locale, initial }: { locale: string; initial
     bidCount: number;
     endsAtMs: number;
     status: AuctionDetail['status'];
+    currentBidderUid: string | null;
   }>({
     currentBid: initial.currentBid,
     bidCount: initial.bidCount,
     endsAtMs: initial.endsAtMs,
     status: initial.status,
+    currentBidderUid: null,
   });
   const [bids, setBids] = useState<BidEntry[]>([]);
 
@@ -49,6 +62,7 @@ export function AuctionDetailView({ locale, initial }: { locale: string; initial
         bidCount: (data['bidCount'] as number) ?? 0,
         endsAtMs: ms('endsAt'),
         status: (data['status'] as AuctionDetail['status']) ?? 'scheduled',
+        currentBidderUid: (data['currentBidderUid'] as string | undefined) ?? null,
       });
     });
     const q = query(
@@ -187,14 +201,16 @@ export function AuctionDetailView({ locale, initial }: { locale: string; initial
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t('bidPlaceholderTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-text-muted">{t('bidPlaceholderBody')}</p>
-            </CardContent>
-          </Card>
+          <BidPanel
+            auctionId={initial.id}
+            status={live.status}
+            startingPrice={initial.startingPrice}
+            currentBid={live.currentBid}
+            bidIncrement={initial.bidIncrement}
+            currentBidderUid={live.currentBidderUid}
+            myUid={myUid}
+            allowManualIncrement={allowManualIncrement}
+          />
         </aside>
       </div>
 

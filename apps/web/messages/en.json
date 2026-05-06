@@ -266,7 +266,25 @@
         "bidPlaceholderTitle": "Place a bid (coming soon)",
         "bidPlaceholderBody": "The bidding system will be enabled in Plan 6.",
         "timeLeft": "Time remaining",
-        "startingPrice": "Starting price"
+        "startingPrice": "Starting price",
+        "bidPanel": {
+          "title": "Place a bid",
+          "minRequired": "Minimum: USD {amount}",
+          "increment": "Increment: USD {amount}",
+          "amount": "Amount (USD)",
+          "submit": "Bid",
+          "submitting": "Bidding…",
+          "success": "Bid placed for USD {amount}",
+          "winning": "You are winning.",
+          "errors": {
+            "notLive": "The auction is not active.",
+            "ended": "The auction has already ended.",
+            "tooLow": "The amount is below the minimum required.",
+            "selfOutbid": "You already have the winning bid.",
+            "rateLimit": "Too many bids. Please wait a moment.",
+            "generic": "Could not place the bid."
+          }
+        }
       }
     }
   },
