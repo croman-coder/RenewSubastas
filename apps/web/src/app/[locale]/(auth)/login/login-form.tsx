@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ForgotPasswordDialog } from './forgot-password-dialog';
 
 const Schema = z.object({
   email: z.string().email(),
@@ -84,7 +85,10 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         {errors.email && <p className="text-sm text-danger">{t('errors.emailInvalid')}</p>}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">{t('password')}</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">{t('password')}</Label>
+          <ForgotPasswordDialog />
+        </div>
         <Input
           id="password"
           type="password"

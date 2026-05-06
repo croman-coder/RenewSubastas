@@ -50,5 +50,13 @@ service cloud.firestore {
       allow read:  if isAdmin();
       allow write: if false;
     }
+
+    // Password reset requests: only admins can read or update the queue;
+    // creation is restricted to the requestPasswordReset Cloud Function
+    // (rate-limited and identity-checked there).
+    match /password_reset_requests/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false;
+    }
   }
 }

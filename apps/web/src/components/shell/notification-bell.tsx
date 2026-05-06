@@ -58,33 +58,71 @@ export function NotificationBell({ locale, role, uid }: Props) {
   });
 
   useEffect(() => {
-    // Auctions feed for buyers, bids feed for admin/staff.
+    // Each role gets its own listener stack:
+    //   buyer  -> auctions that just opened
+    //   staff  -> every bid
+    //   admin  -> every bid AND password-reset queue (admin is the human who
+    //            confirms identity before generating reset links)
     const isBuyer = role === 'buyer';
-    const baseQuery = isBuyer
-      ? query(
+    const isAdmin = role === 'admin';
+
+    const unsubs: Array<() => void> = [];
+    // Hold latest items per source separately so a fast feed (bids) can't
+    // starve a slower but high-priority feed (password resets).
+    const sources: Record<string, NotificationItem[]> = {};
+    const flush = () => {
+      const merged = Object.values(sources)
+        .flat()
+        .sort((a, b) => b.ts - a.ts)
+        .slice(0, 15);
+      setItems(merged);
+    };
+
+    function subscribe<T extends NotificationItem>(
+      key: string,
+      q: ReturnType<typeof query>,
+      mapper: (data: Record<string, unknown>, id: string) => T,
+    ) {
+      const u = onSnapshot(
+        q,
+        (snap) => {
+          sources[key] = snap.docs.map((d) => mapper(d.data() as Record<string, unknown>, d.id));
+          flush();
+        },
+        (err) => {
+          console.warn(`[notifications] ${key} listener failed`, err);
+          sources[key] = [];
+          flush();
+        },
+      );
+      unsubs.push(u);
+    }
+
+    if (isBuyer) {
+      subscribe(
+        'auctions',
+        query(
           collection(fb.db, 'auctions'),
           where('status', 'in', ['scheduled', 'live']),
           orderBy('createdAt', 'desc'),
           limit(10),
-        )
-      : query(collectionGroup(fb.db, 'bids'), orderBy('createdAt', 'desc'), limit(10));
-
-    const unsub = onSnapshot(
-      baseQuery,
-      (snap) => {
-        const next: NotificationItem[] = snap.docs.map((d) => {
-          const data = d.data();
-          const ts = (data['createdAt'] as Timestamp | undefined)?.toMillis?.() ?? Date.now();
-          if (isBuyer) {
-            const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
-            return {
-              id: d.id,
-              ts,
-              href: `/${locale}/auctions/${(data['id'] as string) ?? d.id}`,
-              title: 'Nueva subasta disponible',
-              subtitle: `${(v['make'] as string) ?? '—'} ${(v['model'] as string) ?? ''}`.trim(),
-            };
-          }
+        ),
+        (data, docId) => {
+          const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
+          return {
+            id: `auction-${docId}`,
+            ts: (data['createdAt'] as Timestamp | undefined)?.toMillis?.() ?? Date.now(),
+            href: `/${locale}/auctions/${(data['id'] as string) ?? docId}`,
+            title: 'Nueva subasta disponible',
+            subtitle: `${(v['make'] as string) ?? '—'} ${(v['model'] as string) ?? ''}`.trim(),
+          };
+        },
+      );
+    } else {
+      subscribe(
+        'bids',
+        query(collectionGroup(fb.db, 'bids'), orderBy('createdAt', 'desc'), limit(10)),
+        (data, docId) => {
           const buyer = (data['buyerSnapshot'] ?? {}) as {
             firstName?: string;
             lastInitial?: string;
@@ -92,24 +130,40 @@ export function NotificationBell({ locale, role, uid }: Props) {
           const auctionId = (data['auctionId'] as string) ?? '';
           const amount = (data['amount'] as number) ?? 0;
           return {
-            id: d.id,
-            ts,
+            id: `bid-${docId}`,
+            ts: (data['createdAt'] as Timestamp | undefined)?.toMillis?.() ?? Date.now(),
             href: `/${locale}/staff/auctions/${auctionId}`,
             title: 'Nueva puja',
             subtitle:
               `USD ${amount.toLocaleString()} · ${buyer.firstName ?? 'Buyer'} ${(buyer.lastInitial ?? '').toString()}.`.trim(),
           };
-        });
-        setItems(next);
-      },
-      (err) => {
-        // Permission denied or missing index — fail closed to keep the bell quiet
-        // instead of bubbling up to a render error.
-        console.warn('[notifications] listener failed', err);
-        setItems([]);
-      },
-    );
-    return () => unsub();
+        },
+      );
+
+      if (isAdmin) {
+        subscribe(
+          'pwresets',
+          query(
+            collection(fb.db, 'password_reset_requests'),
+            where('status', '==', 'pending'),
+            orderBy('requestedAt', 'desc'),
+            limit(5),
+          ),
+          (data, docId) => {
+            const fullName = [data['firstName'], data['lastName']].filter(Boolean).join(' ').trim();
+            return {
+              id: `pwreset-${docId}`,
+              ts: (data['requestedAt'] as Timestamp | undefined)?.toMillis?.() ?? Date.now(),
+              href: `/${locale}/admin/password-resets`,
+              title: 'Solicitud de contraseña',
+              subtitle: `${fullName || (data['email'] as string) || 'Buyer'} pidió recuperar su contraseña`,
+            };
+          },
+        );
+      }
+    }
+
+    return () => unsubs.forEach((u) => u());
   }, [role, locale]);
 
   const unread = items.filter((it) => it.ts > lastSeen).length;

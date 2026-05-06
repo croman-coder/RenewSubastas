@@ -10,7 +10,8 @@ export type IconKey =
   | 'audit'
   | 'settings'
   | 'heart'
-  | 'trophy';
+  | 'trophy'
+  | 'key';
 
 export interface NavItem {
   href: string;
@@ -43,6 +44,7 @@ export function getNavItems(role: Role, locale: string, t: T): NavItem[] {
       { href: `/${locale}/admin/users`, label: t.admin.users, icon: 'users' },
       { href: `/${locale}/staff/vehicles`, label: t.admin.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.admin.auctions, icon: 'gavel' },
+      { href: `/${locale}/admin/password-resets`, label: 'Contraseñas', icon: 'key' },
       { href: `/${locale}/admin/audit`, label: t.admin.audit, icon: 'audit' },
       { href: `/${locale}/admin/config`, label: t.admin.config, icon: 'settings' },
     ];

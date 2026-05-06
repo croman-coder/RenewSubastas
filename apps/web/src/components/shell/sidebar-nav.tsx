@@ -10,6 +10,7 @@ import {
   Settings,
   Heart,
   Trophy,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react';
 import type { IconKey, NavItem } from './nav-config';
@@ -23,6 +24,7 @@ const ICON_MAP: Record<IconKey, LucideIcon> = {
   settings: Settings,
   heart: Heart,
   trophy: Trophy,
+  key: KeyRound,
 };
 
 interface Props {
