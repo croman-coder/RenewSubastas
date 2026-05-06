@@ -41,7 +41,15 @@ export async function listAuctions(filter: ListAuctionsFilter): Promise<ListAuct
     if (!Number.isNaN(ms)) q = q.startAfter(new Date(ms));
   }
   q = q.limit(pageSize + 1);
-  const snap = await q.get();
+  // A missing composite index (or a not-yet-built one) returns FAILED_PRECONDITION;
+  // returning an empty page keeps the UI rendering instead of crashing the route.
+  let snap: FirebaseFirestore.QuerySnapshot;
+  try {
+    snap = await q.get();
+  } catch (err) {
+    console.warn('[listAuctions] query failed, returning empty page', err);
+    return { items: [], nextCursor: null };
+  }
   const docs = snap.docs;
   const hasMore = docs.length > pageSize;
   const items: AuctionListItem[] = docs.slice(0, pageSize).map((d) => {
