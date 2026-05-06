@@ -21,12 +21,23 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ReadyVehicleOption } from '@/lib/staff/list-ready-vehicles';
 
+// Mirrors the cap enforced server-side in createAuction. Surfaces immediate
+// validation messages instead of letting users hit a Cloud Functions error.
+const MAX_PRICE_USD = 200_000;
+const MAX_INCREMENT_USD = 50_000;
+
 const Schema = z
   .object({
     vehicleId: z.string().min(1),
-    startingPrice: z.coerce.number().positive(),
-    reservePrice: z.coerce.number().optional(),
-    bidIncrement: z.coerce.number().positive(),
+    startingPrice: z.coerce
+      .number()
+      .positive()
+      .max(MAX_PRICE_USD, `El máximo permitido es USD ${MAX_PRICE_USD.toLocaleString()}`),
+    reservePrice: z.coerce.number().max(MAX_PRICE_USD).optional(),
+    bidIncrement: z.coerce
+      .number()
+      .positive()
+      .max(MAX_INCREMENT_USD, `Incremento máximo USD ${MAX_INCREMENT_USD.toLocaleString()}`),
     startsAt: z.string().min(1),
     endsAt: z.string().min(1),
   })

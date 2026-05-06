@@ -10,6 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trophy, Gavel } from 'lucide-react';
 
+// Mirrors the cap enforced server-side in placeBid. Anything above this is a
+// typo or abuse; we surface the validation client-side too so the user gets
+// immediate feedback without a round-trip.
+const MAX_BID_USD = 200_000;
+
 interface Props {
   auctionId: string;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
@@ -40,6 +45,14 @@ export function BidPanel({
   const isWinning = currentBidderUid === myUid && currentBid > 0;
 
   async function placeBid(amount: number) {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error('Ingresá un monto válido.');
+      return;
+    }
+    if (amount > MAX_BID_USD) {
+      toast.error(`El monto máximo permitido es USD ${MAX_BID_USD.toLocaleString()}.`);
+      return;
+    }
     setBusy(true);
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
@@ -50,6 +63,8 @@ export function BidPanel({
       const code = (e as { code?: string }).code ?? '';
       if (code.includes('resource-exhausted') || msg.includes('rate limit')) {
         toast.error(t('errors.rateLimit'));
+      } else if (msg.includes('exceeds the maximum') || msg.includes('maximum allowed')) {
+        toast.error(`El monto máximo permitido es USD ${MAX_BID_USD.toLocaleString()}.`);
       } else if (msg.includes('at least') || msg.includes('below')) {
         toast.error(t('errors.tooLow'));
       } else if (msg.includes('ended') || msg.includes('not live')) {
@@ -118,7 +133,9 @@ export function BidPanel({
         Mínimo:{' '}
         <span className="text-text-strong font-medium">USD {minRequired.toLocaleString()}</span> ·
         Incremento:{' '}
-        <span className="text-text-strong font-medium">USD {bidIncrement.toLocaleString()}</span>
+        <span className="text-text-strong font-medium">USD {bidIncrement.toLocaleString()}</span> ·
+        Máximo:{' '}
+        <span className="text-text-strong font-medium">USD {MAX_BID_USD.toLocaleString()}</span>
       </p>
       <div className="grid grid-cols-3 gap-2">
         {quickIncrements.map((amt) => (
@@ -143,6 +160,8 @@ export function BidPanel({
               id="manual"
               type="number"
               step="1"
+              min={minRequired}
+              max={MAX_BID_USD}
               value={manual}
               onChange={(e) => setManual(e.target.value)}
               className="num-tab"

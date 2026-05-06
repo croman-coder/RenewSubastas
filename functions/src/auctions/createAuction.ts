@@ -6,12 +6,18 @@ import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
+// Sane caps to keep typo'd values from polluting the database. These mirror
+// the placeBid hard cap and chosen so they cover the realistic top of the
+// vehicle market we're targeting.
+const MAX_PRICE_USD = 200_000;
+const MAX_INCREMENT_USD = 50_000;
+
 const InputSchema = z
   .object({
     vehicleId: z.string().min(1),
-    startingPrice: z.number().positive(),
-    reservePrice: z.number().positive().optional(),
-    bidIncrement: z.number().positive(),
+    startingPrice: z.number().positive().finite().max(MAX_PRICE_USD),
+    reservePrice: z.number().positive().finite().max(MAX_PRICE_USD).optional(),
+    bidIncrement: z.number().positive().finite().max(MAX_INCREMENT_USD),
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime(),
   })
