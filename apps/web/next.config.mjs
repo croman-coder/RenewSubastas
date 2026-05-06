@@ -21,9 +21,11 @@ const nextConfig = {
 
 const withSentry = (cfg) =>
   withSentryConfig(cfg, {
-    silent: true,
-    org: process.env.SENTRY_ORG,
+    org: 'carbid',
     project: 'carbid-web',
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    tunnelRoute: '/monitoring',
     disableLogger: true,
   });
 
