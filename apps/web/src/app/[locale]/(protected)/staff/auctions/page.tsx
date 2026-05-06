@@ -8,7 +8,10 @@ interface PageProps {
 }
 
 export default async function StaffAuctionsList({ params: { locale }, searchParams }: PageProps) {
-  const user = await getCurrentUser(locale);
+  // Auth gate (also enforces "staff or admin" via the layout). The list itself
+  // is intentionally not scoped to the user's uid — staff and admin both see
+  // every auction and can act on any of them.
+  await getCurrentUser(locale);
   const status =
     searchParams?.status === 'scheduled' ||
     searchParams?.status === 'live' ||
@@ -17,7 +20,6 @@ export default async function StaffAuctionsList({ params: { locale }, searchPara
       ? searchParams.status
       : undefined;
   const data = await listAuctions({
-    ...(user.role === 'staff' ? { scopedToUid: user.uid } : {}),
     ...(status && { status }),
     ...(searchParams?.cursor && { cursor: searchParams.cursor }),
   });

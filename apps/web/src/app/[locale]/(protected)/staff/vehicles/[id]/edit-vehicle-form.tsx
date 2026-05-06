@@ -132,19 +132,28 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
     }
   }
 
-  async function setStatusValue(next: 'draft' | 'ready') {
+  async function setStatusValue(next: 'draft' | 'ready' | 'archived') {
     setSubmitting(true);
     try {
       const ref = doc(fb.db, 'vehicles', vehicleId);
       await updateDoc(ref, { status: next, updatedAt: serverTimestamp() });
       setStatus(next);
       toast.success(t('saved'));
-      router.refresh();
+      if (next === 'archived') {
+        router.replace(`/${locale}/staff/vehicles` as `/${string}`);
+      } else {
+        router.refresh();
+      }
     } catch (e) {
       toast.error((e as Error).message ?? t('errors.generic'));
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function confirmArchive() {
+    if (!window.confirm('¿Archivar este vehículo? No aparecerá en listados activos.')) return;
+    await setStatusValue('archived');
   }
 
   return (
@@ -282,6 +291,17 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
             onClick={() => setStatusValue('draft')}
           >
             {t('backToDraft')}
+          </Button>
+        )}
+        {(status === 'draft' || status === 'ready') && (
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={submitting}
+            onClick={confirmArchive}
+            className="ml-auto"
+          >
+            Archivar
           </Button>
         )}
       </div>

@@ -1,9 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { fb } from '@/lib/firebase/client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface BidEntry {
   id: string;
@@ -36,7 +40,31 @@ export function AuctionDetailView({
 }) {
   const t = useTranslations('staff.auctions.detail');
   const tStatus = useTranslations('staff.auctions.status');
+  const router = useRouter();
   const [bids, setBids] = useState<BidEntry[]>([]);
+  const [cancelling, setCancelling] = useState(false);
+  const [status, setStatus] = useState(initial.status);
+  const canCancel = status === 'scheduled' || status === 'live';
+
+  async function handleCancel() {
+    if (!canCancel) return;
+    const msg =
+      status === 'live'
+        ? '¿Cancelar esta subasta EN VIVO? Los bids registrados se mantendrán pero la subasta no tendrá ganador.'
+        : '¿Cancelar esta subasta programada?';
+    if (!window.confirm(msg)) return;
+    setCancelling(true);
+    try {
+      await httpsCallable(fb.functions, 'cancelAuction')({ auctionId });
+      setStatus('cancelled');
+      toast.success('Subasta cancelada');
+      router.refresh();
+    } catch (e) {
+      toast.error((e as Error).message ?? 'No se pudo cancelar la subasta');
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   useEffect(() => {
     const q = query(
@@ -82,12 +110,23 @@ export function AuctionDetailView({
         {initial.thumbnailUrl && (
           <img src={initial.thumbnailUrl} alt="" className="w-20 h-20 object-cover rounded" />
         )}
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-text-strong">
             {initial.vehicleMake} {initial.vehicleModel} {initial.vehicleYear}
           </h1>
-          <Badge variant="secondary">{tStatus(initial.status)}</Badge>
+          <Badge variant="secondary">{tStatus(status)}</Badge>
         </div>
+        {canCancel && (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            disabled={cancelling}
+            onClick={handleCancel}
+          >
+            {cancelling ? 'Cancelando…' : 'Cancelar subasta'}
+          </Button>
+        )}
       </header>
       <section className="space-y-1">
         <p className="text-text-muted text-sm">{t('currentBid')}</p>

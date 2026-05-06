@@ -17,8 +17,12 @@ export default async function VehiclesListPage({ params: { locale }, searchParam
     searchParams?.status === 'archived'
       ? searchParams.status
       : undefined;
+  // Staff and admin both see every vehicle in the system; the firestore.rules
+  // already allow either role to read and update any vehicle. Scoping by uid
+  // would only hide useful inventory from a staff user trying to edit a
+  // colleague's draft.
+  void user;
   const data = await listVehicles({
-    ...(user.role === 'staff' ? { scopedToUid: user.uid } : {}),
     ...(status && { status }),
     ...(searchParams?.cursor && { cursor: searchParams.cursor }),
   });
