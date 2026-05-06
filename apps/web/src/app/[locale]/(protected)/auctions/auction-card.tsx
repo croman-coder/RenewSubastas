@@ -48,11 +48,12 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid }: Props) {
 
   const remainingMs = auction.endsAtMs - now;
   const displayPrice = auction.currentBid > 0 ? auction.currentBid : auction.startingPrice;
+  const isUrgent = remainingMs > 0 && remainingMs < 60 * 60 * 1000;
 
   return (
     <Link
       href={`/${locale}/auctions/${auction.id}` as `/${string}`}
-      className="block group rounded-lg border border-text-subtle/20 overflow-hidden bg-bg-elev hover:border-copper transition-colors"
+      className="block group rounded-lg border border-text-subtle/20 overflow-hidden bg-bg-elev hover:border-copper hover:shadow-lg transition-all duration-200 active:scale-[0.98] animate-in fade-in slide-in-from-bottom-1 duration-300"
     >
       <div className="relative aspect-[4/3] bg-bg-deep overflow-hidden">
         {auction.thumbnailUrl ? (
@@ -91,7 +92,11 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid }: Props) {
             {t('bidCount', { count: auction.bidCount })}
           </span>
         </div>
-        <p className="text-xs text-copper num-tab">{formatRemaining(remainingMs)}</p>
+        <p
+          className={`text-xs num-tab ${isUrgent ? 'text-danger animate-pulse font-medium' : 'text-copper'}`}
+        >
+          {formatRemaining(remainingMs)}
+        </p>
       </div>
     </Link>
   );
