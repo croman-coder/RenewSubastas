@@ -6,6 +6,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { fb } from '@/lib/firebase/client';
 import { SidebarNav } from './sidebar-nav';
+import { NotificationBell } from './notification-bell';
 import type { NavItem, Role } from './nav-config';
 import {
   DropdownMenu,
@@ -31,13 +32,14 @@ const ROLE_TONE: Record<Role, string> = {
 interface Props {
   locale: string;
   email: string;
+  uid: string;
   role: Role;
   navItems: NavItem[];
   signOutLabel: string;
   settingsLabel: string;
 }
 
-export function Topbar({ locale, email, role, navItems, signOutLabel, settingsLabel }: Props) {
+export function Topbar({ locale, email, uid, role, navItems, signOutLabel, settingsLabel }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const initial = email.slice(0, 1).toUpperCase();
@@ -88,7 +90,8 @@ export function Topbar({ locale, email, role, navItems, signOutLabel, settingsLa
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <NotificationBell locale={locale} role={role} uid={uid} />
           <DropdownMenu>
             <DropdownMenuTrigger
               className={

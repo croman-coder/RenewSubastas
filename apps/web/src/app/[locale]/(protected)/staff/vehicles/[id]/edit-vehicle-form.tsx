@@ -67,7 +67,11 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
   const [status, setStatus] = useState(initial.status);
   const [images, setImages] = useState<UploadedImage[]>(initial.images);
 
-  const isLocked = status === 'in_auction' || status === 'sold' || status === 'archived';
+  // Sold and archived vehicles are immutable historical records — editing them
+  // would rewrite past sales. Vehicles currently "in_auction" can be edited
+  // by admin/staff but we surface a warning because changes affect bidders.
+  const isLocked = status === 'sold' || status === 'archived';
+  const showInAuctionWarning = status === 'in_auction';
 
   const {
     register,
@@ -168,6 +172,16 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
         <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
         <Badge variant="secondary">{tStatus(status)}</Badge>
       </header>
+
+      {showInAuctionWarning && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <p className="font-medium">Vehículo en subasta activa</p>
+          <p className="text-xs text-amber-200/80 mt-1">
+            Cualquier cambio que hagas (precio, descripción, fotos) será visible inmediatamente para
+            los buyers que están pujando. Editá con cuidado.
+          </p>
+        </div>
+      )}
 
       <fieldset disabled={isLocked} className="space-y-6 contents">
         <div className="grid grid-cols-2 gap-4">
