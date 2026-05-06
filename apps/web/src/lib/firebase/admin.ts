@@ -11,6 +11,18 @@ export function getAdminApp(): App {
       app = getApps()[0]!;
     } else if (serverEnv.FIREBASE_AUTH_EMULATOR_HOST) {
       app = initializeApp({ projectId: serverEnv.FIREBASE_PROJECT_ID });
+    } else if (serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      // Robust path for hosts that mangle PEM newlines: store full SA JSON as base64.
+      const json = JSON.parse(
+        Buffer.from(serverEnv.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'),
+      ) as { project_id: string; client_email: string; private_key: string };
+      app = initializeApp({
+        credential: cert({
+          projectId: json.project_id,
+          clientEmail: json.client_email,
+          privateKey: json.private_key,
+        }),
+      });
     } else if (serverEnv.FIREBASE_CLIENT_EMAIL && serverEnv.FIREBASE_PRIVATE_KEY) {
       app = initializeApp({
         credential: cert({
