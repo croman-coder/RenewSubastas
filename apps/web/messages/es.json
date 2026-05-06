@@ -227,6 +227,36 @@
     }
   },
   "buyer": {
+    "navBids": "Mis pujas",
+    "navWon": "Ganadas",
+    "bids": {
+      "title": "Mis pujas",
+      "tabs": {
+        "winning": "Ganando",
+        "outbid": "Superado",
+        "won": "Ganadas",
+        "lost": "Perdidas"
+      },
+      "columns": {
+        "vehicle": "Vehículo",
+        "myBid": "Mi puja",
+        "currentBid": "Puja actual",
+        "status": "Estado",
+        "endsAt": "Cierra"
+      },
+      "empty": "No tienes pujas en esta categoría."
+    },
+    "won": {
+      "title": "Vehículos ganados",
+      "subtitle": "Coordina la entrega y el pago directamente con el vendedor.",
+      "columns": {
+        "vehicle": "Vehículo",
+        "finalPrice": "Precio final",
+        "endedAt": "Cerró",
+        "seller": "Vendedor"
+      },
+      "empty": "Aún no has ganado ninguna subasta."
+    },
     "auctions": {
       "title": "Subastas",
       "tabs": {

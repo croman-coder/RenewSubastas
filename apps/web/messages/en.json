@@ -227,6 +227,36 @@
     }
   },
   "buyer": {
+    "navBids": "My bids",
+    "navWon": "Won",
+    "bids": {
+      "title": "My bids",
+      "tabs": {
+        "winning": "Winning",
+        "outbid": "Outbid",
+        "won": "Won",
+        "lost": "Lost"
+      },
+      "columns": {
+        "vehicle": "Vehicle",
+        "myBid": "My bid",
+        "currentBid": "Current bid",
+        "status": "Status",
+        "endsAt": "Closes"
+      },
+      "empty": "You have no bids in this category."
+    },
+    "won": {
+      "title": "Won vehicles",
+      "subtitle": "Coordinate delivery and payment directly with the seller.",
+      "columns": {
+        "vehicle": "Vehicle",
+        "finalPrice": "Final price",
+        "endedAt": "Ended",
+        "seller": "Seller"
+      },
+      "empty": "You haven't won any auctions yet."
+    },
     "auctions": {
       "title": "Auctions",
       "tabs": {
