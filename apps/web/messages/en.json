@@ -226,6 +226,50 @@
       }
     }
   },
+  "buyer": {
+    "auctions": {
+      "title": "Auctions",
+      "tabs": {
+        "all": "All",
+        "closing": "Closing soon",
+        "favorites": "Favorites"
+      },
+      "empty": "No active auctions at this time.",
+      "emptyFavorites": "You have no auctions in your favorites.",
+      "currentBid": "Current bid",
+      "startingPrice": "Starting price",
+      "ends": "Closes",
+      "bidCount": "{count, plural, =0 {no bids} =1 {1 bid} other {# bids}}",
+      "addFavorite": "Add to favorites",
+      "removeFavorite": "Remove from favorites",
+      "status": {
+        "scheduled": "Scheduled",
+        "live": "Live",
+        "ended": "Ended",
+        "cancelled": "Cancelled"
+      },
+      "detail": {
+        "back": "← Auctions",
+        "specs": "Specifications",
+        "make": "Make",
+        "model": "Model",
+        "year": "Year",
+        "mileage": "Mileage",
+        "transmission": "Transmission",
+        "fuelType": "Fuel type",
+        "color": "Color",
+        "condition": "Condition",
+        "vin": "VIN",
+        "description": "Description",
+        "bidsTitle": "Bids (live)",
+        "noBidsYet": "No bids yet. Be the first (Plan 6).",
+        "bidPlaceholderTitle": "Place a bid (coming soon)",
+        "bidPlaceholderBody": "The bidding system will be enabled in Plan 6.",
+        "timeLeft": "Time remaining",
+        "startingPrice": "Starting price"
+      }
+    }
+  },
   "admin": {
     "nav": {
       "home": "Home",

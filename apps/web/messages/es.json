@@ -226,6 +226,50 @@
       }
     }
   },
+  "buyer": {
+    "auctions": {
+      "title": "Subastas",
+      "tabs": {
+        "all": "Todas",
+        "closing": "Cierran pronto",
+        "favorites": "Favoritos"
+      },
+      "empty": "No hay subastas activas en este momento.",
+      "emptyFavorites": "No tienes subastas en favoritos.",
+      "currentBid": "Puja actual",
+      "startingPrice": "Precio inicial",
+      "ends": "Cierra",
+      "bidCount": "{count, plural, =0 {sin pujas} =1 {1 puja} other {# pujas}}",
+      "addFavorite": "Agregar a favoritos",
+      "removeFavorite": "Quitar de favoritos",
+      "status": {
+        "scheduled": "Programada",
+        "live": "En curso",
+        "ended": "Finalizada",
+        "cancelled": "Cancelada"
+      },
+      "detail": {
+        "back": "← Subastas",
+        "specs": "Especificaciones",
+        "make": "Marca",
+        "model": "Modelo",
+        "year": "Año",
+        "mileage": "Kilometraje",
+        "transmission": "Transmisión",
+        "fuelType": "Combustible",
+        "color": "Color",
+        "condition": "Condición",
+        "vin": "VIN",
+        "description": "Descripción",
+        "bidsTitle": "Pujas (en vivo)",
+        "noBidsYet": "Aún no hay pujas. Sé el primero (Plan 6).",
+        "bidPlaceholderTitle": "Pujar (próximamente)",
+        "bidPlaceholderBody": "El sistema de pujas se habilita en el Plan 6.",
+        "timeLeft": "Tiempo restante",
+        "startingPrice": "Precio inicial"
+      }
+    }
+  },
   "admin": {
     "nav": {
       "home": "Inicio",

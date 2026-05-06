@@ -1,15 +1,34 @@
-import { requireRole } from '@/lib/auth/server';
+import { getCurrentUser } from '@/lib/auth/server';
+import { listPublicAuctions, type CatalogTab } from '@/lib/buyer/list-public-auctions';
+import { loadFavorites } from '@/lib/buyer/load-favorites';
+import { AuctionsGrid } from './auctions-grid';
 
-export default async function BuyerAuctionsHome({
-  params: { locale },
-}: {
+interface PageProps {
   params: { locale: string };
-}) {
-  await requireRole(locale, ['admin', 'staff', 'buyer']);
+  searchParams?: { tab?: string };
+}
+
+export default async function BuyerAuctionsCatalog({
+  params: { locale },
+  searchParams,
+}: PageProps) {
+  const user = await getCurrentUser(locale);
+  const tab: CatalogTab =
+    searchParams?.tab === 'closing' || searchParams?.tab === 'favorites' ? searchParams.tab : 'all';
+
+  const favorites = await loadFavorites(user.uid);
+  const items = await listPublicAuctions({
+    tab,
+    ...(tab === 'favorites' && { favorites }),
+  });
+
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold text-text-strong">Subastas</h1>
-      <p className="text-text-muted mt-2">Catálogo de subastas. Plan 5.</p>
-    </main>
+    <AuctionsGrid
+      locale={locale}
+      items={items}
+      currentTab={tab}
+      favorites={favorites}
+      buyerUid={user.uid}
+    />
   );
 }
