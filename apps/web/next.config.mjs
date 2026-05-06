@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
@@ -18,4 +19,12 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+const withSentry = (cfg) =>
+  withSentryConfig(cfg, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: 'carbid-web',
+    disableLogger: true,
+  });
+
+export default withSentry(withNextIntl(nextConfig));

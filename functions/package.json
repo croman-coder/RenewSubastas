@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@carbid/shared-types": "workspace:*",
+    "@sentry/node": "^10.51.0",
     "firebase-admin": "^12.1.0",
     "firebase-functions": "^5.0.0",
     "resend": "^6.12.2",
