@@ -21,7 +21,7 @@ export function BidsPerDayChart({ data }: Props) {
   const formatted = data.map((d) => ({ ...d, label: d.date.slice(5) }));
 
   return (
-    <div className="border border-text-subtle/20 rounded-lg p-4 space-y-3">
+    <div className="border border-text-subtle/20 rounded-lg p-4 space-y-3 transition-shadow duration-200 hover:shadow-md animate-in fade-in duration-500">
       <h2 className="text-sm font-medium text-text-strong">{t('bidsPerDay')}</h2>
       {totalBids === 0 ? (
         <p className="text-text-muted text-sm py-8 text-center">—</p>

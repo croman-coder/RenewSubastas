@@ -14,7 +14,10 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
+      <header className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
+        <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
+        <p className="text-sm text-text-muted">{t('subtitle')}</p>
+      </header>
       <KpiCards
         usersTotal={usersTotal}
         liveAuctions={s.liveAuctions}

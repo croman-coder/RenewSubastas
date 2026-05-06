@@ -333,6 +333,7 @@
   "admin": {
     "home": {
       "title": "Home",
+      "subtitle": "Current platform status overview.",
       "kpis": {
         "activeUsers": "Active users",
         "liveAuctions": "Live auctions",

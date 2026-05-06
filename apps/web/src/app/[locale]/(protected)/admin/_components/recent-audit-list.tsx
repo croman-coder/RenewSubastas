@@ -17,7 +17,7 @@ interface Props {
 export function RecentAuditList({ locale, items }: Props) {
   const t = useTranslations('admin.home');
   return (
-    <div className="border border-text-subtle/20 rounded-lg p-4 space-y-3">
+    <div className="border border-text-subtle/20 rounded-lg p-4 space-y-3 transition-shadow duration-200 hover:shadow-md animate-in fade-in duration-500">
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-text-strong">{t('recentAudit')}</h2>
         <Link
