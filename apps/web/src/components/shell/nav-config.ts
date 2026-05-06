@@ -56,7 +56,8 @@ export function getNavItems(role: Role, locale: string, t: T): NavItem[] {
   }
   // buyer
   return [
-    { href: `/${locale}/auctions`, label: t.buyer.catalog, icon: 'gavel', exact: true },
+    { href: `/${locale}/buyer`, label: 'Inicio', icon: 'home', exact: true },
+    { href: `/${locale}/auctions`, label: t.buyer.catalog, icon: 'gavel' },
     { href: `/${locale}/buyer/bids`, label: t.buyer.bids, icon: 'heart' },
     { href: `/${locale}/buyer/won`, label: t.buyer.won, icon: 'trophy' },
   ];

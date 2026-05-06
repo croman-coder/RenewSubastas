@@ -6,5 +6,5 @@ export type Role = 'admin' | 'staff' | 'buyer';
 export const ROLE_HOME: Record<Role, string> = {
   admin: '/admin',
   staff: '/staff',
-  buyer: '/auctions',
+  buyer: '/buyer',
 };

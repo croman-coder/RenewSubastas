@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Calculator, ChevronDown } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -101,7 +101,6 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
         <Select value={String(term)} onValueChange={(v) => setTerm(Number(v))}>
           <SelectTrigger className="h-11 rounded-xl bg-bg-deep/60 border-text-subtle/20 hover:border-copper/40 focus:ring-copper/30 transition-colors text-base font-medium num-tab">
             <SelectValue />
-            <ChevronDown className="w-4 h-4 opacity-60" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             {sortedTerms.map((months) => (
