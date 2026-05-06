@@ -41,6 +41,11 @@ yarn-debug.log*
 # LibreOffice/OpenOffice lock files
 .~lock.*#
 
+# Firebase service account keys — NEVER commit these
+*firebase-adminsdk*.json
+*-sa.json
+*-service-account*.json
+
 # tests
 coverage/
 playwright-report/
