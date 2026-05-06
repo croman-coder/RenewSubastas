@@ -8,7 +8,7 @@ import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Trophy, Gavel } from 'lucide-react';
 
 interface Props {
   auctionId: string;
@@ -64,71 +64,102 @@ export function BidPanel({
 
   if (!isLive) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t('title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-text-muted">{t('errors.notLive')}</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="w-7 h-7 rounded-md bg-zinc-500/15 text-zinc-400 grid place-items-center">
+            <Gavel className="w-4 h-4" strokeWidth={2.5} />
+          </span>
+          <h3 className="text-sm font-semibold tracking-tight text-text-strong">{t('title')}</h3>
+        </div>
+        <p className="text-sm text-text-muted">{t('errors.notLive')}</p>
+      </div>
     );
   }
 
   const quickIncrements = [minRequired, minRequired + bidIncrement, minRequired + bidIncrement * 2];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t('title')}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isWinning && <p className="text-sm text-success font-medium">{t('winning')}</p>}
-        <p className="text-xs text-text-muted">
-          {t('minRequired', { amount: minRequired.toLocaleString() })} ·{' '}
-          {t('increment', { amount: bidIncrement.toLocaleString() })}
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          {quickIncrements.map((amt) => (
-            <Button
-              key={amt}
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => placeBid(amt)}
-              className="num-tab"
-            >
-              USD {amt.toLocaleString()}
-            </Button>
-          ))}
-        </div>
-        {allowManualIncrement && (
-          <div className="space-y-2 pt-2 border-t border-text-subtle/20">
-            <Label htmlFor="manual">{t('amount')}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="manual"
-                type="number"
-                step="1"
-                value={manual}
-                onChange={(e) => setManual(e.target.value)}
-                className="num-tab"
+    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="w-7 h-7 rounded-md bg-copper/15 text-copper grid place-items-center">
+          <Gavel className="w-4 h-4" strokeWidth={2.5} />
+        </span>
+        <h3 className="text-sm font-semibold tracking-tight text-text-strong">{t('title')}</h3>
+      </div>
+
+      {isWinning && (
+        <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 animate-in fade-in zoom-in-95 duration-300">
+          <div
+            aria-hidden
+            className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/20 blur-2xl pointer-events-none"
+          />
+          <div className="relative flex items-center gap-3">
+            <span className="w-9 h-9 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
+              <Trophy
+                className="w-5 h-5 text-emerald-300"
+                strokeWidth={2.5}
+                style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
               />
-              <Button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  const n = Number(manual);
-                  if (Number.isFinite(n)) placeBid(n);
-                }}
+            </span>
+            <div className="min-w-0">
+              <p
+                className="text-base sm:text-lg font-bold tracking-tight text-emerald-300 leading-tight"
+                style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
               >
-                {busy ? t('submitting') : t('submit')}
-              </Button>
+                {t('winning')}
+              </p>
+              <p className="text-xs text-emerald-300/70 mt-0.5">Sos el mejor postor por ahora</p>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+
+      <p className="text-xs text-text-muted num-tab">
+        Mínimo:{' '}
+        <span className="text-text-strong font-medium">USD {minRequired.toLocaleString()}</span> ·
+        Incremento:{' '}
+        <span className="text-text-strong font-medium">USD {bidIncrement.toLocaleString()}</span>
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {quickIncrements.map((amt) => (
+          <Button
+            key={amt}
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => placeBid(amt)}
+            className="num-tab"
+          >
+            USD {amt.toLocaleString()}
+          </Button>
+        ))}
+      </div>
+      {allowManualIncrement && (
+        <div className="space-y-2 pt-3 border-t border-text-subtle/15">
+          <Label htmlFor="manual">{t('amount')}</Label>
+          <div className="flex gap-2">
+            <Input
+              id="manual"
+              type="number"
+              step="1"
+              value={manual}
+              onChange={(e) => setManual(e.target.value)}
+              className="num-tab"
+            />
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                const n = Number(manual);
+                if (Number.isFinite(n)) placeBid(n);
+              }}
+            >
+              {busy ? t('submitting') : t('submit')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

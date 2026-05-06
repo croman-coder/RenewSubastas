@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react';
 import { collection, doc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useTranslations } from 'next-intl';
+import { ArrowLeft, Clock, Flame } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
 import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
@@ -108,18 +107,25 @@ export function AuctionDetailView({
   const displayPrice = live.currentBid > 0 ? live.currentBid : initial.startingPrice;
   const description =
     locale === 'en' && initial.descriptionEn ? initial.descriptionEn : initial.descriptionEs;
+  const isLive = live.status === 'live';
+  const isUrgent = isLive && remainingMs > 0 && remainingMs < 60 * 60 * 1000;
+  const isCritical = isLive && remainingMs > 0 && remainingMs < 60 * 1000;
 
   return (
     <div className="space-y-6">
-      <a href={`/${locale}/auctions`} className="text-sm text-text-muted hover:text-text-strong">
+      <a
+        href={`/${locale}/auctions`}
+        className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-copper transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
         {t('back')}
       </a>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:gap-8">
         <div className="space-y-6">
           {/* Photo gallery */}
           <div className="space-y-2">
-            <div className="aspect-[4/3] bg-bg-deep rounded-lg overflow-hidden">
+            <div className="aspect-[4/3] bg-bg-deep rounded-2xl overflow-hidden ring-1 ring-text-subtle/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.5)]">
               {initial.images[activeImg] ? (
                 <img
                   src={initial.images[activeImg].url}
@@ -140,8 +146,10 @@ export function AuctionDetailView({
                     type="button"
                     onClick={() => setActiveImg(i)}
                     className={
-                      'aspect-square rounded overflow-hidden border-2 ' +
-                      (i === activeImg ? 'border-copper' : 'border-transparent')
+                      'aspect-square rounded-lg overflow-hidden ring-2 transition-all duration-200 ' +
+                      (i === activeImg
+                        ? 'ring-copper scale-[0.98]'
+                        : 'ring-transparent opacity-70 hover:opacity-100')
                     }
                   >
                     <img src={img.thumbnailUrl} alt="" className="w-full h-full object-cover" />
@@ -151,18 +159,20 @@ export function AuctionDetailView({
             )}
           </div>
 
-          <header>
-            <h1 className="text-3xl font-semibold text-text-strong">
+          <header className="space-y-3">
+            <div className="flex items-center gap-2">
+              <StatusChip status={live.status} label={tStatus(live.status)} />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-strong leading-[1.05]">
               {initial.make} {initial.model}{' '}
-              <span className="num-tab text-text-muted">{initial.year}</span>
+              <span className="num-tab text-text-muted font-light">{initial.year}</span>
             </h1>
-            <Badge variant="secondary" className="mt-2">
-              {tStatus(live.status)}
-            </Badge>
           </header>
 
           <section>
-            <h2 className="text-lg font-medium text-text-strong mb-3">{t('specs')}</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
+              {t('specs')}
+            </h2>
             <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <Spec label={t('transmission')} value={initial.transmission} />
               <Spec label={t('fuelType')} value={initial.fuelType} />
@@ -176,37 +186,43 @@ export function AuctionDetailView({
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-text-strong mb-2">{t('description')}</h2>
-            <p className="whitespace-pre-line text-text-strong">{description}</p>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-2">
+              {t('description')}
+            </h2>
+            <p className="whitespace-pre-line text-text-strong text-base leading-relaxed">
+              {description}
+            </p>
           </section>
         </div>
 
         {/* Sticky bid panel */}
-        <aside className="lg:sticky lg:top-6 self-start space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-text-muted font-normal">
-                {t('timeLeft')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-3xl font-semibold num-tab text-copper">
-                {formatRemaining(remainingMs)}
-              </p>
-              <Separator />
-              <div>
-                <p className="text-sm text-text-muted">
-                  USD {initial.startingPrice.toLocaleString()} ({t('startingPrice')})
-                </p>
-                <p className="text-3xl font-semibold num-tab">
-                  USD {displayPrice.toLocaleString()}
-                </p>
-                <p className="text-xs text-text-muted mt-1">
-                  {live.bidCount} pujas · incremento USD {initial.bidIncrement.toLocaleString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <aside className="lg:sticky lg:top-20 self-start space-y-4">
+          {/* Countdown — flashy neon-style card */}
+          <CountdownCard
+            label={t('timeLeft')}
+            remainingMs={remainingMs}
+            urgent={isUrgent}
+            critical={isCritical}
+            isLive={isLive}
+          />
+
+          {/* Price card */}
+          <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
+              {live.currentBid > 0 ? 'Puja actual' : t('startingPrice')}
+            </p>
+            <p className="text-4xl sm:text-5xl font-bold tracking-tight num-tab text-text-strong">
+              USD {displayPrice.toLocaleString()}
+            </p>
+            <p className="text-xs text-text-muted num-tab">
+              {live.currentBid > 0 && (
+                <span>Inicial: USD {initial.startingPrice.toLocaleString()} · </span>
+              )}
+              {live.bidCount} {live.bidCount === 1 ? 'puja' : 'pujas'} · incremento USD{' '}
+              {initial.bidIncrement.toLocaleString()}
+            </p>
+          </div>
+
           <BidPanel
             auctionId={initial.id}
             status={live.status}
@@ -229,18 +245,31 @@ export function AuctionDetailView({
       <Separator />
 
       <section>
-        <h2 className="text-lg font-medium text-text-strong mb-3">{t('bidsTitle')}</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
+          {t('bidsTitle')}
+        </h2>
         {bids.length === 0 ? (
           <p className="text-text-muted text-sm">{t('noBidsYet')}</p>
         ) : (
-          <ul className="divide-y divide-text-subtle/20 border border-text-subtle/20 rounded">
-            {bids.map((b) => (
-              <li key={b.id} className="flex items-center justify-between p-3 text-sm">
-                <span>
-                  {b.buyerSnapshot.firstName} {b.buyerSnapshot.lastInitial}.
+          <ul className="divide-y divide-text-subtle/15 rounded-xl border border-text-subtle/15 bg-bg-elev/40 overflow-hidden">
+            {bids.map((b, i) => (
+              <li
+                key={b.id}
+                className={
+                  'flex items-center justify-between p-3 text-sm transition-colors hover:bg-bg-deep/40 ' +
+                  (i === 0 ? 'bg-copper/5' : '')
+                }
+              >
+                <span className="flex items-center gap-2">
+                  {i === 0 && <Flame className="w-3.5 h-3.5 text-copper" />}
+                  <span className={i === 0 ? 'text-text-strong font-medium' : 'text-text-strong'}>
+                    {b.buyerSnapshot.firstName} {b.buyerSnapshot.lastInitial}.
+                  </span>
                 </span>
                 <span className="num-tab">
-                  USD {b.amount.toLocaleString()}
+                  <span className={i === 0 ? 'font-semibold text-copper' : ''}>
+                    USD {b.amount.toLocaleString()}
+                  </span>
                   <span className="text-text-muted text-xs ml-2">
                     {new Date(b.createdAt).toLocaleTimeString(locale)}
                   </span>
@@ -256,21 +285,175 @@ export function AuctionDetailView({
 
 function Spec({ label, value }: { label: string; value: string | number }) {
   return (
-    <div>
-      <dt className="text-text-muted text-xs uppercase tracking-wide">{label}</dt>
-      <dd className="text-text-strong">{value}</dd>
+    <div className="rounded-lg border border-text-subtle/10 bg-bg-elev/30 px-3 py-2.5">
+      <dt className="text-text-muted text-[10px] uppercase tracking-[0.1em] font-semibold">
+        {label}
+      </dt>
+      <dd className="text-text-strong text-sm mt-0.5 truncate">{value}</dd>
     </div>
   );
 }
 
-function formatRemaining(ms: number): string {
-  if (ms <= 0) return '00:00:00';
-  const total = Math.floor(ms / 1000);
+function StatusChip({ status, label }: { status: string; label: string }) {
+  const map: Record<string, string> = {
+    live: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    scheduled: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    ended: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30',
+    cancelled: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+  };
+  const cls = map[status] ?? map['ended']!;
+  return (
+    <span
+      className={
+        'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 ' +
+        'text-[11px] uppercase tracking-[0.08em] font-semibold ' +
+        'ring-1 ring-inset ' +
+        cls
+      }
+    >
+      {status === 'live' && (
+        <span className="relative flex w-1.5 h-1.5">
+          <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400/70 animate-ping" />
+          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-emerald-400" />
+        </span>
+      )}
+      {label}
+    </span>
+  );
+}
+
+function CountdownCard({
+  label,
+  remainingMs,
+  urgent,
+  critical,
+  isLive,
+}: {
+  label: string;
+  remainingMs: number;
+  urgent: boolean;
+  critical: boolean;
+  isLive: boolean;
+}) {
+  const ended = remainingMs <= 0;
+  const total = Math.max(0, Math.floor(remainingMs / 1000));
   const days = Math.floor(total / 86400);
   const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  if (days > 0) return `${days}d ${pad(h)}:${pad(m)}:${pad(s)}`;
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+  // Color theme switches as urgency rises.
+  const tone = ended
+    ? {
+        glow: 'shadow-none',
+        text: 'text-text-muted',
+        accent: 'from-zinc-500/0 via-zinc-400/30 to-zinc-500/0',
+      }
+    : critical
+      ? {
+          glow: 'shadow-[0_0_40px_-4px_rgba(244,63,94,0.55)]',
+          text: 'text-rose-400',
+          accent: 'from-rose-500/0 via-rose-400/70 to-rose-500/0',
+        }
+      : urgent
+        ? {
+            glow: 'shadow-[0_0_36px_-6px_rgba(251,146,60,0.5)]',
+            text: 'text-amber-300',
+            accent: 'from-amber-500/0 via-amber-400/70 to-amber-500/0',
+          }
+        : {
+            glow: 'shadow-[0_0_36px_-6px_rgba(205,155,79,0.45)]',
+            text: 'text-copper',
+            accent: 'from-copper/0 via-copper/70 to-copper/0',
+          };
+
+  const showDays = days > 0 && !ended;
+
+  return (
+    <div
+      className={
+        'relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev/60 p-5 ' +
+        'transition-shadow duration-500 ' +
+        tone.glow
+      }
+    >
+      {/* Top hairline gradient accent */}
+      <div
+        aria-hidden
+        className={'absolute inset-x-0 top-0 h-px bg-gradient-to-r ' + tone.accent}
+      />
+      {/* Subtle radial glow background */}
+      {!ended && (
+        <div
+          aria-hidden
+          className={
+            'absolute -top-12 -right-12 w-40 h-40 rounded-full blur-3xl pointer-events-none ' +
+            (critical ? 'bg-rose-500/15' : urgent ? 'bg-amber-500/15' : 'bg-copper/15')
+          }
+        />
+      )}
+
+      <div className="relative space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Clock
+            className={'w-3.5 h-3.5 ' + tone.text + (critical ? ' animate-pulse' : '')}
+            strokeWidth={2.5}
+          />
+          <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-text-muted">
+            {label}
+          </p>
+        </div>
+
+        {ended ? (
+          <p className="text-2xl font-bold tracking-tight text-text-muted num-tab">Finalizada</p>
+        ) : (
+          <div className="flex items-end gap-3 flex-wrap">
+            {showDays && <DigitGroup value={days} unit="d" tone={tone.text} small />}
+            <DigitGroup value={h} unit="h" tone={tone.text} />
+            <DigitGroup value={m} unit="m" tone={tone.text} />
+            <DigitGroup value={s} unit="s" tone={tone.text} pulsing={isLive && critical} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DigitGroup({
+  value,
+  unit,
+  tone,
+  small,
+  pulsing,
+}: {
+  value: number;
+  unit: string;
+  tone: string;
+  small?: boolean;
+  pulsing?: boolean;
+}) {
+  const padded = String(value).padStart(2, '0');
+  return (
+    <div className="flex items-baseline gap-0.5">
+      <span
+        className={
+          'font-bold num-tab tracking-tight tabular-nums ' +
+          (small ? 'text-3xl' : 'text-5xl sm:text-[3.5rem] sm:leading-[1]') +
+          ' ' +
+          tone +
+          (pulsing ? ' animate-pulse' : '')
+        }
+        style={{
+          textShadow: pulsing
+            ? '0 0 20px currentColor, 0 0 40px currentColor'
+            : '0 0 24px currentColor',
+        }}
+      >
+        {padded}
+      </span>
+      <span className={'text-xs font-semibold uppercase tracking-wider ' + tone + '/70'}>
+        {unit}
+      </span>
+    </div>
+  );
 }

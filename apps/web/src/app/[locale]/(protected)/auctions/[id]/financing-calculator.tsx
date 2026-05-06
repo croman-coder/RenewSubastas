@@ -94,7 +94,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
   const principal = pricePyg - cappedDown;
   const monthly = amortize(principal, term, config.annualInterestRate);
   const totalToPay = monthly * term + cappedDown;
-  const totalInterest = totalToPay - pricePyg;
+  // totalInterest intentionally not displayed — operator preference.
 
   const notes = locale === 'en' && config.notesEn ? config.notesEn : config.notesEs;
 
@@ -153,7 +153,6 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
             emphasis
           />
           <Row label="Total a pagar" value={`Gs. ${fmtPyg(totalToPay)}`} />
-          <Row label="Intereses" value={`Gs. ${fmtPyg(totalInterest)}`} />
         </dl>
 
         {usingPlaceholder && (
