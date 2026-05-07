@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
+import { formatLongDatePy } from '@/lib/format/date';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -25,11 +26,7 @@ export default async function BuyerHome({ params: { locale } }: PageProps) {
   const audience = user.audience ?? 'retail';
   const s = await loadBuyerStats(user.uid, audience);
 
-  const dateStr = new Date().toLocaleDateString(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateStr = formatLongDatePy(locale);
 
   return (
     <div className="space-y-8">

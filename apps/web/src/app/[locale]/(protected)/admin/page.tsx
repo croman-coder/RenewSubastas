@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { loadDashboardStats } from '@/lib/admin/load-dashboard-stats';
+import { formatLongDatePy } from '@/lib/format/date';
 import { KpiCards } from './_components/kpi-cards';
 import { AuctionsByStatusChart } from './_components/auctions-by-status-chart';
 import { BidsPerDayChart } from './_components/bids-per-day-chart';
@@ -11,12 +12,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
   const s = await loadDashboardStats();
 
   const usersTotal = s.usersByRole.admin + s.usersByRole.staff + s.usersByRole.buyer;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateStr = formatLongDatePy(locale);
 
   return (
     <div className="space-y-8">

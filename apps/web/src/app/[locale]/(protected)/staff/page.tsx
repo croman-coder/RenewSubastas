@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadStaffStats } from '@/lib/staff/load-staff-stats';
+import { formatLongDatePy } from '@/lib/format/date';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -25,11 +26,7 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
     s.vehicles.draft + s.vehicles.ready + s.vehicles.inAuction + s.vehicles.sold;
   const totalAuctions = s.auctions.scheduled + s.auctions.live + s.auctions.ended;
 
-  const dateStr = new Date().toLocaleDateString(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateStr = formatLongDatePy(locale);
 
   return (
     <div className="space-y-8">
