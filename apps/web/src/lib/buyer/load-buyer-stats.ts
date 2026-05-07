@@ -75,21 +75,53 @@ export async function loadBuyerStats(
       .count()
       .get();
 
-  const [liveAuctions, scheduledAuctions, endedAuctions, myWinningCount, myWonCount] =
+  // The "my winning / my won" buckets are post-filtered by audience because a
+  // buyer who switched segments (or who bid before the audience field
+  // existed) shouldn't keep seeing opposite-audience inventory in their
+  // dashboard. Counts come from the same fetch so they always agree with the
+  // visible list.
+  const [liveAuctions, scheduledAuctions, endedAuctions, myWinningDocs, myWonDocs] =
     await Promise.all([
       safeCount(a('live')),
       safeCount(a('scheduled')),
       safeCount(a('ended')),
-      safeCount(db.collection('auctions').where('currentBidderUid', '==', uid).count().get()),
-      safeCount(
+      safe(
+        db
+          .collection('auctions')
+          .where('currentBidderUid', '==', uid)
+          .where('status', '==', 'live')
+          .get()
+          .then((s) =>
+            s.docs.filter((d) => {
+              const docAudience =
+                (d.data()['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+              return docAudience === audience;
+            }),
+          ),
+        [] as FirebaseFirestore.QueryDocumentSnapshot[],
+      ),
+      safe(
         db
           .collection('auctions')
           .where('winnerUid', '==', uid)
           .where('status', '==', 'ended')
-          .count()
-          .get(),
+          .get()
+          .then((s) =>
+            s.docs.filter((d) => {
+              const docAudience =
+                (d.data()['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail';
+              return docAudience === audience;
+            }),
+          ),
+        [] as FirebaseFirestore.QueryDocumentSnapshot[],
       ),
     ]);
+  const myWinningCount = myWinningDocs.length;
+  const myWonCount = myWonDocs.length;
+  const myWonGmvUsd = myWonDocs.reduce(
+    (acc, d) => acc + ((d.data()['finalPrice'] as number | undefined) ?? 0),
+    0,
+  );
 
   // Distinct auctions the buyer has placed any bid on.
   const myActiveBidsCount = await safe(
@@ -106,20 +138,6 @@ export async function loadBuyerStats(
         });
         return ids.size;
       }),
-    0,
-  );
-
-  // Sum of GMV in won auctions (USD).
-  const myWonGmvUsd = await safe(
-    db
-      .collection('auctions')
-      .where('winnerUid', '==', uid)
-      .where('status', '==', 'ended')
-      .select('finalPrice')
-      .get()
-      .then((s) =>
-        s.docs.reduce((acc, d) => acc + ((d.data()['finalPrice'] as number | undefined) ?? 0), 0),
-      ),
     0,
   );
 
@@ -176,32 +194,22 @@ export async function loadBuyerStats(
     [] as BuyerStats['closingSoon'],
   );
 
-  // Auctions the buyer is currently winning (currentBidderUid=me, status=live).
-  const myWinning = await safe(
-    db
-      .collection('auctions')
-      .where('currentBidderUid', '==', uid)
-      .where('status', '==', 'live')
-      .limit(5)
-      .get()
-      .then((s) =>
-        s.docs.map((d) => {
-          const data = d.data();
-          const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
-          return {
-            auctionId: d.id,
-            make: (v['make'] as string) ?? '',
-            model: (v['model'] as string) ?? '',
-            year: (v['year'] as number) ?? 0,
-            thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
-            currentBid: (data['currentBid'] as number) ?? 0,
-            endsAtMs:
-              (data['endsAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
-          };
-        }),
-      ),
-    [] as BuyerStats['myWinning'],
-  );
+  // Auctions the buyer is currently winning, scoped to their audience and
+  // capped at 5 for the dashboard panel. Reuses myWinningDocs so the count
+  // and the visible list stay in sync.
+  const myWinning: BuyerStats['myWinning'] = myWinningDocs.slice(0, 5).map((d) => {
+    const data = d.data();
+    const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
+    return {
+      auctionId: d.id,
+      make: (v['make'] as string) ?? '',
+      model: (v['model'] as string) ?? '',
+      year: (v['year'] as number) ?? 0,
+      thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
+      currentBid: (data['currentBid'] as number) ?? 0,
+      endsAtMs: (data['endsAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
+    };
+  });
 
   return {
     liveAuctions,

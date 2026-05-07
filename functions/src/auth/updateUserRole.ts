@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { RoleSchema, UserStatusSchema, AudienceSchema } from '../_shared/index.js';
-import { adminDb } from '../lib/admin.js';
+import { adminAuth, adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { loadAppConfig } from '../lib/config.js';
 import { writeAuditLog } from '../lib/audit.js';
@@ -91,6 +91,26 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
     status: nextStatus,
     ...(nextAudience ? { audience: nextAudience } : {}),
   });
+
+  // Mirror the status to Firebase Auth so a reactivated user can actually
+  // sign in (deleteUser flips `disabled: true`; without this, Firestore says
+  // active but Auth keeps blocking the login). Also revoke refresh tokens on
+  // disable so any active session is terminated immediately.
+  if (input.status !== undefined && input.status !== before['status']) {
+    try {
+      await adminAuth().updateUser(input.uid, { disabled: nextStatus === 'disabled' });
+      if (nextStatus === 'disabled') {
+        await adminAuth().revokeRefreshTokens(input.uid);
+      }
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code !== 'auth/user-not-found') throw err;
+    }
+  }
+
+  const wasReactivated =
+    input.status === 'active' && (before['status'] === 'disabled' || before['deletedAt']);
+
   await ref.update({
     ...(input.role !== undefined && { role: input.role }),
     ...(input.status !== undefined && { status: input.status }),
@@ -99,6 +119,7 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
       : nextRole !== 'buyer'
         ? { 'profile.audience': FieldValue.delete() }
         : {}),
+    ...(wasReactivated && { deletedAt: FieldValue.delete() }),
     updatedAt: FieldValue.serverTimestamp(),
   });
 
