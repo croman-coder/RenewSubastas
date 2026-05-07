@@ -430,6 +430,7 @@
         "disable": "Desactivar",
         "enable": "Reactivar",
         "delete": "Eliminar",
+        "hardDelete": "Eliminar definitivamente",
         "resetPassword": "Generar link de reseteo"
       },
       "empty": "No hay usuarios que coincidan con los filtros.",
@@ -465,6 +466,9 @@
         "saved": "Cambios guardados.",
         "deleteAccount": "Eliminar cuenta",
         "deleteConfirmText": "Esta acción es irreversible. ¿Eliminar este usuario?",
+        "hardDeletePrompt": "Vas a borrar PERMANENTEMENTE a {email}. Se libera el email para que pueda registrarse otra persona y NO se puede deshacer.\n\nEscribí el email exacto para confirmar:",
+        "hardDeleteMismatch": "El email no coincide. Cancelado.",
+        "hardDeleteSuccess": "Usuario eliminado definitivamente.",
         "errors": { "generic": "Error al ejecutar la acción." }
       }
     }

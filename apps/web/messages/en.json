@@ -430,6 +430,7 @@
         "disable": "Disable",
         "enable": "Enable",
         "delete": "Delete",
+        "hardDelete": "Delete permanently",
         "resetPassword": "Generate reset link"
       },
       "empty": "No users match the current filters.",
@@ -465,6 +466,9 @@
         "saved": "Changes saved.",
         "deleteAccount": "Delete account",
         "deleteConfirmText": "This action is irreversible. Delete this user?",
+        "hardDeletePrompt": "You are PERMANENTLY deleting {email}. The email will be freed for someone else to register and this CANNOT be undone.\n\nType the email exactly to confirm:",
+        "hardDeleteMismatch": "Email did not match. Cancelled.",
+        "hardDeleteSuccess": "User permanently deleted.",
         "errors": { "generic": "Error executing the action." }
       }
     }

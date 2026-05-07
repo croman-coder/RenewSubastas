@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,28 @@ export function UserRowActions({ locale, user }: { locale: string; user: UserLis
       toast.error((e as Error).message ?? tDetail('errors.generic'));
     }
   }
+
+  // Hard-delete is a permanent destruction (Auth + Firestore). Two-step
+  // safety: the user must already be soft-disabled, and the admin types the
+  // email exactly to confirm. Only surfaced on already-disabled non-admin
+  // accounts so it's nearly impossible to fire by accident.
+  async function hardDeleteUser() {
+    const typed = window.prompt(tDetail('hardDeletePrompt', { email: user.email }));
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== user.email.toLowerCase()) {
+      toast.error(tDetail('hardDeleteMismatch'));
+      return;
+    }
+    try {
+      await httpsCallable(fb.functions, 'hardDeleteUser')({ uid: user.uid });
+      toast.success(tDetail('hardDeleteSuccess'));
+      router.refresh();
+    } catch (e) {
+      toast.error((e as Error).message ?? tDetail('errors.generic'));
+    }
+  }
+
+  const canHardDelete = user.status === 'disabled' && user.role !== 'admin';
 
   async function resetPassword() {
     try {
@@ -74,6 +97,14 @@ export function UserRowActions({ locale, user }: { locale: string; user: UserLis
         <DropdownMenuItem onSelect={deleteUser} className="text-danger">
           {t('delete')}
         </DropdownMenuItem>
+        {canHardDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={hardDeleteUser} className="text-danger font-semibold">
+              {t('hardDelete')}
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
