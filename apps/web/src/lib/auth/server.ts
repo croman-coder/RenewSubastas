@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { getFirestore } from 'firebase-admin/firestore';
 import { adminAuth } from '@/lib/firebase/admin';
 import { getAdminApp } from '@/lib/firebase/admin';
-import { SESSION_COOKIE_NAME, ROLE_HOME, type Role } from './constants';
+import { SESSION_COOKIE_NAME, homeFor, type Role } from './constants';
 
 export interface CurrentUser {
   uid: string;
@@ -74,7 +74,7 @@ export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser>
 
 export async function requireRole(locale: string, allowed: Role[]): Promise<CurrentUser> {
   const user = await getCurrentUser(locale);
-  if (!allowed.includes(user.role)) redirect(`/${locale}${ROLE_HOME[user.role]}`);
+  if (!allowed.includes(user.role)) redirect(`/${locale}${homeFor(user.role, user.audience)}`);
   return user;
 }
 

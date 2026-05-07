@@ -3,11 +3,21 @@ export const SESSION_TTL_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
 
 export type Role = 'admin' | 'staff' | 'buyer';
 
-export const ROLE_HOME: Record<Role, string> = {
-  admin: '/admin',
-  staff: '/staff',
-  // Buyers (retail and wholesale alike) land on /panel — an audience-neutral
-  // path so the URL doesn't say "buyer" while the UI labels them
-  // Retail / Wholesale.
-  buyer: '/panel',
-};
+export type Audience = 'retail' | 'wholesale';
+
+/**
+ * Resolves the post-login destination for a given user.
+ *
+ * Admin and staff have static homes. Buyers land on a path that mirrors
+ * their audience (`/retail` or `/wholesale`) so the URL bar always agrees
+ * with the chip in the topbar — a wholesale account never sees `/retail`
+ * in the URL and vice-versa.
+ *
+ * Falls back to `/retail` for legacy buyer accounts whose `audience` claim
+ * hasn't been backfilled yet, matching the migration default.
+ */
+export function homeFor(role: Role, audience?: Audience): string {
+  if (role === 'admin') return '/admin';
+  if (role === 'staff') return '/staff';
+  return `/${audience ?? 'retail'}`;
+}

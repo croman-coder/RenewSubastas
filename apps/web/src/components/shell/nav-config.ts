@@ -22,6 +22,7 @@ export interface NavItem {
 }
 
 export type Role = 'admin' | 'staff' | 'buyer';
+export type Audience = 'retail' | 'wholesale';
 
 interface T {
   admin: {
@@ -37,7 +38,12 @@ interface T {
   common: { settings: string };
 }
 
-export function getNavItems(role: Role, locale: string, t: T): NavItem[] {
+export function getNavItems(
+  role: Role,
+  locale: string,
+  t: T,
+  audience: Audience = 'retail',
+): NavItem[] {
   if (role === 'admin') {
     return [
       { href: `/${locale}/admin`, label: t.admin.home, icon: 'home', exact: true },
@@ -56,11 +62,12 @@ export function getNavItems(role: Role, locale: string, t: T): NavItem[] {
       { href: `/${locale}/staff/auctions`, label: t.staff.auctions, icon: 'gavel' },
     ];
   }
-  // buyer
+  // buyer — paths follow the buyer's audience so the URL bar matches the
+  // role chip ('Retail' / 'Wholesale').
   return [
-    { href: `/${locale}/panel`, label: 'Inicio', icon: 'home', exact: true },
+    { href: `/${locale}/${audience}`, label: 'Inicio', icon: 'home', exact: true },
     { href: `/${locale}/auctions`, label: t.buyer.catalog, icon: 'gavel' },
-    { href: `/${locale}/panel/bids`, label: t.buyer.bids, icon: 'heart' },
-    { href: `/${locale}/panel/won`, label: t.buyer.won, icon: 'trophy' },
+    { href: `/${locale}/${audience}/bids`, label: t.buyer.bids, icon: 'heart' },
+    { href: `/${locale}/${audience}/won`, label: t.buyer.won, icon: 'trophy' },
   ];
 }

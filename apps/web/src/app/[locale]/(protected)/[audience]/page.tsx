@@ -15,15 +15,14 @@ import { formatLongDatePy } from '@/lib/format/date';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
-  params: { locale: string };
+  params: { locale: string; audience: 'retail' | 'wholesale' };
 }
 
-export default async function BuyerHome({ params: { locale } }: PageProps) {
+export default async function BuyerHome({ params: { locale, audience } }: PageProps) {
+  // The audience is taken from the URL segment, validated by the layout
+  // (any other value falls through to notFound). Stats and links are scoped
+  // to that audience so the dashboard reflects exactly what the URL claims.
   const user = await getCurrentUser(locale);
-  // Stats always scoped to the buyer's audience — wholesale users only see
-  // wholesale auctions, retail only see retail. Default 'retail' for the
-  // edge case of admin/staff opening the buyer dashboard.
-  const audience = user.audience ?? 'retail';
   const s = await loadBuyerStats(user.uid, audience);
 
   const dateStr = formatLongDatePy(locale);
@@ -59,7 +58,7 @@ export default async function BuyerHome({ params: { locale } }: PageProps) {
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/${locale}/panel/bids` as `/${string}`}>
+              <Link href={`/${locale}/${audience}/bids` as `/${string}`}>
                 <Heart className="w-4 h-4 mr-1.5" /> Mis pujas
               </Link>
             </Button>
@@ -113,7 +112,7 @@ export default async function BuyerHome({ params: { locale } }: PageProps) {
           title="Estoy ganando ahora"
           icon={Trophy}
           accent="copper"
-          ctaHref={`/${locale}/panel/bids`}
+          ctaHref={`/${locale}/${audience}/bids`}
           ctaLabel="Ver mis pujas"
         >
           {s.myWinning.length === 0 ? (

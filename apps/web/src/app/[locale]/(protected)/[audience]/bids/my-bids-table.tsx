@@ -16,18 +16,19 @@ import type { MyBidEntry } from '@/lib/buyer/list-my-bids';
 
 interface Props {
   locale: string;
+  audience: 'retail' | 'wholesale';
   items: MyBidEntry[];
   currentTab: 'winning' | 'outbid' | 'won' | 'lost';
 }
 
-export function MyBidsTable({ locale, items, currentTab }: Props) {
+export function MyBidsTable({ locale, audience, items, currentTab }: Props) {
   const t = useTranslations('buyer.bids');
   const tStatus = useTranslations('buyer.auctions.status');
   const router = useRouter();
 
   function setTab(value: string) {
     router.replace(
-      `/${locale}/panel/bids${value === 'winning' ? '' : `?tab=${value}`}` as `/${string}`,
+      `/${locale}/${audience}/bids${value === 'winning' ? '' : `?tab=${value}`}` as `/${string}`,
     );
   }
 

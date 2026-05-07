@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
-import { ROLE_HOME, type Role } from '@/lib/auth/constants';
+import { homeFor, type Audience, type Role } from '@/lib/auth/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,8 +61,8 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         await fb.auth.signOut();
         return;
       }
-      const { role } = (await res.json()) as { role: Role };
-      const target = from && from.startsWith('/') ? from : ROLE_HOME[role];
+      const { role, audience } = (await res.json()) as { role: Role; audience: Audience | null };
+      const target = from && from.startsWith('/') ? from : homeFor(role, audience ?? undefined);
       // Flip to "entering" before the navigation kicks off so the user sees
       // the handoff screen for the entire RSC fetch, not just for the part
       // before router.replace returns.

@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({
       ok: true,
       role: (decoded as { role?: string }).role ?? null,
+      // Echoes the audience claim so the login form can route to the
+      // matching dashboard (/retail or /wholesale) without needing a
+      // second round-trip to read it from Firestore.
+      audience: (decoded as { audience?: 'retail' | 'wholesale' }).audience ?? null,
       uid: decoded.uid,
     });
     res.cookies.set({

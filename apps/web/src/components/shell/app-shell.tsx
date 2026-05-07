@@ -20,27 +20,32 @@ export async function AppShell({ locale, children }: Props) {
 
   const role = user.role as Role;
 
-  const navItems = getNavItems(role, locale, {
-    admin: {
-      home: tAdmin('home'),
-      users: tAdmin('users'),
-      vehicles: tAdmin('vehicles'),
-      auctions: tAdmin('auctions'),
-      audit: tAdmin('audit'),
-      config: tAdmin('config'),
+  const navItems = getNavItems(
+    role,
+    locale,
+    {
+      admin: {
+        home: tAdmin('home'),
+        users: tAdmin('users'),
+        vehicles: tAdmin('vehicles'),
+        auctions: tAdmin('auctions'),
+        audit: tAdmin('audit'),
+        config: tAdmin('config'),
+      },
+      staff: {
+        home: tStaff('home'),
+        vehicles: tStaff('vehicles'),
+        auctions: tStaff('auctions'),
+      },
+      buyer: {
+        catalog: tBuyerAuctions('title'),
+        bids: tBuyer('navBids'),
+        won: tBuyer('navWon'),
+      },
+      common: { settings: tCommon('settings') },
     },
-    staff: {
-      home: tStaff('home'),
-      vehicles: tStaff('vehicles'),
-      auctions: tStaff('auctions'),
-    },
-    buyer: {
-      catalog: tBuyerAuctions('title'),
-      bids: tBuyer('navBids'),
-      won: tBuyer('navWon'),
-    },
-    common: { settings: tCommon('settings') },
-  });
+    user.audience ?? 'retail',
+  );
 
   return (
     <div className="min-h-screen bg-bg-base">

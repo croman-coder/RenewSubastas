@@ -3,11 +3,11 @@ import { listMyBids } from '@/lib/buyer/list-my-bids';
 import { MyBidsTable } from './my-bids-table';
 
 interface Props {
-  params: { locale: string };
+  params: { locale: string; audience: 'retail' | 'wholesale' };
   searchParams?: { tab?: string };
 }
 
-export default async function MyBidsPage({ params: { locale }, searchParams }: Props) {
+export default async function MyBidsPage({ params: { locale, audience }, searchParams }: Props) {
   const user = await getCurrentUser(locale);
   const all = await listMyBids(user.uid);
   const tab = (
@@ -31,5 +31,5 @@ export default async function MyBidsPage({ params: { locale }, searchParams }: P
     return false;
   });
 
-  return <MyBidsTable locale={locale} items={filtered} currentTab={tab} />;
+  return <MyBidsTable locale={locale} audience={audience} items={filtered} currentTab={tab} />;
 }
