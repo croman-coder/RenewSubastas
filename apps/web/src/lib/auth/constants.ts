@@ -6,5 +6,8 @@ export type Role = 'admin' | 'staff' | 'buyer';
 export const ROLE_HOME: Record<Role, string> = {
   admin: '/admin',
   staff: '/staff',
-  buyer: '/buyer',
+  // Buyers (retail and wholesale alike) land on /panel — an audience-neutral
+  // path so the URL doesn't say "buyer" while the UI labels them
+  // Retail / Wholesale.
+  buyer: '/panel',
 };

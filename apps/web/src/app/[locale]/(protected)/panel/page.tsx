@@ -59,7 +59,7 @@ export default async function BuyerHome({ params: { locale } }: PageProps) {
               </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/${locale}/buyer/bids` as `/${string}`}>
+              <Link href={`/${locale}/panel/bids` as `/${string}`}>
                 <Heart className="w-4 h-4 mr-1.5" /> Mis pujas
               </Link>
             </Button>
@@ -113,7 +113,7 @@ export default async function BuyerHome({ params: { locale } }: PageProps) {
           title="Estoy ganando ahora"
           icon={Trophy}
           accent="copper"
-          ctaHref={`/${locale}/buyer/bids`}
+          ctaHref={`/${locale}/panel/bids`}
           ctaLabel="Ver mis pujas"
         >
           {s.myWinning.length === 0 ? (

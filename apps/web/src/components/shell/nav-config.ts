@@ -58,9 +58,9 @@ export function getNavItems(role: Role, locale: string, t: T): NavItem[] {
   }
   // buyer
   return [
-    { href: `/${locale}/buyer`, label: 'Inicio', icon: 'home', exact: true },
+    { href: `/${locale}/panel`, label: 'Inicio', icon: 'home', exact: true },
     { href: `/${locale}/auctions`, label: t.buyer.catalog, icon: 'gavel' },
-    { href: `/${locale}/buyer/bids`, label: t.buyer.bids, icon: 'heart' },
-    { href: `/${locale}/buyer/won`, label: t.buyer.won, icon: 'trophy' },
+    { href: `/${locale}/panel/bids`, label: t.buyer.bids, icon: 'heart' },
+    { href: `/${locale}/panel/won`, label: t.buyer.won, icon: 'trophy' },
   ];
 }

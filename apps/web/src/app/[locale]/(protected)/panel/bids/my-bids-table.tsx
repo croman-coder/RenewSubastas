@@ -27,7 +27,7 @@ export function MyBidsTable({ locale, items, currentTab }: Props) {
 
   function setTab(value: string) {
     router.replace(
-      `/${locale}/buyer/bids${value === 'winning' ? '' : `?tab=${value}`}` as `/${string}`,
+      `/${locale}/panel/bids${value === 'winning' ? '' : `?tab=${value}`}` as `/${string}`,
     );
   }
 
