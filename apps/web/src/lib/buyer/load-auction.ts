@@ -9,6 +9,7 @@ export interface AuctionDetail {
   model: string;
   year: number;
   vin: string | null;
+  licensePlate: string | null;
   mileage: number | null;
   transmission: 'manual' | 'automatic' | 'cvt';
   fuelType: 'gasoline' | 'diesel' | 'hybrid' | 'electric';
@@ -45,6 +46,7 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
     model: (v['model'] as string) ?? '',
     year: (v['year'] as number) ?? 0,
     vin: (v['vin'] as string | undefined) ?? null,
+    licensePlate: (v['licensePlate'] as string | undefined) ?? null,
     mileage: (v['mileage'] as number | undefined) ?? null,
     transmission: (v['transmission'] as AuctionDetail['transmission']) ?? 'manual',
     fuelType: (v['fuelType'] as AuctionDetail['fuelType']) ?? 'gasoline',

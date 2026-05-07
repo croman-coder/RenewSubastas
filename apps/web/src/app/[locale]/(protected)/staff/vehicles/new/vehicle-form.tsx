@@ -27,6 +27,9 @@ const Schema = z.object({
   model: z.string().min(1),
   year: z.coerce.number().int().min(1900).max(2100),
   vin: z.string().optional(),
+  // Paraguayan plates are typically AABB-CCC, ABC-D-1234, etc. We don't enforce
+  // a strict format because regional plates vary; max 12 chars covers them all.
+  licensePlate: z.string().max(12).optional(),
   mileage: z.coerce.number().nonnegative().optional(),
   transmission: z.enum(['manual', 'automatic', 'cvt']),
   fuelType: z.enum(['gasoline', 'diesel', 'hybrid', 'electric']),
@@ -103,6 +106,9 @@ export function VehicleForm({ locale, actorUid }: Props) {
         updatedAt: serverTimestamp(),
       };
       if (values.vin) payload['vin'] = values.vin;
+      if (values.licensePlate) {
+        payload['licensePlate'] = values.licensePlate.trim().toUpperCase();
+      }
       if (values.mileage !== undefined) payload['mileage'] = values.mileage;
       if (values.color) payload['color'] = values.color;
       await setDoc(ref, payload);
@@ -171,9 +177,21 @@ export function VehicleForm({ locale, actorUid }: Props) {
           <Input id="color" {...register('color')} />
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="vin">{t('vin')}</Label>
-        <Input id="vin" {...register('vin')} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="licensePlate">Número de chapa</Label>
+          <Input
+            id="licensePlate"
+            placeholder="Ej. ABCD123"
+            maxLength={12}
+            className="num-tab uppercase"
+            {...register('licensePlate')}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="vin">{t('vin')}</Label>
+          <Input id="vin" {...register('vin')} />
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">

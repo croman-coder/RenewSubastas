@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { GripVertical, X } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +24,12 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
   const t = useTranslations('staff.vehicles.form');
   const [images, setImages] = useState<UploadedImage[]>(initial);
   const [uploading, setUploading] = useState(false);
+  // Native HTML5 drag-and-drop. Two index refs:
+  //   `dragging` -> the tile currently being dragged
+  //   `dragOver` -> the tile under the pointer (used to paint the drop indicator)
+  // Kept in state instead of a ref so React re-renders the indicator.
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -70,30 +77,103 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
     }
   }
 
+  /** Move the image at `from` to position `to`, re-indexing `order`. */
+  function reorder(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= images.length || to >= images.length) {
+      return;
+    }
+    const next = [...images];
+    const [moved] = next.splice(from, 1);
+    if (!moved) return;
+    next.splice(to, 0, moved);
+    const reindexed = next.map((img, i) => ({ ...img, order: i }));
+    setImages(reindexed);
+    onChange(reindexed);
+  }
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-        {images.map((img, i) => (
-          <div key={img.storagePath} className="relative group">
-            <img
-              src={img.thumbnailUrl}
-              alt=""
-              className="w-full aspect-square object-cover rounded border border-text-subtle/20"
-            />
-            {i === 0 && (
-              <span className="absolute top-1 left-1 text-xs bg-copper/90 text-white px-1.5 py-0.5 rounded">
-                #1
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => removeImage(i)}
-              className="absolute top-1 right-1 text-xs bg-danger text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100"
+        {images.map((img, i) => {
+          const isDragging = dragging === i;
+          const isDragOver = dragOver === i && dragging !== null && dragging !== i;
+          return (
+            <div
+              key={img.storagePath}
+              draggable
+              onDragStart={(e) => {
+                setDragging(i);
+                // Use minimal drag image — the empty pixel keeps the tile in
+                // place visually while we paint our own drop indicator on
+                // siblings, which feels smoother than the browser's default
+                // washed-out copy of the element.
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(i));
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOver !== i) setDragOver(i);
+              }}
+              onDragLeave={() => {
+                if (dragOver === i) setDragOver(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const from = Number(e.dataTransfer.getData('text/plain'));
+                if (Number.isFinite(from)) reorder(from, i);
+                setDragging(null);
+                setDragOver(null);
+              }}
+              onDragEnd={() => {
+                setDragging(null);
+                setDragOver(null);
+              }}
+              className={
+                'relative group rounded-lg overflow-hidden border-2 transition-all ' +
+                (isDragOver
+                  ? 'border-copper ring-2 ring-copper/40 scale-[1.02]'
+                  : 'border-text-subtle/20') +
+                (isDragging ? ' opacity-40' : '') +
+                ' cursor-grab active:cursor-grabbing'
+              }
             >
-              {t('removeImage')}
-            </button>
-          </div>
-        ))}
+              <img
+                src={img.thumbnailUrl}
+                alt=""
+                draggable={false}
+                className="w-full aspect-square object-cover pointer-events-none"
+              />
+
+              {/* Drag handle hint (visible on hover/touch) */}
+              <span
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-7 bg-gradient-to-t from-black/55 to-transparent opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center"
+              >
+                <GripVertical className="w-4 h-4 text-white/90" strokeWidth={2.5} />
+              </span>
+
+              {i === 0 && (
+                <span className="absolute top-1.5 left-1.5 text-[10px] uppercase tracking-wide bg-copper text-white px-1.5 py-0.5 rounded font-semibold">
+                  Principal
+                </span>
+              )}
+              {i !== 0 && (
+                <span className="absolute top-1.5 left-1.5 text-[10px] num-tab bg-black/55 text-white px-1.5 py-0.5 rounded font-semibold backdrop-blur-sm">
+                  #{i + 1}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                aria-label={t('removeImage')}
+                className="absolute top-1.5 right-1.5 w-6 h-6 grid place-items-center rounded-md bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-rose-500 transition-all"
+              >
+                <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          );
+        })}
       </div>
       <div>
         <label htmlFor="image-input" className="inline-block">
@@ -110,7 +190,9 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
             <span>{uploading ? t('uploading') : t('addImages')}</span>
           </Button>
         </label>
-        <p className="text-xs text-text-muted mt-1">{t('imagesHint')}</p>
+        <p className="text-xs text-text-muted mt-1">
+          {t('imagesHint')} · Arrastrá las fotos para reordenarlas. La primera es la principal.
+        </p>
       </div>
     </div>
   );

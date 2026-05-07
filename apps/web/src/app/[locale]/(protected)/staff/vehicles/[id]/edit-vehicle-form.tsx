@@ -28,6 +28,7 @@ const Schema = z.object({
   model: z.string().min(1),
   year: z.coerce.number().int().min(1900).max(2100),
   vin: z.string().optional(),
+  licensePlate: z.string().max(12).optional(),
   mileage: z.coerce.number().nonnegative().optional(),
   transmission: z.enum(['manual', 'automatic', 'cvt']),
   fuelType: z.enum(['gasoline', 'diesel', 'hybrid', 'electric']),
@@ -44,6 +45,7 @@ interface Initial {
   model: string;
   year: number;
   vin?: string;
+  licensePlate?: string;
   mileage: number | null | undefined;
   transmission: 'manual' | 'automatic' | 'cvt';
   fuelType: 'gasoline' | 'diesel' | 'hybrid' | 'electric';
@@ -89,6 +91,7 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
       model: initial.model,
       year: initial.year,
       vin: initial.vin,
+      licensePlate: initial.licensePlate,
       ...(initial.mileage !== undefined && initial.mileage !== null
         ? { mileage: initial.mileage }
         : {}),
@@ -134,6 +137,9 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
         updatedAt: serverTimestamp(),
       };
       if (values.vin) payload['vin'] = values.vin;
+      if (values.licensePlate) {
+        payload['licensePlate'] = values.licensePlate.trim().toUpperCase();
+      }
       if (values.mileage !== undefined) payload['mileage'] = values.mileage;
       if (values.color) payload['color'] = values.color;
       await updateDoc(ref, payload);
@@ -242,9 +248,21 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
             <Input id="color" {...register('color')} />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="vin">{t('vin')}</Label>
-          <Input id="vin" {...register('vin')} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="licensePlate">Número de chapa</Label>
+            <Input
+              id="licensePlate"
+              placeholder="Ej. ABCD123"
+              maxLength={12}
+              className="num-tab uppercase"
+              {...register('licensePlate')}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="vin">{t('vin')}</Label>
+            <Input id="vin" {...register('vin')} />
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">

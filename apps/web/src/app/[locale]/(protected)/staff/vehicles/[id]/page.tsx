@@ -36,6 +36,7 @@ export default async function VehicleDetailPage({ params: { locale, id } }: Prop
         model: (data['model'] as string) ?? '',
         year: (data['year'] as number) ?? new Date().getFullYear(),
         vin: (data['vin'] as string) ?? '',
+        licensePlate: (data['licensePlate'] as string) ?? '',
         mileage: (data['mileage'] as number | undefined) ?? null,
         transmission: (data['transmission'] as 'manual' | 'automatic' | 'cvt') ?? 'manual',
         fuelType: (data['fuelType'] as 'gasoline' | 'diesel' | 'hybrid' | 'electric') ?? 'gasoline',

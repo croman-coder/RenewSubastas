@@ -181,6 +181,7 @@ export function AuctionDetailView({
               )}
               <Spec label={t('condition')} value={initial.condition} />
               {initial.color && <Spec label={t('color')} value={initial.color} />}
+              {initial.licensePlate && <Spec label="Chapa" value={initial.licensePlate} />}
               {initial.vin && <Spec label={t('vin')} value={initial.vin} />}
             </dl>
           </section>
