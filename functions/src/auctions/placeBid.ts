@@ -16,7 +16,14 @@ const InputSchema = z.object({
     .number()
     .positive()
     .finite()
-    .max(DEFAULT_MAX_BID_USD * 10),
+    .max(DEFAULT_MAX_BID_USD * 10)
+    // Money is denominated in USD with at most cents-precision. Anything
+    // finer is either a typo, a bug, or a float-precision artifact from a
+    // previous broken bid leaking into the next minRequired. Use the
+    // `* 100 -> round -> compare` trick so we don't fight float epsilons.
+    .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, {
+      message: 'amount must have at most 2 decimal places',
+    }),
 });
 
 const RATE_LIMIT_MAX = 10; // bids per minute per buyer
@@ -38,7 +45,11 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
   if (!parsed.success) {
     throw new HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
   }
-  const { auctionId, amount } = parsed.data;
+  const { auctionId } = parsed.data;
+  // Snap to cents so stored values are always clean (no 16002.55555555 from
+  // a stray float). Schema already validated 2-decimal precision so this is
+  // a normalization, not a silent rounding.
+  const amount = Math.round(parsed.data.amount * 100) / 100;
 
   const db = adminDb();
 

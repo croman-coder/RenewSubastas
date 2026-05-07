@@ -10,6 +10,12 @@ import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { BidPanel } from './bid-panel';
 import { FinancingCalculator } from './financing-calculator';
 
+// Money is denominated in USD with 2-decimal precision. Formatting it
+// consistently here avoids the "USD 16.502,556" surface bug where a stray
+// 8-decimal currentBid leaked into the big price number.
+const fmtUsd = (n: number) =>
+  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 interface BidEntry {
   id: string;
   buyerSnapshot: { firstName: string; lastInitial: string };
@@ -213,14 +219,12 @@ export function AuctionDetailView({
               {live.currentBid > 0 ? 'Puja actual' : t('startingPrice')}
             </p>
             <p className="text-4xl sm:text-5xl font-bold tracking-tight num-tab text-text-strong">
-              USD {displayPrice.toLocaleString()}
+              USD {fmtUsd(displayPrice)}
             </p>
             <p className="text-xs text-text-muted num-tab">
-              {live.currentBid > 0 && (
-                <span>Inicial: USD {initial.startingPrice.toLocaleString()} · </span>
-              )}
+              {live.currentBid > 0 && <span>Inicial: USD {fmtUsd(initial.startingPrice)} · </span>}
               {live.bidCount} {live.bidCount === 1 ? 'puja' : 'pujas'} · incremento USD{' '}
-              {initial.bidIncrement.toLocaleString()}
+              {fmtUsd(initial.bidIncrement)}
             </p>
           </div>
 
@@ -269,7 +273,7 @@ export function AuctionDetailView({
                 </span>
                 <span className="num-tab">
                   <span className={i === 0 ? 'font-semibold text-copper' : ''}>
-                    USD {b.amount.toLocaleString()}
+                    USD {fmtUsd(b.amount)}
                   </span>
                   <span className="text-text-muted text-xs ml-2">
                     {new Date(b.createdAt).toLocaleTimeString(locale)}

@@ -157,7 +157,7 @@
         "errors": { "generic": "No se pudo crear la subasta." }
       },
       "detail": {
-        "back": "← Mis subastas",
+        "back": "Mis subastas",
         "vehicle": "Vehículo",
         "currentBid": "Puja actual",
         "noBidsYet": "Aún no hay pujas.",
@@ -279,7 +279,7 @@
         "cancelled": "Cancelada"
       },
       "detail": {
-        "back": "← Subastas",
+        "back": "Subastas",
         "specs": "Especificaciones",
         "make": "Marca",
         "model": "Modelo",

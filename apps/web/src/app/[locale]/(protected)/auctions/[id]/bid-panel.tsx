@@ -15,6 +15,13 @@ import { Trophy, Gavel } from 'lucide-react';
 // immediate feedback without a round-trip.
 const MAX_BID_USD = 200_000;
 
+// Snap to cents. Existing dirty data (e.g. a currentBid that ended up as
+// 16002.55555555 from a previous bug) would otherwise propagate into the
+// next minRequired and into the quick-bid buttons.
+const toCents = (n: number) => Math.round(n * 100) / 100;
+const fmtUsd = (n: number) =>
+  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 interface Props {
   auctionId: string;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
@@ -38,25 +45,28 @@ export function BidPanel({
 }: Props) {
   const t = useTranslations('buyer.auctions.detail.bidPanel');
   const router = useRouter();
-  const minRequired = currentBid > 0 ? currentBid + bidIncrement : startingPrice;
-  const [manual, setManual] = useState(String(minRequired));
+  const minRequired = toCents(currentBid > 0 ? currentBid + bidIncrement : startingPrice);
+  const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
   const isLive = status === 'live';
   const isWinning = currentBidderUid === myUid && currentBid > 0;
 
-  async function placeBid(amount: number) {
-    if (!Number.isFinite(amount) || amount <= 0) {
+  async function placeBid(rawAmount: number) {
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
       toast.error('Ingresá un monto válido.');
       return;
     }
+    // Snap to cents before sending so the server's 2-decimal validator never
+    // rejects a perfectly-intentional bid because of float arithmetic.
+    const amount = toCents(rawAmount);
     if (amount > MAX_BID_USD) {
-      toast.error(`El monto máximo permitido es USD ${MAX_BID_USD.toLocaleString()}.`);
+      toast.error(`El monto máximo permitido es USD ${fmtUsd(MAX_BID_USD)}.`);
       return;
     }
     setBusy(true);
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
-      toast.success(t('success', { amount: amount.toLocaleString() }));
+      toast.success(t('success', { amount: fmtUsd(amount) }));
       router.refresh();
     } catch (e) {
       const msg = (e as { message?: string }).message ?? '';
@@ -64,7 +74,7 @@ export function BidPanel({
       if (code.includes('resource-exhausted') || msg.includes('rate limit')) {
         toast.error(t('errors.rateLimit'));
       } else if (msg.includes('exceeds the maximum') || msg.includes('maximum allowed')) {
-        toast.error(`El monto máximo permitido es USD ${MAX_BID_USD.toLocaleString()}.`);
+        toast.error(`El monto máximo permitido es USD ${fmtUsd(MAX_BID_USD)}.`);
       } else if (msg.includes('at least') || msg.includes('below')) {
         toast.error(t('errors.tooLow'));
       } else if (msg.includes('ended') || msg.includes('not live')) {
@@ -91,7 +101,11 @@ export function BidPanel({
     );
   }
 
-  const quickIncrements = [minRequired, minRequired + bidIncrement, minRequired + bidIncrement * 2];
+  const quickIncrements = [
+    minRequired,
+    toCents(minRequired + bidIncrement),
+    toCents(minRequired + bidIncrement * 2),
+  ];
 
   return (
     <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
@@ -130,12 +144,9 @@ export function BidPanel({
       )}
 
       <p className="text-xs text-text-muted num-tab">
-        Mínimo:{' '}
-        <span className="text-text-strong font-medium">USD {minRequired.toLocaleString()}</span> ·
-        Incremento:{' '}
-        <span className="text-text-strong font-medium">USD {bidIncrement.toLocaleString()}</span> ·
-        Máximo:{' '}
-        <span className="text-text-strong font-medium">USD {MAX_BID_USD.toLocaleString()}</span>
+        Mínimo: <span className="text-text-strong font-medium">USD {fmtUsd(minRequired)}</span> ·
+        Incremento: <span className="text-text-strong font-medium">USD {fmtUsd(bidIncrement)}</span>{' '}
+        · Máximo: <span className="text-text-strong font-medium">USD {fmtUsd(MAX_BID_USD)}</span>
       </p>
       <div className="grid grid-cols-3 gap-2">
         {quickIncrements.map((amt) => (
@@ -148,7 +159,7 @@ export function BidPanel({
             onClick={() => placeBid(amt)}
             className="num-tab"
           >
-            USD {amt.toLocaleString()}
+            USD {fmtUsd(amt)}
           </Button>
         ))}
       </div>
@@ -159,11 +170,22 @@ export function BidPanel({
             <Input
               id="manual"
               type="number"
-              step="1"
+              step="0.01"
+              inputMode="decimal"
               min={minRequired}
               max={MAX_BID_USD}
               value={manual}
-              onChange={(e) => setManual(e.target.value)}
+              onChange={(e) => {
+                // Clamp the typed value to 2 decimals while the user is
+                // typing — accept "16002", "16002.5", "16002.55" but
+                // truncate "16002.555" before it ever reaches state.
+                const v = e.target.value;
+                if (v === '' || /^\d+(\.\d{0,2})?$/.test(v)) setManual(v);
+              }}
+              onBlur={() => {
+                const n = Number(manual);
+                if (Number.isFinite(n) && n > 0) setManual(toCents(n).toFixed(2));
+              }}
               className="num-tab"
             />
             <Button
