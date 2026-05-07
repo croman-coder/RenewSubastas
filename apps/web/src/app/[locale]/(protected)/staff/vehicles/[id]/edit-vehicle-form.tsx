@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -19,6 +20,7 @@ import {
   Save,
   Settings2,
   Tag,
+  Trash2,
   Undo2,
 } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
@@ -77,10 +79,11 @@ interface Initial {
 interface Props {
   locale: string;
   vehicleId: string;
+  isAdmin: boolean;
   initial: Initial;
 }
 
-export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
+export function EditVehicleForm({ locale, vehicleId, isAdmin, initial }: Props) {
   const t = useTranslations('staff.vehicles.form');
   const tStatus = useTranslations('staff.vehicles.status');
   const router = useRouter();
@@ -184,6 +187,33 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
   async function confirmArchive() {
     if (!window.confirm('¿Archivar este vehículo? No aparecerá en listados activos.')) return;
     await setStatusValue('archived');
+  }
+
+  // Hard-delete is admin-only and irreversible: it wipes the Firestore doc
+  // and the photos in Storage. Locked while in_auction or sold so financial
+  // history can never be silently destroyed.
+  const canHardDelete =
+    isAdmin && (status === 'draft' || status === 'ready' || status === 'archived');
+
+  async function confirmHardDelete() {
+    const label = `${initial.make} ${initial.model} ${initial.year}`;
+    const typed = window.prompt(
+      `Vas a borrar PERMANENTEMENTE el vehículo "${label}" y todas sus fotos.\nEsta acción NO se puede deshacer.\n\nEscribí ELIMINAR para confirmar:`,
+    );
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== 'ELIMINAR') {
+      toast.error('Confirmación incorrecta. Cancelado.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await httpsCallable(fb.functions, 'deleteVehicle')({ vehicleId });
+      toast.success('Vehículo eliminado.');
+      router.replace(`/${locale}/staff/vehicles` as `/${string}`);
+    } catch (e) {
+      toast.error((e as Error).message ?? t('errors.generic'));
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -439,6 +469,17 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
                 className="text-text-muted hover:text-rose-400"
               >
                 <Archive className="w-4 h-4 mr-1.5" /> Archivar
+              </Button>
+            )}
+            {canHardDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={submitting}
+                onClick={confirmHardDelete}
+                className="text-text-muted hover:text-danger"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" /> Eliminar definitivamente
               </Button>
             )}
           </div>

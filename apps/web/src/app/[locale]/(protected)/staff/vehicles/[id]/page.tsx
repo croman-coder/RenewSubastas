@@ -1,6 +1,7 @@
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { notFound } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth/server';
 import { EditVehicleForm } from './edit-vehicle-form';
 
 interface Props {
@@ -19,7 +20,10 @@ function extractStoragePath(url: string): string {
 }
 
 export default async function VehicleDetailPage({ params: { locale, id } }: Props) {
-  const snap = await getFirestore(getAdminApp()).doc(`vehicles/${id}`).get();
+  const [snap, user] = await Promise.all([
+    getFirestore(getAdminApp()).doc(`vehicles/${id}`).get(),
+    getCurrentUser(locale),
+  ]);
   if (!snap.exists) notFound();
   const data = snap.data()!;
   const description = (data['description'] ?? {}) as { es?: string; en?: string };
@@ -30,6 +34,7 @@ export default async function VehicleDetailPage({ params: { locale, id } }: Prop
     <EditVehicleForm
       locale={locale}
       vehicleId={id}
+      isAdmin={user.role === 'admin'}
       initial={{
         audience: (data['audience'] as 'retail' | 'wholesale' | undefined) ?? 'retail',
         make: (data['make'] as string) ?? '',

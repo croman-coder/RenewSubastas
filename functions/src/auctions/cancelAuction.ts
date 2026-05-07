@@ -29,6 +29,9 @@ export async function cancelAuctionHandler(req: CallableRequest): Promise<Cancel
   const auctionRef = db.doc(`auctions/${auctionId}`);
 
   await db.runTransaction(async (tx) => {
+    // Firestore transactions require ALL reads to happen before any writes,
+    // otherwise the transaction fails with INTERNAL. Read both docs up-front,
+    // validate, then issue the writes at the end.
     const aSnap = await tx.get(auctionRef);
     if (!aSnap.exists) {
       throw new HttpsError('not-found', 'Auction not found');
@@ -39,6 +42,12 @@ export async function cancelAuctionHandler(req: CallableRequest): Promise<Cancel
       throw new HttpsError('failed-precondition', `Cannot cancel an auction in status "${status}"`);
     }
 
+    const vehicleId = aData['vehicleId'] as string | undefined;
+    const vehicleRef = vehicleId ? db.doc(`vehicles/${vehicleId}`) : null;
+    const vSnap = vehicleRef ? await tx.get(vehicleRef) : null;
+    const shouldFreeVehicle =
+      !!vehicleRef && !!vSnap?.exists && vSnap.data()?.['status'] === 'in_auction';
+
     tx.update(auctionRef, {
       status: 'cancelled',
       cancelledAt: FieldValue.serverTimestamp(),
@@ -47,16 +56,11 @@ export async function cancelAuctionHandler(req: CallableRequest): Promise<Cancel
     });
 
     // Free up the vehicle so it can be auctioned again later if desired.
-    const vehicleId = aData['vehicleId'] as string | undefined;
-    if (vehicleId) {
-      const vehicleRef = db.doc(`vehicles/${vehicleId}`);
-      const vSnap = await tx.get(vehicleRef);
-      if (vSnap.exists && vSnap.data()?.['status'] === 'in_auction') {
-        tx.update(vehicleRef, {
-          status: 'ready',
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      }
+    if (shouldFreeVehicle && vehicleRef) {
+      tx.update(vehicleRef, {
+        status: 'ready',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     }
   });
 
