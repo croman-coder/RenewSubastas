@@ -7,10 +7,10 @@ import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
+import { ArrowLeft, CalendarRange, Car, DollarSign, Gavel, Loader2 } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,12 +19,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FormField, FormSection } from '@/components/forms/form-section';
 import type { ReadyVehicleOption } from '@/lib/staff/list-ready-vehicles';
 
 // Mirrors the cap enforced server-side in createAuction. Surfaces immediate
 // validation messages instead of letting users hit a Cloud Functions error.
 const MAX_PRICE_USD = 200_000;
 const MAX_INCREMENT_USD = 50_000;
+const INPUT_CLS =
+  'h-11 rounded-xl bg-bg-deep/40 border-text-subtle/20 focus:border-copper/50 focus:ring-copper/30 transition-colors';
 
 const Schema = z
   .object({
@@ -87,12 +90,12 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
 
   if (vehicles.length === 0) {
     return (
-      <div className="max-w-xl space-y-4">
+      <div className="max-w-xl mx-auto space-y-4">
         <a
           href={`/${locale}/staff/auctions`}
-          className="text-sm text-text-muted hover:text-text-strong"
+          className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-copper transition-colors"
         >
-          ← {t('title')}
+          <ArrowLeft className="w-4 h-4" /> {t('title')}
         </a>
         <Alert>
           <AlertDescription>{t('noReadyVehicles')}</AlertDescription>
@@ -133,71 +136,158 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-4">
-      <a
-        href={`/${locale}/staff/auctions`}
-        className="text-sm text-text-muted hover:text-text-strong"
-      >
-        ← {t('title')}
-      </a>
-      <h1 className="text-2xl font-semibold text-text-strong">{t('title')}</h1>
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-3xl mx-auto pb-24">
+      <div className="flex items-center mb-6 animate-in fade-in slide-in-from-top-1 duration-300">
+        <a
+          href={`/${locale}/staff/auctions`}
+          className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-copper transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Volver a subastas
+        </a>
+      </div>
+      <header className="mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
+        <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-semibold">
+          Subastas · Nueva
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-text-strong">{t('title')}</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          Configurá precio, incrementos y ventana. La audiencia se hereda del vehículo elegido.
+        </p>
+      </header>
 
-      <div className="space-y-2">
-        <Label>{t('vehicle')}</Label>
-        <Select value={vehicleId} onValueChange={(v) => setValue('vehicleId', v)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {vehicles.map((v) => (
-              <SelectItem key={v.id} value={v.id}>
-                {v.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="space-y-5">
+        <FormSection
+          icon={Car}
+          title="Vehículo"
+          description="Solo aparecen los vehículos en estado 'Listo'."
+          accent="copper"
+        >
+          <FormField label="Elegir vehículo">
+            <Select value={vehicleId} onValueChange={(v) => setValue('vehicleId', v)}>
+              <SelectTrigger className={INPUT_CLS}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        </FormSection>
+
+        <FormSection
+          icon={DollarSign}
+          title="Precios"
+          description="USD. Reserva opcional — si la usás, debe ser mayor o igual al inicial."
+          accent="mint"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              label="Precio inicial"
+              htmlFor="startingPrice"
+              required
+              error={errors.startingPrice?.message}
+              hint={`Máximo USD ${MAX_PRICE_USD.toLocaleString()}`}
+            >
+              <Input
+                id="startingPrice"
+                type="number"
+                step="1"
+                className={`${INPUT_CLS} num-tab`}
+                {...register('startingPrice')}
+              />
+            </FormField>
+            <FormField
+              label="Precio de reserva"
+              htmlFor="reservePrice"
+              error={errors.reservePrice?.message}
+              hint="Opcional · dejá vacío si no usás reserva"
+            >
+              <Input
+                id="reservePrice"
+                type="number"
+                step="1"
+                className={`${INPUT_CLS} num-tab`}
+                {...register('reservePrice')}
+              />
+            </FormField>
+          </div>
+          <FormField
+            label="Incremento mínimo"
+            htmlFor="bidIncrement"
+            required
+            error={errors.bidIncrement?.message}
+            hint="Cuánto sube cada puja. Default 500."
+          >
+            <Input
+              id="bidIncrement"
+              type="number"
+              step="1"
+              className={`${INPUT_CLS} num-tab`}
+              {...register('bidIncrement')}
+            />
+          </FormField>
+        </FormSection>
+
+        <FormSection
+          icon={CalendarRange}
+          title="Ventana de subasta"
+          description="Cuándo abre y cierra. Anti-sniping de 60s extiende el cierre si entra una puja."
+          accent="amber"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Inicio" htmlFor="startsAt" required>
+              <Input
+                id="startsAt"
+                type="datetime-local"
+                className={`${INPUT_CLS} num-tab`}
+                {...register('startsAt')}
+              />
+            </FormField>
+            <FormField label="Fin" htmlFor="endsAt" required error={errors.endsAt?.message}>
+              <Input
+                id="endsAt"
+                type="datetime-local"
+                className={`${INPUT_CLS} num-tab`}
+                {...register('endsAt')}
+              />
+            </FormField>
+          </div>
+        </FormSection>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="startingPrice">{t('startingPrice')}</Label>
-          <Input id="startingPrice" type="number" step="1" {...register('startingPrice')} />
-          {errors.startingPrice && (
-            <p className="text-sm text-danger">{errors.startingPrice.message}</p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="reservePrice">{t('reservePrice')}</Label>
-          <Input id="reservePrice" type="number" step="1" {...register('reservePrice')} />
-          <p className="text-xs text-text-muted">
-            Precio mínimo aceptable. Debe ser ≥ al precio inicial. Dejá vacío si no usás reserva.
+      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 backdrop-blur-md border-t border-text-subtle/15 sm:mx-0">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-text-muted hidden sm:block">
+            Al crear, el vehículo pasa a estado{' '}
+            <span className="text-text-strong font-medium">en subasta</span>.
           </p>
-          {errors.reservePrice && (
-            <p className="text-sm text-danger">{errors.reservePrice.message}</p>
-          )}
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.replace(`/${locale}/staff/auctions` as `/${string}`)}
+              disabled={submitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={submitting} className="min-w-[160px]">
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {t('submitting')}
+                </>
+              ) : (
+                <>
+                  <Gavel className="w-4 h-4 mr-1.5" /> {t('submit')}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="bidIncrement">{t('bidIncrement')}</Label>
-        <Input id="bidIncrement" type="number" step="1" {...register('bidIncrement')} />
-        {errors.bidIncrement && (
-          <p className="text-sm text-danger">{errors.bidIncrement.message}</p>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="startsAt">{t('startsAt')}</Label>
-          <Input id="startsAt" type="datetime-local" {...register('startsAt')} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="endsAt">{t('endsAt')}</Label>
-          <Input id="endsAt" type="datetime-local" {...register('endsAt')} />
-          {errors.endsAt && <p className="text-sm text-danger">{errors.endsAt.message}</p>}
-        </div>
-      </div>
-      <Button type="submit" disabled={submitting}>
-        {submitting ? t('submitting') : t('submit')}
-      </Button>
     </form>
   );
 }

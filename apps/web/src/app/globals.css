@@ -103,4 +103,21 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
+  /* Form input chrome that matches the login form and dashboard cards.
+     Use on <Input> / <Select> / <Textarea> via className for consistency. */
+  .form-input-chrome {
+    height: 2.75rem; /* h-11 */
+    border-radius: 0.75rem; /* rounded-xl */
+    background-color: oklch(var(--bg-deep) / 0.4);
+    border-color: oklch(var(--text-subtle) / 0.2);
+    transition:
+      border-color 200ms,
+      box-shadow 200ms;
+  }
+  .form-input-chrome:focus,
+  .form-input-chrome:focus-within {
+    border-color: oklch(var(--copper) / 0.5);
+    box-shadow: 0 0 0 3px oklch(var(--copper) / 0.15);
+  }
 }
