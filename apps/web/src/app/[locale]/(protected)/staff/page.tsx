@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadStaffStats } from '@/lib/staff/load-staff-stats';
-import { formatLongDatePy } from '@/lib/format/date';
+import { TodayLabel } from '@/components/shell/today-label';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -25,8 +25,6 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
   const totalVehicles =
     s.vehicles.draft + s.vehicles.ready + s.vehicles.inAuction + s.vehicles.sold;
   const totalAuctions = s.auctions.scheduled + s.auctions.live + s.auctions.ended;
-
-  const dateStr = formatLongDatePy(locale);
 
   return (
     <div className="space-y-8">
@@ -43,7 +41,7 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
-              {dateStr}
+              <TodayLabel locale={locale} />
             </p>
             <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
               Mi panel

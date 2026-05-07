@@ -25,8 +25,19 @@ import { updateProfileAction } from '@/lib/settings/update-profile';
 //   PASSPORT -> alphanumeric, 5–15 chars (covers most foreign passports)
 const Schema = z
   .object({
-    firstName: z.string().min(1, 'Requerido').max(80),
-    lastName: z.string().min(1, 'Requerido').max(80),
+    // Real human names rarely exceed 40 chars even with multiple given names
+    // or compound surnames. The cap also prevents the "Carlos00000000…" abuse
+    // pattern where a user pastes garbage to break dashboard layouts.
+    firstName: z
+      .string()
+      .min(1, 'Requerido')
+      .max(40, 'Máximo 40 caracteres')
+      .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
+    lastName: z
+      .string()
+      .min(1, 'Requerido')
+      .max(40, 'Máximo 40 caracteres')
+      .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
     documentType: z.enum(['CI', 'RUC', 'PASSPORT']),
     documentNumber: z.string().min(1, 'Requerido').max(15),
     phone: z.string().max(20).optional(),
@@ -141,12 +152,22 @@ export function ProfileForm({ initial }: { initial: Initial }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">{t('firstName')}</Label>
-          <Input id="firstName" {...register('firstName')} />
+          <Input
+            id="firstName"
+            maxLength={40}
+            autoComplete="given-name"
+            {...register('firstName')}
+          />
           {errors.firstName && <p className="text-sm text-danger">{errors.firstName.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastName">{t('lastName')}</Label>
-          <Input id="lastName" {...register('lastName')} />
+          <Input
+            id="lastName"
+            maxLength={40}
+            autoComplete="family-name"
+            {...register('lastName')}
+          />
           {errors.lastName && <p className="text-sm text-danger">{errors.lastName.message}</p>}
         </div>
       </div>

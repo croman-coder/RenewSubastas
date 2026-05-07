@@ -32,14 +32,25 @@ const INPUT_CLS =
   'h-11 rounded-xl bg-bg-deep/40 border-text-subtle/20 focus:border-copper/50 focus:ring-copper/30 transition-colors';
 
 // "kind" is the operator-facing concept: Admin / Staff / Retail / Wholesale.
+// Names are capped at 40 chars and restricted to letters/spaces/apostrophes/
+// hyphens — matches the buyer's self-edit profile validator.
+const NAME_RX = /^[\p{L}\p{M}'’\- .]+$/u;
 const Schema = z.object({
   kind: z.enum(['admin', 'staff', 'retail', 'wholesale']),
-  email: z.string().email('Email inválido'),
-  firstName: z.string().min(1, 'Requerido'),
-  lastName: z.string().min(1, 'Requerido'),
+  email: z.string().email('Email inválido').max(120),
+  firstName: z
+    .string()
+    .min(1, 'Requerido')
+    .max(40, 'Máximo 40 caracteres')
+    .regex(NAME_RX, 'Solo letras, espacios, apóstrofes y guiones'),
+  lastName: z
+    .string()
+    .min(1, 'Requerido')
+    .max(40, 'Máximo 40 caracteres')
+    .regex(NAME_RX, 'Solo letras, espacios, apóstrofes y guiones'),
   documentType: z.enum(['CI', 'RUC']),
-  documentNumber: z.string().min(1, 'Requerido'),
-  phone: z.string().optional(),
+  documentNumber: z.string().min(1, 'Requerido').max(15),
+  phone: z.string().max(20).optional(),
 });
 type FormValues = z.infer<typeof Schema>;
 
@@ -197,6 +208,8 @@ export function CreateUserForm({ locale }: { locale: string }) {
               <Input
                 id="firstName"
                 placeholder="Juan"
+                maxLength={40}
+                autoComplete="given-name"
                 className={INPUT_CLS}
                 {...register('firstName')}
               />
@@ -210,6 +223,8 @@ export function CreateUserForm({ locale }: { locale: string }) {
               <Input
                 id="lastName"
                 placeholder="Pérez"
+                maxLength={40}
+                autoComplete="family-name"
                 className={INPUT_CLS}
                 {...register('lastName')}
               />

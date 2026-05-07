@@ -17,14 +17,19 @@ import { requireAdmin } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 
+// Names are capped at 40 chars and restricted to letters/spaces/apostrophes/
+// hyphens (Unicode-aware). This is the server-side enforcement of the same
+// rule applied in the admin create-user form and the buyer self-edit form,
+// so the API can't be bypassed by hitting the callable directly with junk.
+const NAME_RX = /^[\p{L}\p{M}'’\- .]+$/u;
 const InputSchema = z.object({
   role: RoleSchema,
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  email: z.string().email().max(120),
+  firstName: z.string().min(1).max(40).regex(NAME_RX),
+  lastName: z.string().min(1).max(40).regex(NAME_RX),
   documentType: DocumentTypeSchema,
-  documentNumber: z.string().min(1),
-  phone: z.string().optional(),
+  documentNumber: z.string().min(1).max(15),
+  phone: z.string().max(20).optional(),
   /** Required when role === 'buyer'; ignored otherwise. */
   audience: AudienceSchema.optional(),
 });

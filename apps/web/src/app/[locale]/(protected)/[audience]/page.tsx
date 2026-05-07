@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
-import { formatLongDatePy } from '@/lib/format/date';
+import { TodayLabel } from '@/components/shell/today-label';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -24,8 +24,6 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
   // to that audience so the dashboard reflects exactly what the URL claims.
   const user = await getCurrentUser(locale);
   const s = await loadBuyerStats(user.uid, audience);
-
-  const dateStr = formatLongDatePy(locale);
 
   return (
     <div className="space-y-8">
@@ -42,7 +40,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
-              {dateStr}
+              <TodayLabel locale={locale} />
             </p>
             <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
               ¡Hola, {user.firstName || 'Buyer'}!

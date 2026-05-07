@@ -10,9 +10,13 @@ import { SESSION_COOKIE_NAME } from '@/lib/auth/constants';
 // Document type covers Paraguay's standard CI / RUC plus Pasaporte for
 // foreign buyers. Numeric-only with max 7 for CI / max 11 for RUC, but
 // alphanumeric up to 15 for passports (Latin letters and digits, no spaces).
+// Names: 40 chars max + letters/spaces/apostrophes/hyphens only. Caps the
+// "Carlos00000000…" garbage that breaks dashboard layouts and matches the
+// validation we run client-side in profile-form.tsx.
+const NAME_RX = /^[\p{L}\p{M}'’\- .]+$/u;
 const Input = z.object({
-  firstName: z.string().min(1).max(80),
-  lastName: z.string().min(1).max(80),
+  firstName: z.string().min(1).max(40).regex(NAME_RX),
+  lastName: z.string().min(1).max(40).regex(NAME_RX),
   documentType: z.enum(['CI', 'RUC', 'PASSPORT']),
   documentNumber: z.string().min(1).max(15),
   // Phone is stored as a single E.164-ish string with the country prefix
