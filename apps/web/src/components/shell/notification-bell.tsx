@@ -19,7 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CarbidMark } from '@/components/brand/carbid-mark';
+import { RenewMark } from '@/components/brand/renew-mark';
 import type { Role } from './nav-config';
 
 interface Props {
@@ -229,7 +229,7 @@ export function NotificationBell({ locale, role, uid }: Props) {
       >
         <header className="flex items-center justify-between px-4 py-3 border-b border-text-subtle/15 bg-bg-elev/60">
           <div className="flex items-center gap-2.5">
-            <CarbidMark size={28} ring={false} className="rounded-lg" />
+            <RenewMark size={28} ring={false} className="rounded-lg" />
             <div>
               <h3 className="text-sm font-semibold tracking-tight text-text-strong leading-none">
                 Notificaciones
@@ -285,7 +285,7 @@ export function NotificationBell({ locale, role, uid }: Props) {
                               className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-copper"
                             />
                           )}
-                          <CarbidMark size={40} className="shrink-0" />
+                          <RenewMark size={40} className="shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p
                               className={

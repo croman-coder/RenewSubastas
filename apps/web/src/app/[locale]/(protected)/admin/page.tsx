@@ -23,7 +23,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
         />
         <div
           aria-hidden
-          className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-violet-500/5 blur-3xl pointer-events-none"
+          className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-text-strong/5 blur-3xl pointer-events-none"
         />
         <div className="relative">
           <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">

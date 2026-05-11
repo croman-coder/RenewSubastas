@@ -4,74 +4,84 @@
 
 @layer base {
   :root {
-    /* light theme — values are "L C H" (no parens) for tailwind oklch(var(--token)) */
-    --bg-base: 0.98 0.005 290;
-    --bg-elev: 0.96 0.005 290;
-    --bg-deep: 0.94 0.005 290;
-    --text-strong: 0.2 0.01 290;
-    --text-muted: 0.48 0.01 290;
-    --text-subtle: 0.64 0.01 290;
-    --ink: 0.28 0.04 290;
-    --copper: 0.68 0.13 55;
-    --success: 0.6 0.13 155;
-    --warning: 0.7 0.14 75;
-    --danger: 0.55 0.18 25;
+    /* Renew Subastas — pure monochrome palette.
+       Values are "L C H" (no parens). Chroma forced to 0 so every neutral
+       sits dead-center on the achromatic axis — no tinted "warm gray"
+       drifting back in. Hue is irrelevant when C=0, kept at 0 for clarity. */
+    --bg-base: 1 0 0; /* pure white */
+    --bg-elev: 0.97 0 0;
+    --bg-deep: 0.93 0 0;
+    --text-strong: 0.12 0 0; /* near-black */
+    --text-muted: 0.42 0 0;
+    --text-subtle: 0.62 0 0;
+    --ink: 0.12 0 0; /* solid black for wordmark "new" half */
+    --copper: 0.18 0 0; /* accent — used to be copper, now pure ink black */
+    --success: 0.55 0.14 155;
+    --warning: 0.65 0.16 75;
+    --danger: 0.55 0.2 25;
   }
 
   /* shadcn-ui tokens (HSL) — used by shadcn primitives. Map mostly to neutral grays. */
+  /* shadcn tokens recolored to neutral grayscale — `240` hue stripped to 0
+     so radix primitives don't reintroduce a violet undertone next to the
+     monochrome brand surface. */
   :root {
-    --background: 0 0% 99%;
-    --foreground: 240 10% 4%;
-    --card: 0 0% 99%;
-    --card-foreground: 240 10% 4%;
-    --popover: 0 0% 99%;
-    --popover-foreground: 240 10% 4%;
-    --primary: 240 6% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
+    --primary: 0 0% 8%;
+    --primary-foreground: 0 0% 99%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 8%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 6% 10%;
+    --destructive-foreground: 0 0% 99%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 0 0% 8%;
     --radius: 0.5rem;
   }
   .dark {
-    --background: 240 10% 4%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 4%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 4%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
-    --primary-foreground: 240 6% 10%;
-    --secondary: 240 4% 16%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 0 0% 16%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 4% 16%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 16%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 41%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 240 5% 84%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 0% 80%;
   }
 
   .dark {
-    --bg-base: 0.18 0.01 290;
-    --bg-elev: 0.22 0.01 290;
-    --bg-deep: 0.26 0.01 290;
-    --text-strong: 0.96 0.005 290;
-    --text-muted: 0.72 0.01 290;
-    --text-subtle: 0.58 0.01 290;
-    --ink: 0.96 0.005 290;
-    --copper: 0.75 0.13 55;
+    /* Pure-black dark theme for Renew Subastas. Deep near-black canvas with
+       layered surface elevations (bg-elev / bg-deep) lifted just enough to
+       read against bg-base under the side-rails and cards. Copper accent
+       becomes pure white so wordmark + focus rings pop. */
+    --bg-base: 0.13 0 0;
+    --bg-elev: 0.17 0 0;
+    --bg-deep: 0.22 0 0;
+    --text-strong: 0.98 0 0;
+    --text-muted: 0.72 0 0;
+    --text-subtle: 0.5 0 0;
+    --ink: 0.98 0 0;
+    --copper: 0.98 0 0;
     --success: 0.7 0.13 155;
     --warning: 0.78 0.14 75;
     --danger: 0.65 0.18 25;

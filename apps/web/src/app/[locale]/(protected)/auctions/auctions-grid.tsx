@@ -37,7 +37,7 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
-              CARBID · Subastas
+              Renew · Subastas
             </p>
             <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
               {t('title')}

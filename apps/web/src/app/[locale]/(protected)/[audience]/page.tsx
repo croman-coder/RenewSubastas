@@ -31,7 +31,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
       <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
         <div
           aria-hidden
-          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-violet-500/10 blur-3xl pointer-events-none"
+          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-text-strong/10 blur-3xl pointer-events-none"
         />
         <div
           aria-hidden
@@ -46,7 +46,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
               ¡Hola, {user.firstName || 'Buyer'}!
             </h1>
             <p className="mt-1 text-sm text-text-muted max-w-prose">
-              Tu resumen de subastas y pujas en CARBID.
+              Tu resumen de subastas y pujas en Renew Subastas.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -179,7 +179,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
         >
           <div className="px-3 pb-2">
             <div className="rounded-lg bg-bg-deep/40 px-4 py-5 text-center">
-              <p className="text-3xl font-bold tracking-tight num-tab text-violet-300">
+              <p className="text-3xl font-bold tracking-tight num-tab text-text-strong">
                 {s.myFavoritesLiveCount}
               </p>
               <p className="text-xs text-text-muted mt-1">
@@ -227,9 +227,9 @@ const ACCENT: Record<Accent, { ring: string; iconBg: string; iconText: string }>
     iconText: 'text-emerald-400',
   },
   lavender: {
-    ring: 'before:bg-gradient-to-r before:from-violet-400/0 before:via-violet-400/60 before:to-violet-400/0',
-    iconBg: 'bg-violet-500/10',
-    iconText: 'text-violet-300',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/60 before:to-text-strong/0',
+    iconBg: 'bg-text-strong/10',
+    iconText: 'text-text-strong',
   },
   amber: {
     ring: 'before:bg-gradient-to-r before:from-amber-400/0 before:via-amber-400/60 before:to-amber-400/0',

@@ -31,7 +31,7 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<v
   }
   try {
     const result = await c.emails.send({
-      from: 'CARBID Subastas <no-reply@santarosa.com.py>',
+      from: 'Renew Subastas <no-reply@santarosa.com.py>',
       to,
       subject,
       html,

@@ -103,7 +103,7 @@ export function RouteProgress() {
       style={{ opacity: visible ? 1 : 0, transition: 'opacity 200ms ease-out' }}
     >
       <div
-        className="h-full bg-gradient-to-r from-copper via-copper/80 to-copper shadow-[0_0_8px_rgba(205,155,79,0.6)]"
+        className="h-full bg-text-strong shadow-[0_0_8px_currentColor]"
         style={{
           width: `${progress}%`,
           transition: visible ? 'width 200ms cubic-bezier(0.22, 1, 0.36, 1)' : 'width 0ms',

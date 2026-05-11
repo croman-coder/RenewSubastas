@@ -7,7 +7,11 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        wordmark: ['var(--font-bricolage)', 'system-ui', 'sans-serif'],
+        // `wordmark` kept as the historical token name so existing
+        // `font-wordmark` utility classes don't need a global rename.
+        // Points at Space Grotesk now, the new Renew display face.
+        wordmark: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
       },
       colors: {
         bg: {

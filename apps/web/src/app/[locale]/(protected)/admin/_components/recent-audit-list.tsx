@@ -48,7 +48,7 @@ const DESCRIPTORS: Record<string, Descriptor> = {
   },
   'user.update_role': {
     icon: UserCog,
-    tone: { bg: 'bg-violet-500/10', text: 'text-violet-300' },
+    tone: { bg: 'bg-text-strong/10', text: 'text-text-strong' },
     title: 'Se cambió el rol de un usuario',
   },
   'user.delete': {
@@ -106,7 +106,7 @@ export function RecentAuditList({ locale, items }: Props) {
     >
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-md bg-violet-500/10 text-violet-300 grid place-items-center">
+          <span className="w-7 h-7 rounded-md bg-text-strong/10 text-text-strong grid place-items-center">
             <Activity className="w-3.5 h-3.5" strokeWidth={2.25} />
           </span>
           <h2 className="text-sm font-semibold text-text-strong tracking-tight">

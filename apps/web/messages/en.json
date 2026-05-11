@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CARBID",
+    "appName": "Renew Subastas",
     "tagline": "Vehicle auctions",
     "signIn": "Sign in",
     "signOut": "Sign out",
@@ -12,13 +12,13 @@
     "themeSystem": "System"
   },
   "home": {
-    "title": "Welcome to CARBID",
+    "title": "Welcome to Renew Subastas",
     "subtitle": "Asynchronous vehicle auctions in Paraguay"
   },
   "auth": {
     "login": {
       "title": "Sign in",
-      "subtitle": "Sign in with your CARBID account",
+      "subtitle": "Sign in with your Renew account",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",

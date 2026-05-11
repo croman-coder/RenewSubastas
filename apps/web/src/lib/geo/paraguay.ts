@@ -5,7 +5,7 @@
  * main cities; capitals and the larger Central department cities also list
  * their major neighbourhoods (barrios).
  *
- * Not exhaustive — the goal is to cover ~95% of CARBID's expected user
+ * Not exhaustive — the goal is to cover ~95% of Renew's expected user
  * base while keeping the bundle small. Anything missing falls through to a
  * free-text fallback in the form.
  */

@@ -367,7 +367,7 @@ function CountdownCard({
             accent: 'from-amber-500/0 via-amber-400/70 to-amber-500/0',
           }
         : {
-            glow: 'shadow-[0_0_36px_-6px_rgba(205,155,79,0.45)]',
+            glow: 'shadow-[0_0_36px_-6px_rgba(0,0,0,0.35)]',
             text: 'text-copper',
             accent: 'from-copper/0 via-copper/70 to-copper/0',
           };

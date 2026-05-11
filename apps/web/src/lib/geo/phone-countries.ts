@@ -10,7 +10,7 @@
  *          per-country values; lets the form reject obvious typos without
  *          implementing full E.164 parsing.
  *
- * Curated list focused on Paraguay + neighbours + countries CARBID buyers
+ * Curated list focused on Paraguay + neighbours + countries Renew buyers
  * are realistically going to come from. Paraguay is hard-pinned at the top.
  */
 export interface PhoneCountry {

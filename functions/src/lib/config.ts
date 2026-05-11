@@ -12,7 +12,7 @@ const DEFAULT_CONFIG: RuntimeConfig = {
   emails: {
     adminStaffDomain: 'santarosa.com.py',
     fromAddress: 'no-reply@santarosa.com.py',
-    fromName: 'CARBID Subastas',
+    fromName: 'Renew Subastas',
   },
 };
 

@@ -30,7 +30,7 @@ function roleTone(role: Role, audience: AudienceLabel): string {
   if (role === 'admin') return 'bg-copper/15 text-copper ring-copper/20';
   if (role === 'staff') return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/20';
   if (audience === 'wholesale') return 'bg-amber-500/15 text-amber-300 ring-amber-500/20';
-  return 'bg-violet-500/15 text-violet-300 ring-violet-500/20';
+  return 'bg-text-strong/15 text-text-strong ring-text-strong/20';
 }
 
 interface Props {
@@ -90,10 +90,17 @@ export function Topbar({
           </button>
           <Link
             href={`/${locale}` as `/${string}`}
-            className="font-wordmark font-bold tracking-tight text-xl flex items-center"
+            className="font-display font-bold tracking-tight text-xl flex items-center lowercase select-none"
+            aria-label="Renew Subastas"
           >
-            <span className="text-copper">CAR</span>
-            <span className="text-ink">BID</span>
+            <span
+              aria-hidden
+              className="text-transparent"
+              style={{ WebkitTextStroke: '1.25px currentColor' }}
+            >
+              re
+            </span>
+            <span className="text-ink">new</span>
           </Link>
           <span
             className={
@@ -118,7 +125,7 @@ export function Topbar({
             >
               <span
                 aria-hidden
-                className="w-7 h-7 shrink-0 rounded-full bg-gradient-to-br from-copper/30 to-violet-500/20 grid place-items-center text-text-strong text-xs font-semibold"
+                className="w-7 h-7 shrink-0 rounded-full bg-gradient-to-br from-copper/30 to-text-strong/20 grid place-items-center text-text-strong text-xs font-semibold"
               >
                 {initial}
               </span>
@@ -212,9 +219,18 @@ function MobileDrawer({
         }
       >
         <div className="h-14 flex items-center justify-between px-4 border-b border-text-subtle/15">
-          <span className="font-wordmark font-bold tracking-tight text-xl">
-            <span className="text-copper">CAR</span>
-            <span className="text-ink">BID</span>
+          <span
+            className="font-display font-bold tracking-tight text-xl lowercase select-none"
+            aria-label="Renew Subastas"
+          >
+            <span
+              aria-hidden
+              className="text-transparent"
+              style={{ WebkitTextStroke: '1.25px currentColor' }}
+            >
+              re
+            </span>
+            <span className="text-ink">new</span>
           </span>
           <button
             type="button"
@@ -229,7 +245,7 @@ function MobileDrawer({
           <div className="flex items-center gap-2.5 px-2">
             <span
               aria-hidden
-              className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-copper/30 to-violet-500/20 grid place-items-center text-text-strong text-sm font-semibold"
+              className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-copper/30 to-text-strong/20 grid place-items-center text-text-strong text-sm font-semibold"
             >
               {(firstName || email).slice(0, 1).toUpperCase()}
             </span>

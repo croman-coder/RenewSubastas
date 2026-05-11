@@ -150,7 +150,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
           </p>
           <p
             className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight num-tab text-copper leading-tight"
-            style={{ textShadow: '0 0 20px rgba(205,155,79,0.3)' }}
+            style={{ textShadow: '0 0 20px rgba(0,0,0,0.25)' }}
           >
             <span className="text-base font-semibold mr-1 opacity-80">Gs.</span>
             {fmtPyg(monthly)}

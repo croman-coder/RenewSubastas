@@ -195,7 +195,7 @@ export function CreateUserForm({ locale }: { locale: string }) {
         <FormSection
           icon={UserPlus}
           title="Identidad"
-          description="Cómo se va a llamar el usuario en CARBID."
+          description="Cómo se va a llamar el usuario en Renew."
           accent="copper"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

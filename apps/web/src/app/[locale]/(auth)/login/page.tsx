@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { Gavel, ShieldCheck, Sparkles } from 'lucide-react';
-import { CarbidWordmark } from '@/components/brand/carbid-wordmark';
+import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { LoginForm } from './login-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -22,18 +22,20 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
   return (
     <main className="relative min-h-screen overflow-hidden bg-bg-base">
       {/* Layered background effects:
-            1. radial copper glow top-right
-            2. radial violet glow bottom-left
+            1. soft ink wash top-right
+            2. soft ink wash bottom-left
             3. faint diagonal grid pattern for depth
-          All purely decorative — pointer-events disabled. */}
+          All purely decorative — pointer-events disabled. Tints are now
+          neutral grayscale to match the Renew B&W palette; no chromatic
+          accents creep into the chrome. */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-40 -right-32 w-[36rem] h-[36rem] rounded-full bg-copper/15 blur-[120px]" />
-        <div className="absolute -bottom-48 -left-32 w-[40rem] h-[40rem] rounded-full bg-violet-500/10 blur-[140px]" />
+        <div className="absolute -top-40 -right-32 w-[36rem] h-[36rem] rounded-full bg-text-strong/[0.04] blur-[120px]" />
+        <div className="absolute -bottom-48 -left-32 w-[40rem] h-[40rem] rounded-full bg-text-strong/[0.05] blur-[140px]" />
         <div
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 opacity-[0.035]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, rgb(255 255 255) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255) 1px, transparent 1px)',
+              'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
             backgroundSize: '64px 64px',
             maskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 75%)',
           }}
@@ -44,7 +46,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
         {/* Left side: brand + value props (hidden on mobile) */}
         <aside className="hidden lg:flex flex-col justify-between px-12 py-12 xl:px-16">
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-            <CarbidWordmark size="lg" />
+            <RenewWordmark size="lg" />
             <p className="mt-2 text-sm uppercase tracking-[0.2em] text-text-muted">
               Subastas de vehículos · Paraguay
             </p>
@@ -55,7 +57,8 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             style={{ animationDelay: '120ms', animationFillMode: 'both' }}
           >
             <h2 className="text-4xl xl:text-5xl font-bold tracking-tight text-text-strong leading-[1.05]">
-              Comprá tu próximo vehículo <span className="text-copper">con confianza</span>.
+              Comprá tu próximo vehículo{' '}
+              <span className="underline decoration-2 underline-offset-[6px]">con confianza</span>.
             </h2>
             <p className="text-base text-text-muted leading-relaxed">
               Pujá en tiempo real, simulá tus cuotas en guaraníes, y recibí notificaciones al
@@ -85,7 +88,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             className="text-xs text-text-muted/70 animate-in fade-in duration-1000"
             style={{ animationDelay: '300ms', animationFillMode: 'both' }}
           >
-            © {new Date().getFullYear()} CARBID · Santa Rosa Automotores
+            © {new Date().getFullYear()} Renew Subastas · Santa Rosa Automotores
           </p>
         </aside>
 
@@ -94,7 +97,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
           <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Mobile-only wordmark. The desktop view shows it on the left aside. */}
             <div className="lg:hidden flex flex-col items-center mb-10">
-              <CarbidWordmark size="md" />
+              <RenewWordmark size="md" />
               <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-text-muted">
                 Subastas de vehículos
               </p>

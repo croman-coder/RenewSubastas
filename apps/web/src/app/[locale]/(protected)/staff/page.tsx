@@ -47,7 +47,7 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
               Mi panel
             </h1>
             <p className="mt-1 text-sm text-text-muted max-w-prose">
-              Resumen de tus vehículos y subastas en CARBID.
+              Resumen de tus vehículos y subastas en Renew Subastas.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -148,9 +148,9 @@ const ACCENT: Record<Accent, { ring: string; iconBg: string; iconText: string }>
     iconText: 'text-emerald-400',
   },
   lavender: {
-    ring: 'before:bg-gradient-to-r before:from-violet-400/0 before:via-violet-400/60 before:to-violet-400/0',
-    iconBg: 'bg-violet-500/10',
-    iconText: 'text-violet-300',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/60 before:to-text-strong/0',
+    iconBg: 'bg-text-strong/10',
+    iconText: 'text-text-strong',
   },
   amber: {
     ring: 'before:bg-gradient-to-r before:from-amber-400/0 before:via-amber-400/60 before:to-amber-400/0',

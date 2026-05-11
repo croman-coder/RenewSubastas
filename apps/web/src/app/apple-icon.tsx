@@ -14,19 +14,17 @@ export default function AppleIcon() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'radial-gradient(circle at 30% 25%, #cd9b4f3a 0%, #cd9b4f1f 35%, #2d2935 75%, #1c1923 100%)',
-        color: '#f3eee7',
-        fontWeight: 800,
-        fontSize: 102,
-        letterSpacing: -3,
+        background: '#000',
+        color: '#fff',
+        fontWeight: 700,
+        fontSize: 124,
+        letterSpacing: -6,
         fontFamily:
           'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         borderRadius: 36,
       }}
     >
-      <span style={{ color: '#cd9b4f' }}>C</span>
-      <span style={{ marginLeft: -6 }}>B</span>
+      r
     </div>,
     { ...size },
   );

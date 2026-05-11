@@ -40,7 +40,7 @@ export const sendBidOutbid = onDocumentCreated(
         <p>Tu puja en <b>${v['make']} ${v['model']} ${v['year']}</b> fue superada.</p>
         <p>Nueva puja: USD ${(newBid['amount'] as number).toLocaleString()}</p>
         <p>Visita la subasta para volver a pujar.</p>
-        <p>— CARBID Subastas</p>`,
+        <p>— Renew Subastas</p>`,
     });
   },
 );

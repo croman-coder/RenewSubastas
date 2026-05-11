@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CarbidWordmark } from '@/components/brand/carbid-wordmark';
+import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { ForgotPasswordDialog } from './forgot-password-dialog';
 
 const Schema = z.object({
@@ -212,7 +212,7 @@ function EnteringOverlay() {
             className="absolute -inset-6 rounded-full border-2 border-copper/30 animate-ping"
           />
           <span aria-hidden className="absolute -inset-3 rounded-full border border-copper/50" />
-          <CarbidWordmark size="lg" />
+          <RenewWordmark size="lg" />
         </div>
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <Loader2 className="w-4 h-4 animate-spin text-copper" strokeWidth={2.5} />

@@ -102,7 +102,7 @@ export function ForgotPasswordDialog() {
             <div>
               <p className="font-medium">Solicitud registrada</p>
               <p className="text-xs text-emerald-200/80 mt-1">
-                Si el email está registrado en CARBID, el administrador recibirá tu solicitud y te
+                Si el email está registrado en Renew, el administrador recibirá tu solicitud y te
                 enviará un link de recuperación a la brevedad.
               </p>
             </div>

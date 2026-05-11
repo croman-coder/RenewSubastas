@@ -130,12 +130,12 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
 
   await sendEmail({
     to: input.email,
-    subject: 'Bienvenido a CARBID',
+    subject: 'Bienvenido a Renew Subastas',
     html: `<p>Hola ${input.firstName},</p>
-    <p>Se creó tu cuenta CARBID con rol <b>${input.role}</b>.</p>
+    <p>Se creó tu cuenta Renew con rol <b>${input.role}</b>.</p>
     <p>Configura tu contraseña aquí:</p>
     <p><a href="${resetLink}">Configurar contraseña</a></p>
-    <p>— CARBID Subastas</p>`,
+    <p>— Renew Subastas</p>`,
   }).catch((err) => {
     console.error('[createUser] welcome email failed', err);
   });

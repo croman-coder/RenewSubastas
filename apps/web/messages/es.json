@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CARBID",
+    "appName": "Renew Subastas",
     "tagline": "Subastas de vehículos",
     "signIn": "Iniciar sesión",
     "signOut": "Cerrar sesión",
@@ -12,13 +12,13 @@
     "themeSystem": "Sistema"
   },
   "home": {
-    "title": "Bienvenido a CARBID",
+    "title": "Bienvenido a Renew Subastas",
     "subtitle": "Subastas asincrónicas de vehículos en Paraguay"
   },
   "auth": {
     "login": {
       "title": "Iniciar sesión",
-      "subtitle": "Ingresa con tu cuenta CARBID",
+      "subtitle": "Ingresa con tu cuenta Renew",
       "email": "Correo electrónico",
       "password": "Contraseña",
       "submit": "Entrar",
