@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { fb } from '@/lib/firebase/client';
 import { SidebarNav } from './sidebar-nav';
 import { NotificationBell } from './notification-bell';
+import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import type { NavItem, Role } from './nav-config';
 import {
   DropdownMenu,
@@ -90,17 +91,10 @@ export function Topbar({
           </button>
           <Link
             href={`/${locale}` as `/${string}`}
-            className="font-display font-bold tracking-tight text-xl flex items-center lowercase select-none"
+            className="flex items-center"
             aria-label="Renew Subastas"
           >
-            <span
-              aria-hidden
-              className="text-transparent"
-              style={{ WebkitTextStroke: '1.25px currentColor' }}
-            >
-              re
-            </span>
-            <span className="text-ink">new</span>
+            <RenewWordmark size="sm" />
           </Link>
           <span
             className={
@@ -219,19 +213,7 @@ function MobileDrawer({
         }
       >
         <div className="h-14 flex items-center justify-between px-4 border-b border-text-subtle/15">
-          <span
-            className="font-display font-bold tracking-tight text-xl lowercase select-none"
-            aria-label="Renew Subastas"
-          >
-            <span
-              aria-hidden
-              className="text-transparent"
-              style={{ WebkitTextStroke: '1.25px currentColor' }}
-            >
-              re
-            </span>
-            <span className="text-ink">new</span>
-          </span>
+          <RenewWordmark size="sm" />
           <button
             type="button"
             onClick={onClose}
