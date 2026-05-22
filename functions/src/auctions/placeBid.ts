@@ -38,7 +38,12 @@ export interface PlaceBidResult {
 
 export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidResult> {
   const { uid, role } = requireSignedIn(req);
-  if (role !== 'buyer' && role !== 'admin') {
+  // Only buyers may bid. Admins and staff are deliberately excluded — even
+  // though admins have the highest trust level elsewhere in the app, letting
+  // an admin place bids opens the door to shill-bidding (an operator pushing
+  // a price up against a real buyer). The marketplace's integrity depends
+  // on the bidding side being strictly held to genuine customer accounts.
+  if (role !== 'buyer') {
     throw new HttpsError('permission-denied', 'Only buyers can place bids');
   }
   const parsed = InputSchema.safeParse(req.data);

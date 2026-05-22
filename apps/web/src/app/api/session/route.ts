@@ -5,7 +5,44 @@ import { SESSION_COOKIE_NAME, SESSION_TTL_MS } from '@/lib/auth/constants';
 
 export const runtime = 'nodejs';
 
+/**
+ * Same-origin guard. Browsers send `Origin` on every state-changing
+ * cross-origin POST, so comparing it to the request's own host blocks
+ * any third-party page that managed to obtain a Firebase ID token
+ * (e.g. via OAuth flow misuse) from minting a session cookie under
+ * our domain.
+ *
+ * We accept the request only when:
+ *   - `Origin` header is missing (older browsers / Next.js server-side
+ *     rewrites) AND `Sec-Fetch-Site` is missing too (legacy clients),
+ *     OR
+ *   - the Origin's host matches the request's Host header.
+ */
+function sameOrigin(req: NextRequest): boolean {
+  const origin = req.headers.get('origin');
+  const host = req.headers.get('host');
+  if (!origin) {
+    // Modern fetch always sets Origin on POST. If it's missing AND the
+    // browser also didn't send Sec-Fetch-Site, this is likely a
+    // server-side request (e.g. SSR) which we trust. If Sec-Fetch-Site
+    // says cross-site, refuse.
+    const sfs = req.headers.get('sec-fetch-site');
+    return !sfs || sfs === 'same-origin';
+  }
+  if (!host) return false;
+  try {
+    const originUrl = new URL(origin);
+    return originUrl.host === host;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
+  if (!sameOrigin(req)) {
+    return NextResponse.json({ error: 'forbidden_origin' }, { status: 403 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -41,7 +78,10 @@ export async function POST(req: NextRequest) {
       maxAge: SESSION_TTL_MS / 1000,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      // `strict` instead of `lax`: a session cookie should never be
+      // attached to top-level navigations from external sites. The
+      // login flow always runs same-origin so we lose nothing.
+      sameSite: 'strict',
       path: '/',
     });
     return res;
@@ -61,7 +101,7 @@ export async function DELETE() {
     maxAge: 0,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
   });
   return res;

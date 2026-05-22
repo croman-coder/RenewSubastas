@@ -18,10 +18,26 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read:   if isAdmin() || request.auth.uid == uid;
+      // A user editing their own doc cannot change any of the privileged
+      // fields. `role` and `status` gate access; `createdBy` is an audit
+      // anchor; `profile.audience` decides which catalog they can see (a
+      // retail buyer could otherwise self-promote to wholesale and read
+      // the opposite segment). All four must stay equal to their previous
+      // value — checked with the explicit-equality pattern so missing
+      // fields can't be used to bypass the check.
       allow update: if request.auth.uid == uid
                     && request.resource.data.role == resource.data.role
                     && request.resource.data.status == resource.data.status
-                    && request.resource.data.createdBy == resource.data.createdBy;
+                    && request.resource.data.createdBy == resource.data.createdBy
+                    // Use the map-of-keys trick so this also blocks deletes
+                    // of the audience field (a delete would set the
+                    // post-write value to undefined and bypass an equality
+                    // check). `get(...).audience` returns null when the
+                    // field doesn't exist on either side, so legacy users
+                    // without profile.audience can still update other
+                    // fields freely.
+                    && request.resource.data.get(['profile', 'audience'], null)
+                       == resource.data.get(['profile', 'audience'], null);
       allow create, delete: if false;
     }
 

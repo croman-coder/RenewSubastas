@@ -1,14 +1,56 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Pull the buyer's audience claim, defaulting to 'retail' for legacy
+    // accounts whose token predates the audience split.
+    function audience() {
+      return request.auth.token.audience != null
+        ? request.auth.token.audience
+        : 'retail';
+    }
+
+    // Read the Firestore vehicle doc so we can check its audience without
+    // forcing a path convention change on existing uploads. Returns the
+    // doc data map, or null if the doc is gone (in which case the read
+    // is rejected by the wrapping rule).
+    function vehicleAudience(vehicleId) {
+      return firestore
+        .get(/databases/(default)/documents/vehicles/$(vehicleId))
+        .data
+        .audience;
+    }
+
+    // Vehicle photos. Buyers may only read the photos of vehicles whose
+    // audience matches their claim — wholesale buyers can't scrape the
+    // retail catalog and vice-versa. Admin/staff have universal read.
+    // Writes stay restricted to admin/staff with size + content-type caps.
     match /vehicles/{vehicleId}/{file=**} {
-      allow read:  if request.auth != null && request.auth.token.status == 'active';
+      allow read: if request.auth != null
+                  && request.auth.token.status == 'active'
+                  && (
+                    request.auth.token.role in ['staff', 'admin']
+                    || (
+                      request.auth.token.role == 'buyer'
+                      && (
+                        // Vehicle has no audience field (legacy) → treat
+                        // as retail, the original segment.
+                        vehicleAudience(vehicleId) == null
+                          ? audience() == 'retail'
+                          : vehicleAudience(vehicleId) == audience()
+                      )
+                    )
+                  );
       allow write: if request.auth != null
                    && request.auth.token.status == 'active'
                    && request.auth.token.role in ['staff', 'admin']
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
+
+    // Avatars are intentionally world-readable so they can appear in
+    // notification cards and audit-log rows without a signed-URL dance.
+    // Upload side locked to the avatar's owner, capped at 2 MB so the
+    // bucket can't be used as anonymous file hosting.
     match /avatars/{uid}/{file=**} {
       allow read:  if true;
       allow write: if request.auth != null
