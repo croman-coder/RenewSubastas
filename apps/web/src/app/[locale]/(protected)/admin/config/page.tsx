@@ -4,6 +4,7 @@ import { CurrencyForm } from './currency-form';
 import { BidForm } from './bid-form';
 import { FinancingForm } from './financing-form';
 import { EmailsForm } from './emails-form';
+import { PaymentForm } from './payment-form';
 import { Separator } from '@/components/ui/separator';
 
 export default async function AdminConfigPage() {
@@ -22,6 +23,8 @@ export default async function AdminConfigPage() {
       <FinancingForm initial={cfg.financing} />
       <Separator />
       <EmailsForm initial={cfg.emails} />
+      <Separator />
+      <PaymentForm initial={cfg.payment} />
     </div>
   );
 }

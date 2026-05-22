@@ -14,6 +14,9 @@ export interface MyWonAuction {
   sellerUid: string;
   sellerName: string;
   sellerEmail: string;
+  paymentStatus: 'pending_payment' | 'paid' | 'forfeited' | null;
+  paymentDeadlineMs: number | null;
+  paymentDepositUsd: number | null;
 }
 
 export async function listMyWon(uid: string): Promise<MyWonAuction[]> {
@@ -57,6 +60,11 @@ export async function listMyWon(uid: string): Promise<MyWonAuction[]> {
       sellerUid,
       sellerName: `${sellerProfile['firstName'] ?? ''} ${sellerProfile['lastName'] ?? ''}`.trim(),
       sellerEmail: (sellerData['email'] as string) ?? '',
+      paymentStatus:
+        (a['paymentStatus'] as 'pending_payment' | 'paid' | 'forfeited' | undefined) ?? null,
+      paymentDeadlineMs:
+        (a['paymentDeadline'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? null,
+      paymentDepositUsd: (a['paymentDepositUsd'] as number | undefined) ?? null,
     };
   });
 }

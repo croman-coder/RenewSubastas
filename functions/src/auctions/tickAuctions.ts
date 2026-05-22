@@ -1,6 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
+import { loadAppConfig } from '../lib/config.js';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 export interface TickResult {
@@ -49,6 +50,12 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
 
   const details: TickResult['details'] = [];
 
+  // Pull payment config once per tick so each close transaction can stamp
+  // the deadline without re-reading app_config for every auction.
+  const cfg = liveSnap.size > 0 ? await loadAppConfig() : null;
+  const deadlineHours = cfg?.payment.deadlineHours ?? 24;
+  const depositPercent = cfg?.payment.depositPercent ?? 0.1;
+
   for (const doc of liveSnap.docs) {
     const result = await db.runTransaction(async (tx) => {
       const fresh = await tx.get(doc.ref);
@@ -81,6 +88,14 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
       if (outcome === 'sold' && winnerUid) {
         auctionUpdate['winnerUid'] = winnerUid;
         auctionUpdate['finalPrice'] = currentBid;
+        // Payment window opens when the auction closes. The buyer has
+        // `deadlineHours` (default 24) to wire the deposit. Stored as a
+        // Firestore Timestamp so a separate cron pass can sweep
+        // overdue auctions into `forfeited` deterministically.
+        auctionUpdate['paymentStatus'] = 'pending_payment';
+        auctionUpdate['paymentDepositPercent'] = depositPercent;
+        auctionUpdate['paymentDepositUsd'] = Math.round(currentBid * depositPercent * 100) / 100;
+        auctionUpdate['paymentDeadline'] = Timestamp.fromMillis(now + deadlineHours * 3600_000);
       }
       tx.update(doc.ref, auctionUpdate);
 
@@ -111,6 +126,44 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
         after: result as Record<string, unknown>,
       });
     }
+  }
+
+  // ---- Pass 3: forfeit auctions whose payment deadline passed ----
+  // Won-but-unpaid auctions whose paymentDeadline elapsed transition to
+  // paymentStatus=forfeited and the vehicle returns to status=ready so
+  // it can be re-listed. Runs in the same tick to keep operational
+  // surface area small.
+  const expiredSnap = await db
+    .collection('auctions')
+    .where('status', '==', 'ended')
+    .where('outcome', '==', 'sold')
+    .where('paymentStatus', '==', 'pending_payment')
+    .where('paymentDeadline', '<=', nowTs)
+    .limit(200)
+    .get();
+
+  for (const eDoc of expiredSnap.docs) {
+    const a = eDoc.data();
+    await eDoc.ref.update({
+      paymentStatus: 'forfeited',
+      paymentStatusUpdatedAt: FieldValue.serverTimestamp(),
+      paymentStatusUpdatedBy: 'system',
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    const vehicleId = a['vehicleId'] as string | undefined;
+    if (vehicleId) {
+      await db.doc(`vehicles/${vehicleId}`).update({
+        status: 'ready',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    await writeAuditLog({
+      actorUid: 'system',
+      action: 'auction.forfeited',
+      resourceType: 'auction',
+      resourceId: eDoc.id,
+      after: { reason: 'payment_deadline_expired' },
+    });
   }
 
   return { promoted, closed: details.length, details };

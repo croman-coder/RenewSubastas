@@ -38,6 +38,26 @@ const InputSchema = z.object({
       fromName: z.string().min(1).optional(),
     })
     .optional(),
+  // Payment instructions surfaced to a buyer who just won an auction.
+  // Stored as plain text so admin can drop the full Santa Rosa banking
+  // block (account holder, bank, account number, CBU/CCI, etc.) without
+  // forcing a rigid schema. `deadlineHours` controls how long the
+  // winner has to formalize the deposit; defaults applied at read time.
+  payment: z
+    .object({
+      bankAccountHolder: z.string().max(120).optional(),
+      bankName: z.string().max(120).optional(),
+      bankAccountNumber: z.string().max(60).optional(),
+      bankAccountType: z.string().max(40).optional(),
+      bankRuc: z.string().max(40).optional(),
+      depositPercent: z.number().min(0).max(1).optional(),
+      deadlineHours: z.number().int().positive().max(168).optional(),
+      instructionsEs: z.string().max(2000).optional(),
+      instructionsEn: z.string().max(2000).optional(),
+      contactEmail: z.string().email().max(254).optional(),
+      contactPhone: z.string().max(40).optional(),
+    })
+    .optional(),
 });
 
 export interface UpdateGlobalConfigResult {
@@ -95,6 +115,11 @@ export async function updateGlobalConfigHandler(
       update['emails.adminStaffDomain'] = v.emails.adminStaffDomain;
     if (v.emails.fromAddress !== undefined) update['emails.fromAddress'] = v.emails.fromAddress;
     if (v.emails.fromName !== undefined) update['emails.fromName'] = v.emails.fromName;
+  }
+  if (v.payment) {
+    for (const [k, val] of Object.entries(v.payment)) {
+      if (val !== undefined) update[`payment.${k}`] = val;
+    }
   }
 
   // Ensure document exists (update() fails on non-existent docs)

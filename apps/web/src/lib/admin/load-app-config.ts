@@ -16,6 +16,19 @@ export interface AppConfigSnapshot {
     notesEn: string;
   };
   emails: { adminStaffDomain: string; fromAddress: string; fromName: string };
+  payment: {
+    bankAccountHolder: string;
+    bankName: string;
+    bankAccountType: string;
+    bankAccountNumber: string;
+    bankRuc: string;
+    depositPercent: number;
+    deadlineHours: number;
+    instructionsEs: string;
+    instructionsEn: string;
+    contactEmail: string;
+    contactPhone: string;
+  };
 }
 
 const DEFAULTS: AppConfigSnapshot = {
@@ -35,6 +48,19 @@ const DEFAULTS: AppConfigSnapshot = {
     fromAddress: 'no-reply@santarosa.com.py',
     fromName: 'Renew Subastas',
   },
+  payment: {
+    bankAccountHolder: '',
+    bankName: '',
+    bankAccountType: '',
+    bankAccountNumber: '',
+    bankRuc: '',
+    depositPercent: 0.1,
+    deadlineHours: 24,
+    instructionsEs: '',
+    instructionsEn: '',
+    contactEmail: '',
+    contactPhone: '',
+  },
 };
 
 /**
@@ -50,6 +76,7 @@ export const loadAppConfigSnapshot = cache(async (): Promise<AppConfigSnapshot> 
   const b = (data['bid'] ?? {}) as Record<string, unknown>;
   const f = (data['financing'] ?? {}) as Record<string, unknown>;
   const e = (data['emails'] ?? {}) as Record<string, unknown>;
+  const p = (data['payment'] ?? {}) as Record<string, unknown>;
   const fNotes = (f['notes'] ?? {}) as Record<string, unknown>;
   return {
     currency: {
@@ -78,6 +105,19 @@ export const loadAppConfigSnapshot = cache(async (): Promise<AppConfigSnapshot> 
       adminStaffDomain: (e['adminStaffDomain'] as string) ?? DEFAULTS.emails.adminStaffDomain,
       fromAddress: (e['fromAddress'] as string) ?? DEFAULTS.emails.fromAddress,
       fromName: (e['fromName'] as string) ?? DEFAULTS.emails.fromName,
+    },
+    payment: {
+      bankAccountHolder: (p['bankAccountHolder'] as string) ?? DEFAULTS.payment.bankAccountHolder,
+      bankName: (p['bankName'] as string) ?? DEFAULTS.payment.bankName,
+      bankAccountType: (p['bankAccountType'] as string) ?? DEFAULTS.payment.bankAccountType,
+      bankAccountNumber: (p['bankAccountNumber'] as string) ?? DEFAULTS.payment.bankAccountNumber,
+      bankRuc: (p['bankRuc'] as string) ?? DEFAULTS.payment.bankRuc,
+      depositPercent: (p['depositPercent'] as number) ?? DEFAULTS.payment.depositPercent,
+      deadlineHours: (p['deadlineHours'] as number) ?? DEFAULTS.payment.deadlineHours,
+      instructionsEs: (p['instructionsEs'] as string) ?? DEFAULTS.payment.instructionsEs,
+      instructionsEn: (p['instructionsEn'] as string) ?? DEFAULTS.payment.instructionsEn,
+      contactEmail: (p['contactEmail'] as string) ?? DEFAULTS.payment.contactEmail,
+      contactPhone: (p['contactPhone'] as string) ?? DEFAULTS.payment.contactPhone,
     },
   };
 });
