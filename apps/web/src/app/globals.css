@@ -21,7 +21,6 @@
     --danger: 0.55 0.2 25;
   }
 
-  /* shadcn-ui tokens (HSL) — used by shadcn primitives. Map mostly to neutral grays. */
   /* shadcn tokens recolored to neutral grayscale — `240` hue stripped to 0
      so radix primitives don't reintroduce a violet undertone next to the
      monochrome brand surface. */
@@ -70,10 +69,10 @@
   }
 
   .dark {
-    /* Pure-black dark theme for Renew Subastas. Deep near-black canvas with
-       layered surface elevations (bg-elev / bg-deep) lifted just enough to
-       read against bg-base under the side-rails and cards. Copper accent
-       becomes pure white so wordmark + focus rings pop. */
+    /* Pure-black dark theme for Renew Subastas. Deep near-black canvas
+       with layered surface elevations (bg-elev / bg-deep) lifted just
+       enough to read against bg-base under the side-rails and cards.
+       Copper accent becomes pure white so wordmark + focus rings pop. */
     --bg-base: 0.13 0 0;
     --bg-elev: 0.17 0 0;
     --bg-deep: 0.22 0 0;
@@ -87,10 +86,23 @@
     --danger: 0.65 0.18 25;
   }
 
+  /* Smooth-scroll for in-page anchor jumps + reserve scrollbar width so a
+     short page and a long page line up to the same content edge (no
+     post-load horizontal jolt when content grows past the viewport). */
+  html {
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   html,
   body {
     background-color: oklch(var(--bg-base));
     color: oklch(var(--text-strong));
+    /* cv11 = single-storey g, ss01 = open digits — both ship with Inter
+       and quietly lift the perceived quality of dashboard numerics. */
     font-feature-settings: 'cv11', 'ss01';
   }
 
@@ -98,14 +110,87 @@
     font-family: var(--font-inter), system-ui, sans-serif;
   }
 
-  .num-tab {
+  /* Brand-tinted selection so highlighting feels native to the app
+     instead of the OS-default electric blue. */
+  ::selection {
+    background-color: oklch(var(--text-strong) / 0.18);
+    color: oklch(var(--text-strong));
+  }
+
+  /* Custom scrollbar — slim, near-invisible, theme-adaptive. Mirrors the
+     monochrome palette so the bar never reintroduces a stray colour into
+     a long-scrolling page. Webkit gets the precise treatment; Firefox
+     falls back to the `scrollbar-color` / `thin` pair which is good
+     enough and platform-native. */
+  * {
+    scrollbar-color: oklch(var(--text-subtle) / 0.4) transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: oklch(var(--text-subtle) / 0.35);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 200ms ease-out;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(var(--text-subtle) / 0.6);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Tabular numerics by default for any element that *looks* numeric.
+     The .num-tab utility stays as the explicit knob, but headings,
+     <data>, and <time> get free alignment so dashboard tiles stop
+     dancing one pixel at every cent update. */
+  .num-tab,
+  data,
+  time {
     font-variant-numeric: tabular-nums;
+    font-feature-settings:
+      'tnum' 1,
+      'cv11' 1,
+      'ss01' 1;
+  }
+
+  /* Uniform focus-visible ring across every interactive primitive. We
+     keep the hard ring for keyboard users only (`:focus-visible`),
+     never for mouse clicks — that pattern is what makes the app feel
+     polished instead of "form-on-a-blog". */
+  :where(button, a, [role='button'], [tabindex]):focus-visible,
+  :where(input, textarea, select):focus-visible {
+    outline: 2px solid oklch(var(--text-strong) / 0.6);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  /* Respect the OS reduce-motion preference. Strips long transitions
+     and animations to a near-instant snap so users with vestibular
+     sensitivity don't get punished by every page transition + chip
+     entrance + scroll-in animation we ship. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer utilities {
-  /* Hide scrollbar but keep scroll on horizontal nav strips, used for tab
-     overflow on narrow screens. */
+  /* Hide scrollbar but keep scroll on horizontal nav strips, used for
+     tab overflow on narrow screens. */
   .scrollbar-none {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -115,7 +200,8 @@
   }
 
   /* Form input chrome that matches the login form and dashboard cards.
-     Use on <Input> / <Select> / <Textarea> via className for consistency. */
+     Use on <Input> / <Select> / <Textarea> via className for
+     consistency. */
   .form-input-chrome {
     height: 2.75rem; /* h-11 */
     border-radius: 0.75rem; /* rounded-xl */
@@ -129,5 +215,64 @@
   .form-input-chrome:focus-within {
     border-color: oklch(var(--copper) / 0.5);
     box-shadow: 0 0 0 3px oklch(var(--copper) / 0.15);
+  }
+
+  /* Reusable shimmer-skeleton background for async loading states.
+     Animates a soft band across a neutral surface; opt-in by adding
+     class="skeleton" to any block with a fixed size. */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: oklch(var(--bg-deep) / 0.6);
+    border-radius: 0.5rem;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0,
+      oklch(var(--text-subtle) / 0.08) 50%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Standard hover-lift used by interactive cards (auction tiles,
+     dashboard KPI cards, won-list rows). Centralises the duration +
+     easing so the whole product breathes at the same rhythm. */
+  .hover-lift {
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms ease-out,
+      background-color 220ms ease-out,
+      box-shadow 220ms ease-out;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+  }
+  .hover-lift:active {
+    transform: translateY(0);
+    transition-duration: 80ms;
+  }
+
+  /* Top + bottom edge fade for long scroll columns (audit list, bid
+     history) so the content blends into the surface instead of being
+     amputated by a hard scroll line. */
+  .scroll-fade-y {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%
+    );
   }
 }

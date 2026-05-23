@@ -44,7 +44,12 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        'border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+        // 200ms hover transition matches the .hover-lift rhythm used on
+        // cards so tables and tiles feel like one motion system. The
+        // border becomes a hairline at full opacity to remove the
+        // "stripey" look on dense lists.
+        'border-b border-text-subtle/10 transition-colors duration-200 ease-out',
+        'hover:bg-muted/40 data-[state=selected]:bg-muted',
         className,
       )}
       {...props}
@@ -60,7 +65,12 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+      // Editorial header treatment: smaller, uppercase, wider letter-
+      // spacing pushes the column labels into "field" territory and
+      // away from "another row of data". 12 / 12px lock keeps the
+      // table head an exact 36px tall regardless of the column label.
+      'h-10 px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-[0.08em]',
+      'text-muted-foreground [&:has([role=checkbox])]:pr-0',
       className,
     )}
     {...props}
