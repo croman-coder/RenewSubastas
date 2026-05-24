@@ -54,8 +54,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'missing_id_token' }, { status: 400 });
   }
 
+  let decoded;
   try {
-    const decoded = await adminAuth().verifyIdToken(idToken, true);
+    decoded = await adminAuth().verifyIdToken(idToken, true);
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    const message = (err as { message?: string }).message ?? '';
+    // Surface configuration failures distinctly so a misformatted
+    // service account (the most common cause of "no puedo entrar" after
+    // a deploy) doesn't masquerade as a generic invalid-token error.
+    console.error('[session POST] verifyIdToken failed', { code, message });
+    if (
+      message.includes('FIREBASE_SERVICE_ACCOUNT_KEY') ||
+      message.includes('Failed to determine project ID') ||
+      code === 'app/invalid-credential' ||
+      code === 'app/no-app'
+    ) {
+      return NextResponse.json({ error: 'server_misconfigured' }, { status: 500 });
+    }
+    if (code === 'auth/id-token-revoked') {
+      return NextResponse.json({ error: 'session_revoked' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'invalid_token' }, { status: 401 });
+  }
+
+  try {
     if ((decoded as { status?: string }).status !== 'active') {
       return NextResponse.json({ error: 'account_disabled' }, { status: 403 });
     }
@@ -86,9 +109,12 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err) {
-    // Log server-side for ops; never leak Firebase error details to the client.
-    console.error('[session POST] invalid token', err);
-    return NextResponse.json({ error: 'invalid_token' }, { status: 401 });
+    // verifyIdToken succeeded but createSessionCookie failed — usually
+    // a project-ID mismatch between the client SDK config and the
+    // service account. Surface as a distinct error so ops can spot it
+    // from the network tab.
+    console.error('[session POST] createSessionCookie failed', err);
+    return NextResponse.json({ error: 'session_creation_failed' }, { status: 500 });
   }
 }
 

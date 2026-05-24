@@ -56,8 +56,19 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
       });
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
-        if (j.error === 'account_disabled') setError(t('errors.accountDisabled'));
-        else setError(t('errors.generic'));
+        if (j.error === 'account_disabled') {
+          setError(t('errors.accountDisabled'));
+        } else if (j.error === 'server_misconfigured' || j.error === 'session_creation_failed') {
+          // Distinct copy so it's obvious the failure is not "wrong
+          // password" — usually an env-var problem on the server.
+          setError(
+            'Servicio no disponible. El equipo fue notificado. Probá de nuevo en unos minutos.',
+          );
+        } else if (j.error === 'forbidden_origin') {
+          setError('Origen no permitido. Cerrá la pestaña y volvé a abrir el sitio.');
+        } else {
+          setError(t('errors.generic'));
+        }
         await fb.auth.signOut();
         return;
       }
