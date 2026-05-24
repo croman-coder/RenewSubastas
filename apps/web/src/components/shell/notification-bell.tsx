@@ -27,6 +27,12 @@ interface Props {
   role: Role;
   /** Stable per-user identity for the lastSeenAt key in localStorage. */
   uid: string;
+  /**
+   * Buyer's catalog segment. Undefined for admin/staff. When present, the
+   * buyer's auction-feed query is filtered to this segment so a retail
+   * buyer never sees wholesale auctions in their bell (and vice-versa).
+   */
+  audience?: 'retail' | 'wholesale';
 }
 
 interface NotificationItem {
@@ -47,7 +53,7 @@ interface NotificationItem {
  * "Unread" is anything newer than the last time the user opened the bell,
  * persisted in localStorage so the badge clears across reloads.
  */
-export function NotificationBell({ locale, role, uid }: Props) {
+export function NotificationBell({ locale, role, uid, audience }: Props) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const storageKey = useMemo(() => `carbid:notif:lastSeen:${role}:${uid}`, [role, uid]);
@@ -99,10 +105,18 @@ export function NotificationBell({ locale, role, uid }: Props) {
     }
 
     if (isBuyer) {
+      // Audience-scoped feed. We narrow by both the audience claim AND
+      // status so a retail buyer's bell can never light up for a
+      // wholesale launch (and the other way around). `audience` always
+      // resolves to a value at this point because the topbar passes the
+      // user's claim down; the `?? 'retail'` is a defensive default for
+      // legacy buyers whose token predates the audience split.
+      const buyerAudience = audience ?? 'retail';
       subscribe(
         'auctions',
         query(
           collection(fb.db, 'auctions'),
+          where('audience', '==', buyerAudience),
           where('status', 'in', ['scheduled', 'live']),
           orderBy('createdAt', 'desc'),
           limit(10),
@@ -164,7 +178,7 @@ export function NotificationBell({ locale, role, uid }: Props) {
     }
 
     return () => unsubs.forEach((u) => u());
-  }, [role, locale]);
+  }, [role, locale, audience]);
 
   const unread = items.filter((it) => it.ts > lastSeen).length;
 

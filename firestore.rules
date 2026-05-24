@@ -37,7 +37,14 @@ service cloud.firestore {
                     // without profile.audience can still update other
                     // fields freely.
                     && request.resource.data.get(['profile', 'audience'], null)
-                       == resource.data.get(['profile', 'audience'], null);
+                       == resource.data.get(['profile', 'audience'], null)
+                    // `fcmTokens` is written only by the savePushToken
+                    // callable (which runs with admin SDK and bypasses
+                    // rules). A buyer cannot read or modify it from the
+                    // client — leaks would expose every device the user
+                    // has registered for push.
+                    && request.resource.data.get('fcmTokens', null)
+                       == resource.data.get('fcmTokens', null);
       allow create, delete: if false;
     }
 

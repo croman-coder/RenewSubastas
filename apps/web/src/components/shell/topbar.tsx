@@ -108,7 +108,12 @@ export function Topbar({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <NotificationBell locale={locale} role={role} uid={uid} />
+          <NotificationBell
+            locale={locale}
+            role={role}
+            uid={uid}
+            {...(audience ? { audience } : {})}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger
               className={

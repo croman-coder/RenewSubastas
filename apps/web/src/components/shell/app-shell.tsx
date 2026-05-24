@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { Topbar } from './topbar';
 import { SidebarNav } from './sidebar-nav';
 import { RouteProgress } from './route-progress';
+import { PushPermissionPrompt } from './push-permission-prompt';
 import { getNavItems, type Role } from './nav-config';
 
 interface Props {
@@ -61,6 +62,11 @@ export async function AppShell({ locale, children }: Props) {
         signOutLabel={tCommon('signOut')}
         settingsLabel={tCommon('settings')}
       />
+      {/* Push opt-in lives only on the buyer surface. Admin/staff
+          notifications are operational (bids landing, password resets)
+          and already covered by the in-app bell; pestering them for OS
+          permission adds no value. */}
+      {role === 'buyer' && <PushPermissionPrompt locale={locale} />}
       <div className="flex">
         {/* Desktop sidebar */}
         <aside
