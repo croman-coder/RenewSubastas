@@ -15,6 +15,14 @@ interface Props {
   data: Array<{ date: string; count: number }>;
 }
 
+// Single ink series for the B&W brand — pure neutral stroke so the
+// trend reads on its own without competing with the rest of the
+// monochrome dashboard. Gradient fades to transparent so the area
+// fill never overpowers underlying gridlines.
+const INK = 'oklch(0.18 0 0)';
+const INK_GRID = 'oklch(0.5 0 0 / 0.18)';
+const INK_AXIS = 'oklch(0.42 0 0)';
+
 export function BidsPerDayChart({ data }: Props) {
   const t = useTranslations('admin.home');
   const totalBids = data.reduce((acc, d) => acc + d.count, 0);
@@ -32,7 +40,7 @@ export function BidsPerDayChart({ data }: Props) {
     >
       <header className="flex items-center justify-between px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-md bg-copper/10 text-copper grid place-items-center">
+          <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong grid place-items-center ring-1 ring-text-subtle/20">
             <LineIcon className="w-3.5 h-3.5" strokeWidth={2.25} />
           </span>
           <h2 className="text-sm font-semibold text-text-strong tracking-tight">
@@ -52,44 +60,47 @@ export function BidsPerDayChart({ data }: Props) {
               <AreaChart data={formatted} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="bidsArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(68% 0.13 55)" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="oklch(68% 0.13 55)" stopOpacity={0} />
+                    <stop offset="0%" stopColor={INK} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={INK} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid
-                  strokeDasharray="2 4"
-                  stroke="oklch(64% 0.01 290 / 0.15)"
-                  vertical={false}
-                />
+                <CartesianGrid strokeDasharray="2 4" stroke={INK_GRID} vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: 'oklch(64% 0.01 290)' }}
+                  tick={{ fontSize: 11, fill: INK_AXIS }}
                   interval="preserveStartEnd"
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   allowDecimals={false}
-                  tick={{ fontSize: 11, fill: 'oklch(64% 0.01 290)' }}
+                  tick={{ fontSize: 11, fill: INK_AXIS }}
                   width={28}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
+                  cursor={{ stroke: INK, strokeWidth: 1, strokeDasharray: '3 3' }}
                   contentStyle={{
-                    backgroundColor: 'oklch(18% 0.01 290)',
-                    border: '1px solid oklch(64% 0.01 290 / 0.2)',
+                    backgroundColor: 'oklch(0.1 0 0)',
+                    color: 'oklch(0.98 0 0)',
+                    border: '1px solid oklch(0.4 0 0)',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    padding: '6px 10px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                   }}
+                  itemStyle={{ color: 'oklch(0.98 0 0)' }}
+                  labelStyle={{ color: 'oklch(0.85 0 0)', marginBottom: '2px' }}
                 />
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke="oklch(68% 0.13 55)"
-                  strokeWidth={2}
+                  stroke={INK}
+                  strokeWidth={2.25}
                   fill="url(#bidsArea)"
                   dot={false}
+                  activeDot={{ r: 4, stroke: INK, strokeWidth: 2, fill: 'oklch(1 0 0)' }}
                 />
               </AreaChart>
             </ResponsiveContainer>

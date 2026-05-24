@@ -215,26 +215,30 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
 
 type Accent = 'copper' | 'mint' | 'lavender' | 'amber';
 
+// Monochrome accents: solid ink chip carries the primary KPI; the
+// other three share a ringed light chip so the layout reads as one
+// cohesive set instead of a four-colour rainbow. Matches the admin
+// KPI cards 1:1.
 const ACCENT: Record<Accent, { ring: string; iconBg: string; iconText: string }> = {
   copper: {
-    ring: 'before:bg-gradient-to-r before:from-copper/0 before:via-copper/70 before:to-copper/0',
-    iconBg: 'bg-copper/10',
-    iconText: 'text-copper',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/80 before:to-text-strong/0',
+    iconBg: 'bg-text-strong',
+    iconText: 'text-bg-base',
   },
   mint: {
-    ring: 'before:bg-gradient-to-r before:from-emerald-400/0 before:via-emerald-400/60 before:to-emerald-400/0',
-    iconBg: 'bg-emerald-500/10',
-    iconText: 'text-emerald-400',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
+    iconText: 'text-text-strong',
   },
   lavender: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/60 before:to-text-strong/0',
-    iconBg: 'bg-text-strong/10',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
   amber: {
-    ring: 'before:bg-gradient-to-r before:from-amber-400/0 before:via-amber-400/60 before:to-amber-400/0',
-    iconBg: 'bg-amber-500/10',
-    iconText: 'text-amber-300',
+    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
+    iconText: 'text-text-strong',
   },
 };
 
@@ -423,7 +427,7 @@ function StatusCard({
   return (
     <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in duration-500">
       <header className="flex items-center gap-2.5 px-5 pt-5 pb-3">
-        <span className="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-300 grid place-items-center">
+        <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong ring-1 ring-text-subtle/20 grid place-items-center">
           <Gavel className="w-3.5 h-3.5" strokeWidth={2.25} />
         </span>
         <h2 className="text-sm font-semibold text-text-strong tracking-tight">

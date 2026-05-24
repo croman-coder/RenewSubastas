@@ -11,9 +11,9 @@
     --bg-base: 1 0 0; /* pure white */
     --bg-elev: 0.97 0 0;
     --bg-deep: 0.93 0 0;
-    --text-strong: 0.12 0 0; /* near-black */
-    --text-muted: 0.42 0 0;
-    --text-subtle: 0.62 0 0;
+    --text-strong: 0.1 0 0; /* near-black, was 0.12 — title tier */
+    --text-muted: 0.34 0 0; /* subtitle / icon, was 0.42 — bumped for AA contrast on white */
+    --text-subtle: 0.58 0 0; /* hairlines / disabled, was 0.62 */
     --ink: 0.12 0 0; /* solid black for wordmark "new" half */
     --copper: 0.18 0 0; /* accent — used to be copper, now pure ink black */
     --success: 0.55 0.14 155;

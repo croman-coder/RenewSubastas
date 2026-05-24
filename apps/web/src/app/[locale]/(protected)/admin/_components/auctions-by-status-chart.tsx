@@ -9,19 +9,23 @@ interface Props {
   ended: number;
 }
 
-const COLORS = {
-  live: 'oklch(72% 0.15 158)', // mint
-  scheduled: 'oklch(75% 0.13 75)', // amber
-  ended: 'oklch(58% 0.02 290)', // muted
+// Monochrome series for the B&W brand. Three steps of neutral ink so
+// slices read by tonal contrast alone — no chromatic hue leaks back
+// into the otherwise grayscale dashboard. Order matches semantic
+// hierarchy: live = darkest (most attention), ended = lightest (past).
+const SERIES = {
+  live: 'oklch(0.18 0 0)',
+  scheduled: 'oklch(0.45 0 0)',
+  ended: 'oklch(0.74 0 0)',
 };
 
 export function AuctionsByStatusChart({ live, scheduled, ended }: Props) {
   const t = useTranslations('admin.home');
   const tStatus = useTranslations('staff.auctions.status');
   const data = [
-    { name: tStatus('live'), value: live, color: COLORS.live },
-    { name: tStatus('scheduled'), value: scheduled, color: COLORS.scheduled },
-    { name: tStatus('ended'), value: ended, color: COLORS.ended },
+    { name: tStatus('live'), value: live, color: SERIES.live },
+    { name: tStatus('scheduled'), value: scheduled, color: SERIES.scheduled },
+    { name: tStatus('ended'), value: ended, color: SERIES.ended },
   ];
   const total = live + scheduled + ended;
 
@@ -34,7 +38,7 @@ export function AuctionsByStatusChart({ live, scheduled, ended }: Props) {
       }
     >
       <header className="flex items-center gap-2.5 px-5 pt-5 pb-2">
-        <span className="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-300 grid place-items-center">
+        <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong grid place-items-center ring-1 ring-text-subtle/20">
           <PieIcon className="w-3.5 h-3.5" strokeWidth={2.25} />
         </span>
         <h2 className="text-sm font-semibold text-text-strong tracking-tight">
@@ -62,12 +66,18 @@ export function AuctionsByStatusChart({ live, scheduled, ended }: Props) {
                     ))}
                   </Pie>
                   <Tooltip
+                    cursor={{ fill: 'oklch(0 0 0 / 0.04)' }}
                     contentStyle={{
-                      backgroundColor: 'oklch(18% 0.01 290)',
-                      border: '1px solid oklch(64% 0.01 290 / 0.2)',
+                      backgroundColor: 'oklch(0.1 0 0)',
+                      color: 'oklch(0.98 0 0)',
+                      border: '1px solid oklch(0.4 0 0)',
                       borderRadius: '8px',
                       fontSize: '12px',
+                      padding: '6px 10px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                     }}
+                    itemStyle={{ color: 'oklch(0.98 0 0)' }}
+                    labelStyle={{ color: 'oklch(0.85 0 0)', marginBottom: '2px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

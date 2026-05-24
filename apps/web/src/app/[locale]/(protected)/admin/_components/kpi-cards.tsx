@@ -58,27 +58,33 @@ export function KpiCards({ usersTotal, liveAuctions, gmvUsd, bidsToday }: Props)
   );
 }
 
+// All four KPI accents collapse to monochrome ink tiers so the cards
+// look like one cohesive set instead of a rainbow. Hierarchy comes from
+// tonal weight (solid ink chip vs ringed light chip), not chromatic
+// difference, which keeps the dashboard on-brand and lifts perceived
+// quality. Ring gradient kept on every variant for the top-edge accent
+// line that gives the cards their "premium" feel.
 const ACCENT_STYLES: Record<KpiItem['accent'], { ring: string; iconBg: string; iconText: string }> =
   {
     copper: {
-      ring: 'before:bg-gradient-to-r before:from-copper/0 before:via-copper/70 before:to-copper/0',
-      iconBg: 'bg-copper/10',
-      iconText: 'text-copper',
+      ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/80 before:to-text-strong/0',
+      iconBg: 'bg-text-strong',
+      iconText: 'text-bg-base',
     },
     mint: {
-      ring: 'before:bg-gradient-to-r before:from-emerald-400/0 before:via-emerald-400/60 before:to-emerald-400/0',
-      iconBg: 'bg-emerald-500/10',
-      iconText: 'text-emerald-400',
+      ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+      iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
+      iconText: 'text-text-strong',
     },
     lavender: {
-      ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/60 before:to-text-strong/0',
-      iconBg: 'bg-text-strong/10',
+      ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+      iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
       iconText: 'text-text-strong',
     },
     amber: {
-      ring: 'before:bg-gradient-to-r before:from-amber-400/0 before:via-amber-400/60 before:to-amber-400/0',
-      iconBg: 'bg-amber-500/10',
-      iconText: 'text-amber-300',
+      ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
+      iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
+      iconText: 'text-text-strong',
     },
   };
 
