@@ -98,7 +98,18 @@ const KIND_HINT: Record<FormValues['kind'], string> = {
   admin: 'Acceso total a la plataforma. Email obligatorio @santarosa.com.py.',
 };
 
-export function CreateUserForm({ locale }: { locale: string }) {
+interface FormProps {
+  locale: string;
+  /**
+   * When true, the role picker only exposes buyer kinds (retail /
+   * wholesale). Staff use this surface to onboard customers without
+   * being able to manufacture admin/staff accounts and escalate the
+   * role surface. Mirrors the server-side guard in `createUser`.
+   */
+  restrictToBuyers?: boolean;
+}
+
+export function CreateUserForm({ locale, restrictToBuyers = false }: FormProps) {
   const t = useTranslations('admin.users.create');
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -177,15 +188,29 @@ export function CreateUserForm({ locale }: { locale: string }) {
           }
         >
           <FormField label="Rol">
-            <Select value={kind} onValueChange={(v) => setValue('kind', v as FormValues['kind'])}>
+            <Select
+              value={kind}
+              onValueChange={(v) => {
+                // Defensive: even if a staff user crafts a DOM event with
+                // an admin/staff value, ignore it on the client. The
+                // server callable rejects it again so this is just UX.
+                const next = v as FormValues['kind'];
+                if (restrictToBuyers && next !== 'retail' && next !== 'wholesale') return;
+                setValue('kind', next);
+              }}
+            >
               <SelectTrigger className={INPUT_CLS}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="retail">Retail · Público general</SelectItem>
                 <SelectItem value="wholesale">Wholesale · Mayorista</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                {!restrictToBuyers && (
+                  <>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </FormField>

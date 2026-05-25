@@ -33,7 +33,7 @@ interface T {
     audit: string;
     config: string;
   };
-  staff: { home: string; vehicles: string; auctions: string };
+  staff: { home: string; vehicles: string; auctions: string; buyers: string };
   buyer: { catalog: string; bids: string; won: string };
   common: { settings: string };
 }
@@ -60,6 +60,10 @@ export function getNavItems(
       { href: `/${locale}/staff`, label: t.staff.home, icon: 'home', exact: true },
       { href: `/${locale}/staff/vehicles`, label: t.staff.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.staff.auctions, icon: 'gavel' },
+      // Staff can onboard buyers (retail / wholesale). Route reuses the
+      // admin create-user form in restricted mode; staff cannot reach
+      // /admin/users (admin layout blocks them).
+      { href: `/${locale}/staff/buyers/new`, label: t.staff.buyers, icon: 'users' },
     ];
   }
   // buyer — paths follow the buyer's audience so the URL bar matches the

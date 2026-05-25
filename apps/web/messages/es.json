@@ -122,7 +122,8 @@
     "nav": {
       "home": "Inicio",
       "vehicles": "Mis vehículos",
-      "auctions": "Mis subastas"
+      "auctions": "Mis subastas",
+      "buyers": "Nuevo cliente"
     },
     "auctions": {
       "title": "Mis subastas",

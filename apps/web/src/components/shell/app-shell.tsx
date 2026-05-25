@@ -37,6 +37,7 @@ export async function AppShell({ locale, children }: Props) {
         home: tStaff('home'),
         vehicles: tStaff('vehicles'),
         auctions: tStaff('auctions'),
+        buyers: tStaff('buyers'),
       },
       buyer: {
         catalog: tBuyerAuctions('title'),

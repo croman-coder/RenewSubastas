@@ -13,7 +13,7 @@ import { adminAuth, adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { loadAppConfig } from '../lib/config.js';
-import { requireAdmin } from '../lib/errors.js';
+import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 
@@ -44,13 +44,27 @@ export interface CreateUserResult {
  * going through the v2 onCall wrapper.
  */
 export async function createUserHandler(req: CallableRequest): Promise<CreateUserResult> {
-  const { uid: actorUid } = requireAdmin(req);
+  // Admins can create any role. Staff can create buyers only (retail or
+  // wholesale) so the day-to-day customer onboarding doesn't bottleneck
+  // on an admin, but staff still can't manufacture more admin/staff
+  // accounts and escalate the role surface.
+  const { uid: actorUid, role: actorRole } = requireSignedIn(req);
+  if (actorRole !== 'admin' && actorRole !== 'staff') {
+    throw new HttpsError('permission-denied', 'Only admin or staff can create users');
+  }
 
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) {
     throw new HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
   }
   const input = parsed.data;
+
+  if (actorRole === 'staff' && input.role !== 'buyer') {
+    throw new HttpsError(
+      'permission-denied',
+      'Staff can only create buyer accounts (retail or wholesale)',
+    );
+  }
 
   const docOk =
     input.documentType === 'CI'

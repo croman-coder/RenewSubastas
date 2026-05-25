@@ -122,7 +122,8 @@
     "nav": {
       "home": "Home",
       "vehicles": "My vehicles",
-      "auctions": "My auctions"
+      "auctions": "My auctions",
+      "buyers": "New customer"
     },
     "auctions": {
       "title": "My auctions",
