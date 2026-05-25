@@ -1,45 +1,19 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Pull the buyer's audience claim, defaulting to 'retail' for legacy
-    // accounts whose token predates the audience split.
-    function audience() {
-      return request.auth.token.audience != null
-        ? request.auth.token.audience
-        : 'retail';
-    }
-
-    // Read the Firestore vehicle doc so we can check its audience without
-    // forcing a path convention change on existing uploads. Returns the
-    // doc data map, or null if the doc is gone (in which case the read
-    // is rejected by the wrapping rule).
-    function vehicleAudience(vehicleId) {
-      return firestore
-        .get(/databases/(default)/documents/vehicles/$(vehicleId))
-        .data
-        .audience;
-    }
-
-    // Vehicle photos. Buyers may only read the photos of vehicles whose
-    // audience matches their claim — wholesale buyers can't scrape the
-    // retail catalog and vice-versa. Admin/staff have universal read.
-    // Writes stay restricted to admin/staff with size + content-type caps.
+    // Vehicle photos. Any active signed-in user can read; audience
+    // scoping is enforced in the application layer (Firestore queries
+    // filter vehicles/auctions by `audience`, so a wholesale buyer
+    // can never reach a retail vehicle's detail page in the first
+    // place). Doing the audience check here too would require a
+    // firestore.get() per read, which is fragile against vehicles
+    // that don't yet have a Firestore doc (the upload flow generates
+    // the vehicleId client-side and uploads photos before the doc
+    // exists). Writes stay locked to admin/staff with size and
+    // content-type caps.
     match /vehicles/{vehicleId}/{file=**} {
-      allow read: if request.auth != null
-                  && request.auth.token.status == 'active'
-                  && (
-                    request.auth.token.role in ['staff', 'admin']
-                    || (
-                      request.auth.token.role == 'buyer'
-                      && (
-                        // Vehicle has no audience field (legacy) → treat
-                        // as retail, the original segment.
-                        vehicleAudience(vehicleId) == null
-                          ? audience() == 'retail'
-                          : vehicleAudience(vehicleId) == audience()
-                      )
-                    )
-                  );
+      allow read:  if request.auth != null
+                   && request.auth.token.status == 'active';
       allow write: if request.auth != null
                    && request.auth.token.status == 'active'
                    && request.auth.token.role in ['staff', 'admin']
@@ -48,9 +22,9 @@ service firebase.storage {
     }
 
     // Avatars are intentionally world-readable so they can appear in
-    // notification cards and audit-log rows without a signed-URL dance.
-    // Upload side locked to the avatar's owner, capped at 2 MB so the
-    // bucket can't be used as anonymous file hosting.
+    // notification cards and audit-log rows without a signed-URL
+    // dance. The upload side is locked to the avatar's owner, capped
+    // at 2 MB so the bucket can't be used as anonymous file hosting.
     match /avatars/{uid}/{file=**} {
       allow read:  if true;
       allow write: if request.auth != null
