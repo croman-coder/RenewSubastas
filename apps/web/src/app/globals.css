@@ -275,4 +275,68 @@
       transparent 100%
     );
   }
+
+  /* Subtle ink-mesh hero background. Two radial washes of ink at low
+     opacity sit behind the hero content to give a sense of depth
+     without breaking the monochrome palette. Pointer-events disabled
+     so it never intercepts clicks. */
+  .ink-mesh {
+    position: relative;
+    isolation: isolate;
+  }
+  .ink-mesh::before,
+  .ink-mesh::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .ink-mesh::before {
+    background: radial-gradient(
+      ellipse 60% 50% at 85% 10%,
+      oklch(var(--text-strong) / 0.06),
+      transparent 60%
+    );
+  }
+  .ink-mesh::after {
+    background: radial-gradient(
+      ellipse 70% 60% at 0% 100%,
+      oklch(var(--text-strong) / 0.05),
+      transparent 65%
+    );
+  }
+
+  /* Optional dotted ink grid backdrop. Use as decoration behind heroes
+     or empty states. Pure CSS — no extra DOM, no image fetch. */
+  .ink-grid {
+    background-image: radial-gradient(oklch(var(--text-strong) / 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: 0 0;
+  }
+
+  /* Sheen sweep across an element on hover. Used on primary CTAs and
+     "ganaste" hero panels for a premium, restrained accent. The mask
+     keeps the sweep limited to the inside of the rounded shape. */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      oklch(var(--text-strong) / 0.08) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .sheen:hover::after {
+    transform: translateX(120%);
+  }
 }

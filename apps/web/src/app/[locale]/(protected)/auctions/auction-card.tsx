@@ -61,10 +61,11 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
     <Link
       href={`/${locale}/auctions/${auction.id}` as `/${string}`}
       className={
-        'group block rounded-xl overflow-hidden border border-text-subtle/15 bg-bg-elev/40 ' +
-        'transition-all duration-300 hover:border-copper/40 hover:bg-bg-elev/70 ' +
-        'hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.5)] ' +
-        'active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-copper/40 focus:ring-offset-2 focus:ring-offset-bg-base ' +
+        'sheen group block rounded-xl overflow-hidden border border-text-subtle/15 bg-bg-elev/40 ' +
+        'transition-all duration-300 hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
+        'hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.55)] ' +
+        'active:scale-[0.99] active:translate-y-0 ' +
+        'focus:outline-none focus:ring-2 focus:ring-text-strong/40 focus:ring-offset-2 focus:ring-offset-bg-base ' +
         'animate-in fade-in slide-in-from-bottom-2 duration-300'
       }
       style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}

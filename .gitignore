@@ -56,3 +56,4 @@ test-results/
 
 # functions build
 functions/lib/
+.vercel

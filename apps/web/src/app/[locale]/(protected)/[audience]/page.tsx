@@ -12,6 +12,8 @@ import {
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
 import { TodayLabel } from '@/components/shell/today-label';
+import { RevealOnScroll } from '@/components/motion/reveal-on-scroll';
+import { CountUp } from '@/components/motion/count-up';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -28,14 +30,12 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
+      <header className="ink-mesh relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
+        {/* Faint dotted ink grid clipped to the hero so the panel reads
+            as a designed surface, not just a flat card. */}
         <div
           aria-hidden
-          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-text-strong/10 blur-3xl pointer-events-none"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-copper/5 blur-3xl pointer-events-none"
+          className="ink-grid absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black_30%,transparent_75%)] pointer-events-none"
         />
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="min-w-0">
@@ -65,7 +65,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
       </header>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <RevealOnScroll className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi
           label="Subastas activas"
           value={s.liveAuctions}
@@ -102,10 +102,10 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
           accent="amber"
           index={3}
         />
-      </div>
+      </RevealOnScroll>
 
       {/* Two-column section: My winning auctions + Closing soon */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <RevealOnScroll className="grid grid-cols-1 lg:grid-cols-2 gap-5" delayMs={60}>
         <Panel
           title="Estoy ganando ahora"
           icon={Trophy}
@@ -165,10 +165,10 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
             </ul>
           )}
         </Panel>
-      </div>
+      </RevealOnScroll>
 
       {/* Bottom row: Status counts + Favorites */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <RevealOnScroll className="grid grid-cols-1 lg:grid-cols-3 gap-5" delayMs={80}>
         <StatusCard live={s.liveAuctions} scheduled={s.scheduledAuctions} ended={s.endedAuctions} />
         <Panel
           title="Mis favoritos en vivo"
@@ -208,7 +208,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
             </div>
           </div>
         </Panel>
-      </div>
+      </RevealOnScroll>
     </div>
   );
 }
@@ -261,7 +261,7 @@ function Kpi({
   return (
     <div
       className={
-        'group relative overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-5 ' +
+        'sheen group relative overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-5 ' +
         'transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 ' +
         'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.45)] ' +
         'animate-in fade-in slide-in-from-bottom-2 ' +
@@ -276,7 +276,7 @@ function Kpi({
             {label}
           </p>
           <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
-            {value.toLocaleString()}
+            <CountUp value={value} />
           </p>
         </div>
         <div
