@@ -85,7 +85,7 @@ export function AuditTable({ locale, items, nextCursor, currentAction }: Props) 
               <TableHead>{t('columns.resource')}</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="stagger-in">
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-text-muted py-8">

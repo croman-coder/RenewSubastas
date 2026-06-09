@@ -107,7 +107,7 @@ export function UsersTable({ locale, items, nextCursor, currentRole, currentStat
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="stagger-in">
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-text-muted py-8">

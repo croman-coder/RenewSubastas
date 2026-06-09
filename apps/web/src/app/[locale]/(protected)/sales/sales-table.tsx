@@ -125,7 +125,7 @@ export function SalesTable({ locale }: { locale: string }) {
   }
 
   return (
-    <ul className="space-y-3">
+    <ul className="stagger-in space-y-3">
       {rows.map((r) => (
         <li
           key={r.auctionId}
