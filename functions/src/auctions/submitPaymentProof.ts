@@ -77,10 +77,30 @@ export async function submitPaymentProofHandler(
   const docType = (profile['documentType'] as string) ?? '';
   const docNumber = (profile['documentNumber'] as string) ?? '';
 
-  // Vehicle dossier.
+  // Vehicle dossier. The auction snapshot only carries make/model/year,
+  // so fetch the full vehicle doc for the identifying fields (plate +
+  // chassis/VIN) the admin needs to match the unit physically.
   const v = (a['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
   const finalPrice = (a['finalPrice'] as number) ?? 0;
   const depositUsd = (a['paymentDepositUsd'] as number) ?? finalPrice * 0.1;
+
+  const vehicleId = (a['vehicleId'] as string) ?? '';
+  let vehFull: Record<string, unknown> = {};
+  if (vehicleId) {
+    const vSnap = await adminDb().doc(`vehicles/${vehicleId}`).get();
+    vehFull = vSnap.data() ?? {};
+  }
+  const plate = (vehFull['licensePlate'] as string) ?? '';
+  const vin = (vehFull['vin'] as string) ?? '';
+  const mileage = vehFull['mileage'] as number | undefined;
+  const color = (vehFull['color'] as string) ?? '';
+  const transmission = (vehFull['transmission'] as string) ?? '';
+  const fuelType = (vehFull['fuelType'] as string) ?? '';
+
+  // Vanity reference: human-friendly auction code from the last 6 chars
+  // of the id, uppercased. Readable + unique enough for support
+  // ("subasta RNW-CWKJUK") without a sequential counter.
+  const vanity = `RNW-${auctionId.slice(-6).toUpperCase()}`;
 
   // Record the proof on the auction so admin sees it in-app too.
   const downloadUrlBase = `https://firebasestorage.googleapis.com/v0/b/${adminStorage().bucket().name}/o/${encodeURIComponent(storagePath)}?alt=media`;
@@ -125,6 +145,9 @@ export async function submitPaymentProofHandler(
           <h1 style="margin:14px 0 4px;font-size:22px;color:#0f0f0f;font-weight:800;">
             ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}
           </h1>
+          <p style="margin:0 0 4px;font-size:12px;color:#71717a;font-weight:600;letter-spacing:0.5px;">
+            Subasta ${vanity}
+          </p>
           <p style="margin:0 0 18px;font-size:14px;color:#52525b;">
             Un ganador subió su comprobante. Revisá el adjunto y confirmá la seña en el panel.
           </p>
@@ -132,9 +155,15 @@ export async function submitPaymentProofHandler(
           <h2 style="margin:18px 0 4px;font-size:13px;color:#0f0f0f;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Vehículo</h2>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             ${row('Vehículo', `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`)}
+            ${row('Chasis / VIN', vin)}
+            ${row('Chapa', plate)}
+            ${mileage != null ? row('Kilometraje', `${mileage.toLocaleString('es-PY')} km`) : ''}
+            ${color ? row('Color', color) : ''}
+            ${transmission ? row('Transmisión', transmission) : ''}
+            ${fuelType ? row('Combustible', fuelType) : ''}
             ${row('Precio final', `USD ${fmtUsd(finalPrice)}`)}
             ${row('Seña esperada', `USD ${fmtUsd(depositUsd)}`)}
-            ${row('Subasta', auctionId)}
+            ${row('Subasta', vanity)}
           </table>
 
           <h2 style="margin:20px 0 4px;font-size:13px;color:#0f0f0f;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Cliente</h2>
@@ -167,7 +196,7 @@ export async function submitPaymentProofHandler(
   await sendEmail({
     to: ADMIN_TO,
     from: FROM,
-    subject: `Comprobante de seña · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
+    subject: `Comprobante ${vanity} · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
     html,
     ...(attachment ? { attachments: [attachment] } : {}),
   });
