@@ -65,13 +65,16 @@ export function UserRowActions({ locale, user }: { locale: string; user: UserLis
 
   async function resetPassword() {
     try {
-      const res = await httpsCallable<{ uid: string }, { resetLink: string }>(
+      const res = await httpsCallable<{ uid: string }, { resetLink: string; emailed: boolean }>(
         fb.functions,
         'generatePasswordReset',
       )({ uid: user.uid });
-      const link = res.data.resetLink;
-      await navigator.clipboard.writeText(link);
-      toast.success('Link copiado al portapapeles');
+      await navigator.clipboard.writeText(res.data.resetLink).catch(() => {});
+      toast.success(
+        res.data.emailed
+          ? 'Email de reseteo enviado al usuario (link también copiado).'
+          : 'Link copiado (email no enviado).',
+      );
     } catch (e) {
       toast.error((e as Error).message ?? tDetail('errors.generic'));
     }

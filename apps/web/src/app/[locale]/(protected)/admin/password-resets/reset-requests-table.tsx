@@ -64,12 +64,16 @@ function RequestRow({
     if (generating) return;
     setGenerating(true);
     try {
-      const res = await httpsCallable<{ uid: string }, { resetLink: string }>(
+      const res = await httpsCallable<{ uid: string }, { resetLink: string; emailed: boolean }>(
         fb.functions,
         'generatePasswordReset',
       )({ uid: req.uid });
       setResetLink(res.data.resetLink);
-      toast.success('Link generado. Copialo y enviáselo al buyer.');
+      toast.success(
+        res.data.emailed
+          ? 'Link enviado por email al usuario. También podés copiarlo abajo.'
+          : 'Link generado (email no enviado). Copialo y enviáselo manualmente.',
+      );
     } catch (err) {
       toast.error((err as Error).message ?? 'No se pudo generar el link.');
     } finally {
