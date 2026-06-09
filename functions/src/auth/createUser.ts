@@ -199,8 +199,6 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
 
   await sendEmail({
     to: input.email,
-    // Onboarding sender until santarosa.com.py is verified in Resend.
-    from: 'Renew Subastas <onboarding@resend.dev>',
     subject: '¡Bienvenido a Renew Subastas! Creá tu contraseña',
     html: welcomeHtml,
   }).catch((err) => {

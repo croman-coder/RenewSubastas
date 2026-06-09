@@ -28,7 +28,7 @@ export interface RuntimeConfig {
 const DEFAULT_CONFIG: RuntimeConfig = {
   emails: {
     adminStaffDomain: 'santarosa.com.py',
-    fromAddress: 'no-reply@santarosa.com.py',
+    fromAddress: 'subastas@santarosaparaguay.com.py',
     fromName: 'Renew Subastas',
   },
   payment: {

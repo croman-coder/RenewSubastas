@@ -20,9 +20,6 @@ export interface SubmitPaymentProofResult {
 }
 
 const LOGO = 'https://renewsubastas.netlify.app/brand/renew-wordmark-black.png';
-// Until santarosa.com.py is verified in Resend, send from the onboarding
-// sender so the notification actually reaches the admin inbox.
-const FROM = 'Renew Subastas <onboarding@resend.dev>';
 const ADMIN_TO = 'croman@santarosa.com.py';
 
 const fmtUsd = (n: number) =>
@@ -195,7 +192,6 @@ export async function submitPaymentProofHandler(
 
   await sendEmail({
     to: ADMIN_TO,
-    from: FROM,
     subject: `Comprobante ${vanity} · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
     html,
     ...(attachment ? { attachments: [attachment] } : {}),

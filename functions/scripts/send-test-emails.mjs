@@ -21,7 +21,7 @@ if (!KEY || !TO) {
 const resend = new Resend(KEY);
 
 const LOGO = 'https://renewsubastas.netlify.app/brand/renew-wordmark-black.png';
-const FROM = 'Renew Subastas <onboarding@resend.dev>';
+const FROM = 'Renew Subastas <subastas@santarosaparaguay.com.py>';
 const fmtUsd = (n) => n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // Shared shell: white canvas, centered 560px card, ink type, hosted logo.
@@ -124,13 +124,34 @@ const outbidHtml = shell(`
   </div>
 `);
 
+const welcomeHtml = shell(`
+  <div style="padding:22px 32px 8px;">
+    <div style="display:inline-block;background:#f5f5f5;color:#0f0f0f;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:4px 10px;border-radius:999px;">
+      Cuenta creada
+    </div>
+    <h1 style="margin:14px 0 4px;font-size:26px;line-height:1.2;color:#0f0f0f;font-weight:800;">
+      ¡Bienvenido, Carlos!
+    </h1>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#52525b;">
+      Tu cuenta en <strong style="color:#0f0f0f;">Renew Subastas</strong> está lista.
+      Tipo de cuenta: <strong style="color:#0f0f0f;">Wholesale (mayorista)</strong>.
+    </p>
+    <div style="background:#f5f5f5;border-radius:12px;padding:16px 18px;margin:0 0 18px;">
+      <p style="margin:0;font-size:13px;color:#52525b;">
+        Para entrar, primero creá tu contraseña con el botón de abajo. El enlace es personal, no lo compartas.
+      </p>
+    </div>
+    <div style="margin:8px 0 4px;">${button('https://renewsubastas.netlify.app/es/login', 'Crear mi contraseña')}</div>
+  </div>
+`);
+
 async function send(subject, html) {
   const r = await resend.emails.send({ from: FROM, to: TO, subject, html });
   if (r.error) console.error('REJECTED:', subject, '->', r.error);
   else console.log('SENT:', subject, '| id', r.data?.id);
 }
 
+await send('¡Bienvenido a Renew Subastas! Creá tu contraseña', welcomeHtml);
 await send('¡Ganaste la subasta! Toyota Corolla 2026', wonHtml);
 await send('Te superaron en una subasta · Toyota Corolla 2026', outbidHtml);
-console.log('\nIf both SENT but nothing arrives: Resend onboarding only delivers to the Resend account-owner email until santarosa.com.py is verified.');
 process.exit(0);
