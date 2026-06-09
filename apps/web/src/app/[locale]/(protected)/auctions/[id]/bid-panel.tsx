@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trophy, Gavel } from 'lucide-react';
+import { BlurNumber } from '@/components/brand/blur-number';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
 // typo or abuse; we surface the validation client-side too so the user gets
@@ -154,7 +155,15 @@ export function BidPanel({
       {/* Min / Increment / Max as three compact stat tiles — easier to
           scan than a cramped run-on sentence. */}
       <div className="grid grid-cols-3 gap-2">
-        <StatTile label="Mínimo" value={`USD ${fmtUsd(minRequired)}`} strong />
+        <StatTile
+          label="Mínimo"
+          value={
+            <>
+              USD <BlurNumber value={minRequired} format={fmtUsd} />
+            </>
+          }
+          strong
+        />
         <StatTile label="Incremento" value={`USD ${fmtUsd(bidIncrement)}`} />
         <StatTile label="Máximo" value={`USD ${fmtUsd(MAX_BID_USD)}`} />
       </div>
@@ -245,7 +254,7 @@ function StatTile({
   strong = false,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   strong?: boolean;
 }) {
   return (

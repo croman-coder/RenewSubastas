@@ -26,6 +26,8 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@sentry/nextjs": "^10.51.0",
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^1.12.97",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "firebase": "^10.12.0",
