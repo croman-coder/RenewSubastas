@@ -30,6 +30,7 @@ export async function AppShell({ locale, children }: Props) {
         users: tAdmin('users'),
         vehicles: tAdmin('vehicles'),
         auctions: tAdmin('auctions'),
+        sales: tAdmin('sales'),
         audit: tAdmin('audit'),
         config: tAdmin('config'),
       },

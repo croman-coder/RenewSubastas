@@ -133,37 +133,48 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
   // paymentStatus=forfeited and the vehicle returns to status=ready so
   // it can be re-listed. Runs in the same tick to keep operational
   // surface area small.
-  const expiredSnap = await db
-    .collection('auctions')
-    .where('status', '==', 'ended')
-    .where('outcome', '==', 'sold')
-    .where('paymentStatus', '==', 'pending_payment')
-    .where('paymentDeadline', '<=', nowTs)
-    .limit(200)
-    .get();
+  //
+  // WRAPPED IN TRY/CATCH: this query needs a 4-field composite index.
+  // If that index is missing or still building, the forfeit sweep must
+  // NOT take down Pass 1 (promote) and Pass 2 (close) with it — those
+  // are the critical paths that set winnerUid and fire the won email.
+  // A forfeit that's a minute late is harmless; a close that never
+  // happens is not.
+  try {
+    const expiredSnap = await db
+      .collection('auctions')
+      .where('status', '==', 'ended')
+      .where('outcome', '==', 'sold')
+      .where('paymentStatus', '==', 'pending_payment')
+      .where('paymentDeadline', '<=', nowTs)
+      .limit(200)
+      .get();
 
-  for (const eDoc of expiredSnap.docs) {
-    const a = eDoc.data();
-    await eDoc.ref.update({
-      paymentStatus: 'forfeited',
-      paymentStatusUpdatedAt: FieldValue.serverTimestamp(),
-      paymentStatusUpdatedBy: 'system',
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    const vehicleId = a['vehicleId'] as string | undefined;
-    if (vehicleId) {
-      await db.doc(`vehicles/${vehicleId}`).update({
-        status: 'ready',
+    for (const eDoc of expiredSnap.docs) {
+      const a = eDoc.data();
+      await eDoc.ref.update({
+        paymentStatus: 'forfeited',
+        paymentStatusUpdatedAt: FieldValue.serverTimestamp(),
+        paymentStatusUpdatedBy: 'system',
         updatedAt: FieldValue.serverTimestamp(),
       });
+      const vehicleId = a['vehicleId'] as string | undefined;
+      if (vehicleId) {
+        await db.doc(`vehicles/${vehicleId}`).update({
+          status: 'ready',
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      await writeAuditLog({
+        actorUid: 'system',
+        action: 'auction.forfeited',
+        resourceType: 'auction',
+        resourceId: eDoc.id,
+        after: { reason: 'payment_deadline_expired' },
+      });
     }
-    await writeAuditLog({
-      actorUid: 'system',
-      action: 'auction.forfeited',
-      resourceType: 'auction',
-      resourceId: eDoc.id,
-      after: { reason: 'payment_deadline_expired' },
-    });
+  } catch (err) {
+    console.error('[tickAuctions] forfeit sweep failed (non-fatal)', err);
   }
 
   return { promoted, closed: details.length, details };

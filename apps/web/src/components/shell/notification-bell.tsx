@@ -132,6 +132,33 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
           };
         },
       );
+
+      // "Ganaste" feed. Realtime listener on auctions this buyer won so
+      // the bell lights up the instant tickAuctions closes an auction
+      // in their favour — no refresh, no waiting on the email. Links to
+      // the won-detail page where the bank/seña instructions live.
+      subscribe(
+        'won',
+        query(
+          collection(fb.db, 'auctions'),
+          where('winnerUid', '==', uid),
+          where('status', '==', 'ended'),
+          orderBy('updatedAt', 'desc'),
+          limit(5),
+        ),
+        (data, docId) => {
+          const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
+          const finalPrice = (data['finalPrice'] as number | undefined) ?? 0;
+          return {
+            id: `won-${docId}`,
+            ts: (data['updatedAt'] as Timestamp | undefined)?.toMillis?.() ?? Date.now(),
+            href: `/${locale}/${buyerAudience}/won/${docId}`,
+            title: '¡Ganaste la subasta!',
+            subtitle:
+              `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · USD ${finalPrice.toLocaleString()}`.trim(),
+          };
+        },
+      );
     } else {
       subscribe(
         'bids',

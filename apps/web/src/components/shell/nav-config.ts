@@ -30,6 +30,7 @@ interface T {
     users: string;
     vehicles: string;
     auctions: string;
+    sales: string;
     audit: string;
     config: string;
   };
@@ -50,6 +51,7 @@ export function getNavItems(
       { href: `/${locale}/admin/users`, label: t.admin.users, icon: 'users' },
       { href: `/${locale}/staff/vehicles`, label: t.admin.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.admin.auctions, icon: 'gavel' },
+      { href: `/${locale}/admin/sales`, label: t.admin.sales, icon: 'trophy' },
       { href: `/${locale}/admin/password-resets`, label: 'Contraseñas', icon: 'key' },
       { href: `/${locale}/admin/audit`, label: t.admin.audit, icon: 'audit' },
       { href: `/${locale}/admin/config`, label: t.admin.config, icon: 'settings' },

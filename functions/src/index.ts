@@ -13,6 +13,7 @@ export { revokeMySessions } from './auth/revokeMySessions.js';
 export { updateGlobalConfig } from './config/updateGlobalConfig.js';
 export { createAuction } from './auctions/createAuction.js';
 export { cancelAuction } from './auctions/cancelAuction.js';
+export { updateAuction } from './auctions/updateAuction.js';
 export { confirmAuctionPayment } from './auctions/confirmAuctionPayment.js';
 export { deleteVehicle } from './vehicles/deleteVehicle.js';
 export { placeBid } from './auctions/placeBid.js';

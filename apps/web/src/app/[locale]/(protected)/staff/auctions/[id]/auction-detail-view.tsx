@@ -1,13 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { fb } from '@/lib/firebase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface BidEntry {
   id: string;
@@ -58,10 +60,15 @@ export function AuctionDetailView({
   const [bids, setBids] = useState<BidEntry[]>([]);
   const [cancelling, setCancelling] = useState(false);
   const [status, setStatus] = useState(initial.status);
+  const [outcome, setOutcome] = useState(initial.outcome);
+  const [currentBid, setCurrentBid] = useState(initial.currentBid);
+  const [endsAtMs, setEndsAtMs] = useState(initial.endsAtMs);
   const [payment, setPayment] = useState(initial.payment);
   const [paymentBusy, setPaymentBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const canCancel = status === 'scheduled' || status === 'live';
-  const isSold = status === 'ended' && initial.outcome === 'sold';
+  const canEdit = status === 'scheduled' || status === 'live';
+  const isSold = status === 'ended' && outcome === 'sold';
 
   async function recordPayment(action: 'paid' | 'forfeited') {
     const label = action === 'paid' ? 'Confirmar seña recibida' : 'Liberar adjudicación';
@@ -141,7 +148,68 @@ export function AuctionDetailView({
     });
   }, [auctionId]);
 
-  const displayPrice = initial.currentBid > 0 ? initial.currentBid : initial.startingPrice;
+  // Realtime listener on the auction doc itself so status / price / end
+  // time update live — the moment tickAuctions closes it, this view
+  // flips to "ended" without a refresh.
+  useEffect(() => {
+    return onSnapshot(doc(fb.db, 'auctions', auctionId), (d) => {
+      const a = d.data();
+      if (!a) return;
+      setStatus((a['status'] as InitialAuction['status']) ?? 'scheduled');
+      setOutcome((a['outcome'] as InitialAuction['outcome']) ?? null);
+      setCurrentBid((a['currentBid'] as number) ?? 0);
+      setEndsAtMs((a['endsAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0);
+      setPayment({
+        status: (a['paymentStatus'] as InitialAuction['payment']['status']) ?? null,
+        depositUsd: (a['paymentDepositUsd'] as number | undefined) ?? null,
+        deadlineMs:
+          (a['paymentDeadline'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? null,
+        note: (a['paymentNote'] as string | undefined) ?? null,
+      });
+    });
+  }, [auctionId]);
+
+  const displayPrice = currentBid > 0 ? currentBid : initial.startingPrice;
+
+  // datetime-local needs `YYYY-MM-DDTHH:mm` in LOCAL time.
+  const toLocalInput = (ms: number) => {
+    if (!ms) return '';
+    const d = new Date(ms);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const [editBusy, setEditBusy] = useState(false);
+  const [fStart, setFStart] = useState(() => toLocalInput(initial.startsAtMs));
+  const [fEnd, setFEnd] = useState(() => toLocalInput(initial.endsAtMs));
+  const [fStartPrice, setFStartPrice] = useState(String(initial.startingPrice));
+  const [fIncrement, setFIncrement] = useState('');
+
+  async function saveEdit() {
+    setEditBusy(true);
+    try {
+      const payloadBase: Record<string, unknown> = { auctionId };
+      if (status === 'live') {
+        // Live: only extend end.
+        payloadBase['endsAt'] = new Date(fEnd).toISOString();
+      } else {
+        // Scheduled: full edit.
+        if (fStart) payloadBase['startsAt'] = new Date(fStart).toISOString();
+        if (fEnd) payloadBase['endsAt'] = new Date(fEnd).toISOString();
+        const sp = Number(fStartPrice);
+        if (Number.isFinite(sp) && sp > 0) payloadBase['startingPrice'] = sp;
+        const inc = Number(fIncrement);
+        if (fIncrement && Number.isFinite(inc) && inc > 0) payloadBase['bidIncrement'] = inc;
+      }
+      await httpsCallable(fb.functions, 'updateAuction')(payloadBase);
+      toast.success('Subasta actualizada');
+      setEditing(false);
+    } catch (e) {
+      toast.error((e as Error).message ?? 'No se pudo actualizar');
+    } finally {
+      setEditBusy(false);
+    }
+  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -161,23 +229,107 @@ export function AuctionDetailView({
           </h1>
           <Badge variant="secondary">{tStatus(status)}</Badge>
         </div>
-        {canCancel && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            disabled={cancelling}
-            onClick={handleCancel}
-          >
-            {cancelling ? 'Cancelando…' : 'Cancelar subasta'}
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {canEdit && (
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditing((e) => !e)}>
+              {editing ? 'Cerrar' : 'Editar'}
+            </Button>
+          )}
+          {canCancel && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={cancelling}
+              onClick={handleCancel}
+            >
+              {cancelling ? 'Cancelando…' : 'Cancelar'}
+            </Button>
+          )}
+        </div>
       </header>
+
+      {editing && canEdit && (
+        <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 space-y-4">
+          <div>
+            <h2 className="text-base font-medium text-text-strong">Editar subasta</h2>
+            <p className="text-xs text-text-muted">
+              {status === 'live'
+                ? 'En vivo: solo podés extender la hora de cierre. Los precios quedan congelados con pujas abiertas.'
+                : 'Programada: podés ajustar precios, incremento y la ventana de fechas.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {status === 'scheduled' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="f-start">Inicio</Label>
+                <Input
+                  id="f-start"
+                  type="datetime-local"
+                  value={fStart}
+                  onChange={(e) => setFStart(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="f-end">Cierre</Label>
+              <Input
+                id="f-end"
+                type="datetime-local"
+                value={fEnd}
+                onChange={(e) => setFEnd(e.target.value)}
+              />
+            </div>
+            {status === 'scheduled' && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="f-sp">Precio inicial (USD)</Label>
+                  <Input
+                    id="f-sp"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    value={fStartPrice}
+                    onChange={(e) => setFStartPrice(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="f-inc">Incremento (USD, opcional)</Label>
+                  <Input
+                    id="f-inc"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    placeholder="Dejar vacío = sin cambio"
+                    value={fIncrement}
+                    onChange={(e) => setFIncrement(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" disabled={editBusy} onClick={saveEdit}>
+              {editBusy ? 'Guardando…' : 'Guardar cambios'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={editBusy}
+              onClick={() => setEditing(false)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </section>
+      )}
+
       <section className="space-y-1">
         <p className="text-text-muted text-sm">{t('currentBid')}</p>
         <p className="text-3xl font-semibold num-tab">USD {fmtUsd(displayPrice)}</p>
         <p className="text-text-muted text-sm">
-          {t('ends')}: {new Date(initial.endsAtMs).toLocaleString(locale)}
+          {t('ends')}: {new Date(endsAtMs).toLocaleString(locale)}
         </p>
       </section>
 
