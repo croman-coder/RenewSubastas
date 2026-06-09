@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type Kind = 'admin' | 'staff' | 'retail' | 'wholesale';
-type Role = 'admin' | 'staff' | 'buyer';
+type Kind = 'admin' | 'staff' | 'finanzas' | 'retail' | 'wholesale';
+type Role = 'admin' | 'staff' | 'finanzas' | 'buyer';
 
 interface Props {
   uid: string;
@@ -31,6 +31,7 @@ interface Props {
 function toKind(role: Role, audience: 'retail' | 'wholesale'): Kind {
   if (role === 'admin') return 'admin';
   if (role === 'staff') return 'staff';
+  if (role === 'finanzas') return 'finanzas';
   return audience;
 }
 
@@ -42,7 +43,7 @@ interface UpdatePayload {
 }
 
 function fromKind(kind: Kind, uid: string, status: 'active' | 'disabled'): UpdatePayload {
-  if (kind === 'admin' || kind === 'staff') {
+  if (kind === 'admin' || kind === 'staff' || kind === 'finanzas') {
     return { uid, role: kind, status };
   }
   return { uid, role: 'buyer', status, audience: kind };
@@ -95,6 +96,7 @@ export function EditRoleForm({ uid, locale, initialRole, initialAudience, initia
               <SelectItem value="retail">Retail (público general)</SelectItem>
               <SelectItem value="wholesale">Wholesale (mayorista)</SelectItem>
               <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="finanzas">Finanzas (pagos)</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
@@ -102,6 +104,7 @@ export function EditRoleForm({ uid, locale, initialRole, initialAudience, initia
             {kind === 'retail' && 'Ve solo el catálogo público de retail.'}
             {kind === 'wholesale' && 'Ve únicamente subastas mayoristas.'}
             {kind === 'staff' && 'Carga vehículos y subastas. Email @santarosa.com.py.'}
+            {kind === 'finanzas' && 'Confirma señas y ve ventas. Email @santarosa.com.py.'}
             {kind === 'admin' && 'Acceso total. Email @santarosa.com.py.'}
           </p>
         </div>

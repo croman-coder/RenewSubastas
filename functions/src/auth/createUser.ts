@@ -149,9 +149,11 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
       ? 'Administrador'
       : input.role === 'staff'
         ? 'Staff'
-        : input.audience === 'wholesale'
-          ? 'Wholesale (mayorista)'
-          : 'Retail (público general)';
+        : input.role === 'finanzas'
+          ? 'Finanzas'
+          : input.audience === 'wholesale'
+            ? 'Wholesale (mayorista)'
+            : 'Retail (público general)';
 
   const welcomeHtml = emailShell(
     body(

@@ -3,7 +3,7 @@ import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
-import { requireAdmin } from '../lib/errors.js';
+import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const InputSchema = z.object({
@@ -23,7 +23,10 @@ export interface ConfirmAuctionPaymentResult {
 export async function confirmAuctionPaymentHandler(
   req: CallableRequest,
 ): Promise<ConfirmAuctionPaymentResult> {
-  const { uid: actorUid } = requireAdmin(req);
+  const { uid: actorUid, role } = requireSignedIn(req);
+  if (role !== 'admin' && role !== 'finanzas') {
+    throw new HttpsError('permission-denied', 'Only admin or finanzas can confirm payments');
+  }
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) throw new HttpsError('invalid-argument', 'Invalid input');
   const { auctionId, action, note } = parsed.data;

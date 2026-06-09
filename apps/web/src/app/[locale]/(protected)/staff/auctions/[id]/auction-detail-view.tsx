@@ -24,6 +24,7 @@ interface InitialAuction {
   vehicleYear: number;
   thumbnailUrl: string | null;
   startingPrice: number;
+  reservePrice: number | null;
   currentBid: number;
   bidCount: number;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
@@ -46,12 +47,12 @@ const fmtUsd = (n: number) =>
 export function AuctionDetailView({
   locale,
   auctionId,
-  isAdmin,
+  role,
   initial,
 }: {
   locale: string;
   auctionId: string;
-  isAdmin: boolean;
+  role: 'admin' | 'staff' | 'finanzas' | 'buyer';
   initial: InitialAuction;
 }) {
   const t = useTranslations('staff.auctions.detail');
@@ -66,8 +67,13 @@ export function AuctionDetailView({
   const [payment, setPayment] = useState(initial.payment);
   const [paymentBusy, setPaymentBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const canCancel = status === 'scheduled' || status === 'live';
-  const canEdit = status === 'scheduled' || status === 'live';
+  // Inventory operations (cancel / edit) are admin + staff. Finanzas is
+  // a payment-confirmation role only — it reaches this page from the
+  // sales ledger to confirm seña, never to edit the auction.
+  const canManage = role === 'admin' || role === 'staff';
+  const canConfirm = role === 'admin' || role === 'finanzas';
+  const canCancel = canManage && (status === 'scheduled' || status === 'live');
+  const canEdit = canManage && (status === 'scheduled' || status === 'live');
   const isSold = status === 'ended' && outcome === 'sold';
 
   async function recordPayment(action: 'paid' | 'forfeited') {
@@ -180,10 +186,25 @@ export function AuctionDetailView({
   };
 
   const [editBusy, setEditBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [fStart, setFStart] = useState(() => toLocalInput(initial.startsAtMs));
   const [fEnd, setFEnd] = useState(() => toLocalInput(initial.endsAtMs));
   const [fStartPrice, setFStartPrice] = useState(String(initial.startingPrice));
   const [fIncrement, setFIncrement] = useState('');
+  const [fReserve, setFReserve] = useState(
+    initial.reservePrice != null ? String(initial.reservePrice) : '',
+  );
+
+  // Delete allowed for admin/staff on auctions that carry no winner:
+  // scheduled, cancelled, or ended-without-sale, and live only when no
+  // bids. The server enforces the same; this just hides the button.
+  const canDelete =
+    canManage &&
+    !isSold &&
+    (status === 'scheduled' ||
+      status === 'cancelled' ||
+      (status === 'live' && currentBid <= 0) ||
+      (status === 'ended' && outcome !== 'sold'));
 
   async function saveEdit() {
     setEditBusy(true);
@@ -200,6 +221,12 @@ export function AuctionDetailView({
         if (Number.isFinite(sp) && sp > 0) payloadBase['startingPrice'] = sp;
         const inc = Number(fIncrement);
         if (fIncrement && Number.isFinite(inc) && inc > 0) payloadBase['bidIncrement'] = inc;
+        // Reserve: empty string clears it (null), a value sets it.
+        if (fReserve.trim() === '') payloadBase['reservePrice'] = null;
+        else {
+          const rp = Number(fReserve);
+          if (Number.isFinite(rp) && rp > 0) payloadBase['reservePrice'] = rp;
+        }
       }
       await httpsCallable(fb.functions, 'updateAuction')(payloadBase);
       toast.success('Subasta actualizada');
@@ -208,6 +235,25 @@ export function AuctionDetailView({
       toast.error((e as Error).message ?? 'No se pudo actualizar');
     } finally {
       setEditBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!canDelete) return;
+    if (
+      !window.confirm(
+        '¿Eliminar esta subasta? Se borra de la lista y el vehículo vuelve a "listo". Esta acción no se puede deshacer.',
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      await httpsCallable(fb.functions, 'deleteAuction')({ auctionId });
+      toast.success('Subasta eliminada');
+      router.replace(`/${locale}/staff/auctions` as `/${string}`);
+    } catch (e) {
+      toast.error((e as Error).message ?? 'No se pudo eliminar');
+      setDeleting(false);
     }
   }
 
@@ -244,6 +290,18 @@ export function AuctionDetailView({
               onClick={handleCancel}
             >
               {cancelling ? 'Cancelando…' : 'Cancelar'}
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="text-text-muted hover:text-danger"
+            >
+              {deleting ? 'Eliminando…' : 'Eliminar'}
             </Button>
           )}
         </div>
@@ -304,6 +362,21 @@ export function AuctionDetailView({
                     value={fIncrement}
                     onChange={(e) => setFIncrement(e.target.value)}
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="f-reserve">Reserva (USD, opcional)</Label>
+                  <Input
+                    id="f-reserve"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    placeholder="Vacío = sin reserva"
+                    value={fReserve}
+                    onChange={(e) => setFReserve(e.target.value)}
+                  />
+                  <p className="text-[11px] text-text-muted">
+                    Precio mínimo oculto. Si no se alcanza, no hay venta.
+                  </p>
                 </div>
               </>
             )}
@@ -381,7 +454,7 @@ export function AuctionDetailView({
             </p>
           )}
 
-          {isAdmin && payment.status !== 'paid' && (
+          {canConfirm && payment.status !== 'paid' && (
             <div className="flex flex-wrap gap-2 pt-2">
               <Button
                 type="button"

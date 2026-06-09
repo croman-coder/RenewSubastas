@@ -36,7 +36,7 @@ const INPUT_CLS =
 // hyphens — matches the buyer's self-edit profile validator.
 const NAME_RX = /^[\p{L}\p{M}'’\- .]+$/u;
 const Schema = z.object({
-  kind: z.enum(['admin', 'staff', 'retail', 'wholesale']),
+  kind: z.enum(['admin', 'staff', 'finanzas', 'retail', 'wholesale']),
   email: z.string().email('Email inválido').max(120),
   firstName: z
     .string()
@@ -55,7 +55,7 @@ const Schema = z.object({
 type FormValues = z.infer<typeof Schema>;
 
 interface CreateUserPayload {
-  role: 'admin' | 'staff' | 'buyer';
+  role: 'admin' | 'staff' | 'finanzas' | 'buyer';
   email: string;
   firstName: string;
   lastName: string;
@@ -66,7 +66,7 @@ interface CreateUserPayload {
 }
 
 function payloadFromKind(values: FormValues): CreateUserPayload {
-  if (values.kind === 'admin' || values.kind === 'staff') {
+  if (values.kind === 'admin' || values.kind === 'staff' || values.kind === 'finanzas') {
     const base: CreateUserPayload = {
       role: values.kind,
       email: values.email,
@@ -95,6 +95,7 @@ const KIND_HINT: Record<FormValues['kind'], string> = {
   retail: 'Ve el catálogo público y puede pujar en subastas retail.',
   wholesale: 'Ve solo el catálogo wholesale, separado del público general.',
   staff: 'Carga vehículos y subastas. Email obligatorio @santarosa.com.py.',
+  finanzas: 'Confirma señas y ve el panel de ventas. Email obligatorio @santarosa.com.py.',
   admin: 'Acceso total a la plataforma. Email obligatorio @santarosa.com.py.',
 };
 
@@ -208,6 +209,7 @@ export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
                 <SelectItem value="retail">Retail · Público general</SelectItem>
                 <SelectItem value="wholesale">Wholesale · Mayorista</SelectItem>
                 <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="finanzas">Finanzas · Confirmación de pagos</SelectItem>
                 {canCreateAdmin && <SelectItem value="admin">Admin</SelectItem>}
               </SelectContent>
             </Select>

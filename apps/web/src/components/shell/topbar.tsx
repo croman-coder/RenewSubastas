@@ -23,6 +23,7 @@ type AudienceLabel = 'retail' | 'wholesale' | undefined;
 function roleLabel(role: Role, audience: AudienceLabel): string {
   if (role === 'admin') return 'Admin';
   if (role === 'staff') return 'Staff';
+  if (role === 'finanzas') return 'Finanzas';
   if (audience === 'wholesale') return 'Wholesale';
   return 'Retail';
 }
@@ -30,6 +31,7 @@ function roleLabel(role: Role, audience: AudienceLabel): string {
 function roleTone(role: Role, audience: AudienceLabel): string {
   if (role === 'admin') return 'bg-copper/15 text-copper ring-copper/20';
   if (role === 'staff') return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/20';
+  if (role === 'finanzas') return 'bg-text-strong/15 text-text-strong ring-text-strong/20';
   if (audience === 'wholesale') return 'bg-amber-500/15 text-amber-300 ring-amber-500/20';
   return 'bg-text-strong/15 text-text-strong ring-text-strong/20';
 }

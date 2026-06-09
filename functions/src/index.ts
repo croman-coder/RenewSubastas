@@ -14,6 +14,7 @@ export { updateGlobalConfig } from './config/updateGlobalConfig.js';
 export { createAuction } from './auctions/createAuction.js';
 export { cancelAuction } from './auctions/cancelAuction.js';
 export { updateAuction } from './auctions/updateAuction.js';
+export { deleteAuction } from './auctions/deleteAuction.js';
 export { confirmAuctionPayment } from './auctions/confirmAuctionPayment.js';
 export { submitPaymentProof } from './auctions/submitPaymentProof.js';
 export { deleteVehicle } from './vehicles/deleteVehicle.js';

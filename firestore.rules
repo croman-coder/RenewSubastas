@@ -6,6 +6,7 @@ service cloud.firestore {
     function role()       { return request.auth.token.role; }
     function isAdmin()    { return isSignedIn() && isActive() && role() == 'admin'; }
     function isStaff()    { return isSignedIn() && isActive() && role() == 'staff'; }
+    function isFinanzas() { return isSignedIn() && isActive() && role() == 'finanzas'; }
     function isBuyer()    { return isSignedIn() && isActive() && role() == 'buyer'; }
     // Buyer-only catalog segment ('retail' | 'wholesale'). Defaults to 'retail'
     // for legacy buyers whose claim hasn't been refreshed yet.
@@ -17,7 +18,9 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read:   if isAdmin() || request.auth.uid == uid;
+      // Finanzas can read user docs to resolve winner identity + contact
+      // on the sales ledger. Admin sees all; everyone reads their own.
+      allow read:   if isAdmin() || isFinanzas() || request.auth.uid == uid;
       // A user editing their own doc cannot change any of the privileged
       // fields. `role` and `status` gate access; `createdBy` is an audit
       // anchor; `profile.audience` decides which catalog they can see (a
@@ -49,9 +52,10 @@ service cloud.firestore {
     }
 
     match /vehicles/{id} {
-      // Admin/staff see every vehicle; buyers only see their audience.
+      // Admin/staff/finanzas see every vehicle; buyers only their audience.
       allow read: if isAdmin()
                   || isStaff()
+                  || isFinanzas()
                   || (isBuyer() && audienceMatches(resource.data.audience));
       allow create, update: if isStaff() || isAdmin();
       allow delete:         if isStaff() || isAdmin();
@@ -60,6 +64,7 @@ service cloud.firestore {
     match /auctions/{id} {
       allow read: if isAdmin()
                   || isStaff()
+                  || isFinanzas()
                   || (isBuyer() && audienceMatches(resource.data.audience));
       allow create, update, delete: if false;
 

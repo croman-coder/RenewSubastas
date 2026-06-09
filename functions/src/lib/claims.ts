@@ -1,7 +1,7 @@
 import { adminAuth } from './admin.js';
 
 export interface UserClaims {
-  role: 'admin' | 'staff' | 'buyer';
+  role: 'admin' | 'staff' | 'finanzas' | 'buyer';
   status: 'active' | 'disabled';
   /**
    * Buyer-only catalog segment. Embedded in the JWT so Firestore rules and

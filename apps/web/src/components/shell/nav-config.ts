@@ -21,7 +21,7 @@ export interface NavItem {
   exact?: boolean;
 }
 
-export type Role = 'admin' | 'staff' | 'buyer';
+export type Role = 'admin' | 'staff' | 'finanzas' | 'buyer';
 export type Audience = 'retail' | 'wholesale';
 
 interface T {
@@ -51,7 +51,7 @@ export function getNavItems(
       { href: `/${locale}/admin/users`, label: t.admin.users, icon: 'users' },
       { href: `/${locale}/staff/vehicles`, label: t.admin.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.admin.auctions, icon: 'gavel' },
-      { href: `/${locale}/admin/sales`, label: t.admin.sales, icon: 'trophy' },
+      { href: `/${locale}/sales`, label: t.admin.sales, icon: 'trophy' },
       { href: `/${locale}/admin/password-resets`, label: 'Contraseñas', icon: 'key' },
       { href: `/${locale}/admin/audit`, label: t.admin.audit, icon: 'audit' },
       { href: `/${locale}/admin/config`, label: t.admin.config, icon: 'settings' },
@@ -67,6 +67,12 @@ export function getNavItems(
       // /admin/users (admin layout blocks them).
       { href: `/${locale}/staff/buyers/new`, label: t.staff.buyers, icon: 'users' },
     ];
+  }
+  if (role === 'finanzas') {
+    // Finance role: just the sales ledger, where it confirms/releases
+    // seña. Auction detail (confirm button) is reached by clicking a
+    // sale row.
+    return [{ href: `/${locale}/sales`, label: t.admin.sales, icon: 'trophy' }];
   }
   // buyer — paths follow the buyer's audience so the URL bar matches the
   // role chip ('Retail' / 'Wholesale').

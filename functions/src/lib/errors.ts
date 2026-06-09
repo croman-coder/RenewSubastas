@@ -1,7 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 
-export type Role = 'admin' | 'staff' | 'buyer';
+export type Role = 'admin' | 'staff' | 'finanzas' | 'buyer';
 
 export function requireSignedIn(req: CallableRequest): { uid: string; role: Role; status: string } {
   if (!req.auth) {

@@ -40,13 +40,14 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
     <AuctionDetailView
       locale={locale}
       auctionId={id}
-      isAdmin={user.role === 'admin'}
+      role={user.role}
       initial={{
         vehicleMake: (v['make'] as string) ?? '',
         vehicleModel: (v['model'] as string) ?? '',
         vehicleYear: (v['year'] as number) ?? 0,
         thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
         startingPrice: (data['startingPrice'] as number) ?? 0,
+        reservePrice: (data['reservePrice'] as number | undefined) ?? null,
         currentBid: (data['currentBid'] as number) ?? 0,
         bidCount: (data['bidCount'] as number) ?? 0,
         status: (data['status'] as 'scheduled' | 'live' | 'ended' | 'cancelled') ?? 'scheduled',
