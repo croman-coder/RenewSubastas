@@ -315,6 +315,61 @@
     background-position: 0 0;
   }
 
+  /* Liquid-glass surface. Translucent, blurred, saturated backdrop with an
+     inner top highlight so the panel reads as a pane of frosted glass over
+     the animated grid behind it. Works on both themes: the inset highlight
+     is white at low alpha, the border tints toward ink. */
+  .glass-surface {
+    background-color: oklch(var(--bg-elev) / 0.55);
+    backdrop-filter: blur(22px) saturate(1.5);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid oklch(var(--text-strong) / 0.08);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.14),
+      inset 0 0 0 1px oklch(1 0 0 / 0.02),
+      0 24px 60px -30px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Liquid-glass CTA. Frosted pill that lifts and brightens on hover, with a
+     traveling sheen on the surface. Pairs with the `glass` button variant. */
+  .glass-cta {
+    position: relative;
+    overflow: hidden;
+    background-color: oklch(var(--text-strong) / 0.08);
+    backdrop-filter: blur(14px) saturate(1.5);
+    -webkit-backdrop-filter: blur(14px) saturate(1.5);
+    border: 1px solid oklch(var(--text-strong) / 0.14);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.18),
+      0 8px 24px -12px oklch(var(--text-strong) / 0.35);
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 220ms ease-out,
+      border-color 220ms ease-out,
+      box-shadow 220ms ease-out;
+  }
+  .glass-cta:hover {
+    background-color: oklch(var(--text-strong) / 0.14);
+    border-color: oklch(var(--text-strong) / 0.24);
+    transform: translateY(-1px);
+  }
+  .glass-cta:active {
+    transform: translateY(0);
+    transition-duration: 80ms;
+  }
+  .glass-cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, oklch(1 0 0 / 0.18) 50%, transparent 70%);
+    transform: translateX(-130%);
+    transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .glass-cta:hover::after {
+    transform: translateX(130%);
+  }
+
   /* Sheen sweep across an element on hover. Used on primary CTAs and
      "ganaste" hero panels for a premium, restrained accent. The mask
      keeps the sweep limited to the inside of the rounded shape. */

@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { Gavel, ShieldCheck, Sparkles } from 'lucide-react';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
+import { PixelGrid } from '@/components/brand/pixel-grid';
 import { LoginForm } from './login-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -31,15 +32,18 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
       <div aria-hidden className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-40 -right-32 w-[36rem] h-[36rem] rounded-full bg-text-strong/[0.04] blur-[120px]" />
         <div className="absolute -bottom-48 -left-32 w-[40rem] h-[40rem] rounded-full bg-text-strong/[0.05] blur-[140px]" />
+        {/* Animated monochrome dot-matrix, faded toward the edges so the
+            content stays the focus. */}
         <div
-          className="absolute inset-0 opacity-[0.035]"
+          className="absolute inset-0"
           style={{
-            backgroundImage:
-              'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 30%, transparent 75%)',
+            maskImage: 'radial-gradient(ellipse 85% 70% at 50% 35%, black 25%, transparent 80%)',
+            WebkitMaskImage:
+              'radial-gradient(ellipse 85% 70% at 50% 35%, black 25%, transparent 80%)',
           }}
-        />
+        >
+          <PixelGrid className="h-full w-full" />
+        </div>
       </div>
 
       <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
@@ -105,8 +109,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
 
             <div
               className={
-                'relative rounded-3xl border border-text-subtle/15 bg-bg-elev/60 p-7 sm:p-8 ' +
-                'backdrop-blur-xl shadow-[0_24px_60px_-30px_rgba(0,0,0,0.6)] ' +
+                'glass-surface relative rounded-3xl p-7 sm:p-8 ' +
                 'before:absolute before:inset-x-0 before:top-0 before:h-px ' +
                 'before:bg-gradient-to-r before:from-copper/0 before:via-copper/60 before:to-copper/0'
               }

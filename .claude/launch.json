@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8099", "--directory", "docs/onboarding"],
       "port": 8099
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd apps/web && npx next dev --port 3010"],
+      "port": 3010
     }
   ]
 }
