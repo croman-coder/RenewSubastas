@@ -11,5 +11,5 @@ export default function StaffCreateBuyerPage({
 }: {
   params: { locale: string };
 }) {
-  return <CreateUserForm locale={locale} restrictToBuyers />;
+  return <CreateUserForm locale={locale} creatorRole="staff" />;
 }

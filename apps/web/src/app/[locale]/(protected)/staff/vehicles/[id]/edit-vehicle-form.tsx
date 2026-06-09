@@ -79,11 +79,10 @@ interface Initial {
 interface Props {
   locale: string;
   vehicleId: string;
-  isAdmin: boolean;
   initial: Initial;
 }
 
-export function EditVehicleForm({ locale, vehicleId, isAdmin, initial }: Props) {
+export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
   const t = useTranslations('staff.vehicles.form');
   const tStatus = useTranslations('staff.vehicles.status');
   const router = useRouter();
@@ -192,8 +191,10 @@ export function EditVehicleForm({ locale, vehicleId, isAdmin, initial }: Props) 
   // Hard-delete is admin-only and irreversible: it wipes the Firestore doc
   // and the photos in Storage. Locked while in_auction or sold so financial
   // history can never be silently destroyed.
-  const canHardDelete =
-    isAdmin && (status === 'draft' || status === 'ready' || status === 'archived');
+  // Admin + staff can delete (both operate inventory). Only blocked
+  // while in_auction / sold — those carry financial state. The
+  // deleteVehicle callable enforces the same status guard server-side.
+  const canHardDelete = status === 'draft' || status === 'ready' || status === 'archived';
 
   async function confirmHardDelete() {
     const label = `${initial.make} ${initial.model} ${initial.year}`;

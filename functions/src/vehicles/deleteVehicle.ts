@@ -3,7 +3,7 @@ import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { adminDb, adminStorage } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
-import { requireAdmin } from '../lib/errors.js';
+import { requireSignedIn } from '../lib/errors.js';
 
 const InputSchema = z.object({ vehicleId: z.string().min(1) });
 
@@ -15,10 +15,10 @@ export interface DeleteVehicleResult {
  * Permanently destroys a vehicle and its photos.
  *
  * Guardrails:
- *   - Admin-only. Staff can archive but not delete.
+ *   - Admin or staff. Both operate the inventory day-to-day.
  *   - The vehicle must NOT be `in_auction` or `sold` — those have live or
  *     historical financial state attached and shouldn't disappear silently.
- *     The admin must cancel/finalize the auction first.
+ *     The auction must be cancelled/finalized first.
  *   - Storage cleanup is best-effort: if a single image fails to delete (e.g.
  *     already gone), the function continues so the Firestore record doesn't
  *     end up half-deleted.
@@ -28,7 +28,10 @@ export interface DeleteVehicleResult {
  * what happened to it.
  */
 export async function deleteVehicleHandler(req: CallableRequest): Promise<DeleteVehicleResult> {
-  requireAdmin(req);
+  const { role } = requireSignedIn(req);
+  if (role !== 'admin' && role !== 'staff') {
+    throw new HttpsError('permission-denied', 'Only admin or staff can delete vehicles');
+  }
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) throw new HttpsError('invalid-argument', 'Invalid input');
   const { vehicleId } = parsed.data;

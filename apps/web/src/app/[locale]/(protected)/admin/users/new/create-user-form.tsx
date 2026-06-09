@@ -101,15 +101,18 @@ const KIND_HINT: Record<FormValues['kind'], string> = {
 interface FormProps {
   locale: string;
   /**
-   * When true, the role picker only exposes buyer kinds (retail /
-   * wholesale). Staff use this surface to onboard customers without
-   * being able to manufacture admin/staff accounts and escalate the
-   * role surface. Mirrors the server-side guard in `createUser`.
+   * Who is creating the user. Drives which roles the picker exposes:
+   *   - admin → retail / wholesale / staff / admin (everything)
+   *   - staff → retail / wholesale / staff (no admin — only an admin
+   *             can mint another admin). Mirrors the server-side guard
+   *             in `createUser`.
+   * Defaults to 'admin' for the admin create-user page.
    */
-  restrictToBuyers?: boolean;
+  creatorRole?: 'admin' | 'staff';
 }
 
-export function CreateUserForm({ locale, restrictToBuyers = false }: FormProps) {
+export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
+  const canCreateAdmin = creatorRole === 'admin';
   const t = useTranslations('admin.users.create');
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -191,11 +194,10 @@ export function CreateUserForm({ locale, restrictToBuyers = false }: FormProps) 
             <Select
               value={kind}
               onValueChange={(v) => {
-                // Defensive: even if a staff user crafts a DOM event with
-                // an admin/staff value, ignore it on the client. The
-                // server callable rejects it again so this is just UX.
+                // Defensive: a staff creator can't pick admin even via a
+                // crafted event. Server rejects it too — this is just UX.
                 const next = v as FormValues['kind'];
-                if (restrictToBuyers && next !== 'retail' && next !== 'wholesale') return;
+                if (!canCreateAdmin && next === 'admin') return;
                 setValue('kind', next);
               }}
             >
@@ -205,12 +207,8 @@ export function CreateUserForm({ locale, restrictToBuyers = false }: FormProps) 
               <SelectContent>
                 <SelectItem value="retail">Retail · Público general</SelectItem>
                 <SelectItem value="wholesale">Wholesale · Mayorista</SelectItem>
-                {!restrictToBuyers && (
-                  <>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </>
-                )}
+                <SelectItem value="staff">Staff</SelectItem>
+                {canCreateAdmin && <SelectItem value="admin">Admin</SelectItem>}
               </SelectContent>
             </Select>
           </FormField>

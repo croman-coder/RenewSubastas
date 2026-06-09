@@ -54,7 +54,7 @@ service cloud.firestore {
                   || isStaff()
                   || (isBuyer() && audienceMatches(resource.data.audience));
       allow create, update: if isStaff() || isAdmin();
-      allow delete:         if isAdmin();
+      allow delete:         if isStaff() || isAdmin();
     }
 
     match /auctions/{id} {
