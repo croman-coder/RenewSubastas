@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth/server';
 import { loadWonAuction } from '@/lib/buyer/load-won-auction';
 import { CopyableField } from './copyable-field';
 import { Countdown } from './countdown';
+import { PaymentProofUpload } from './payment-proof-upload';
 
 interface PageProps {
   params: { locale: string; audience: 'retail' | 'wholesale'; auctionId: string };
@@ -169,6 +170,19 @@ export default async function WonDetailPage({
           </p>
         )}
       </section>
+
+      {/* Upload de comprobante. Solo mientras la seña sigue pendiente —
+          una vez confirmada (paid) o liberada (forfeited) no tiene sentido
+          adjuntar. Si ya subió uno, el componente muestra el estado
+          enviado. */}
+      {status === 'pending_payment' && (
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
+            Confirmá tu pago
+          </h2>
+          <PaymentProofUpload auctionId={auctionId} existingProofUrl={w.paymentProofUrl} />
+        </section>
+      )}
     </div>
   );
 }

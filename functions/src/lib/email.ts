@@ -17,13 +17,35 @@ function getClient(): Resend | null {
   return client;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  /** Base64-encoded file content (no data-URI prefix). */
+  content: string;
+}
+
 export interface SendEmailArgs {
   to: string;
   subject: string;
   html: string;
+  /** Optional file attachments (e.g. payment receipt). */
+  attachments?: EmailAttachment[];
+  /**
+   * Override the From header. Defaults to the santarosa.com.py sender.
+   * Until that domain is verified in Resend, callers can pass the
+   * onboarding sender so the email actually delivers.
+   */
+  from?: string;
 }
 
-export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<void> {
+const DEFAULT_FROM = 'Renew Subastas <no-reply@santarosa.com.py>';
+
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  attachments,
+  from,
+}: SendEmailArgs): Promise<void> {
   const c = getClient();
   if (!c) {
     console.warn('[email] RESEND_API_KEY not set — skipping send', { to, subject });
@@ -31,10 +53,11 @@ export async function sendEmail({ to, subject, html }: SendEmailArgs): Promise<v
   }
   try {
     const result = await c.emails.send({
-      from: 'Renew Subastas <no-reply@santarosa.com.py>',
+      from: from ?? DEFAULT_FROM,
       to,
       subject,
       html,
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
     });
     if (result.error) {
       // Resend returns 4xx in `result.error` (e.g. unverified domain) instead

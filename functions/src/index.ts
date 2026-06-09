@@ -15,6 +15,7 @@ export { createAuction } from './auctions/createAuction.js';
 export { cancelAuction } from './auctions/cancelAuction.js';
 export { updateAuction } from './auctions/updateAuction.js';
 export { confirmAuctionPayment } from './auctions/confirmAuctionPayment.js';
+export { submitPaymentProof } from './auctions/submitPaymentProof.js';
 export { deleteVehicle } from './vehicles/deleteVehicle.js';
 export { placeBid } from './auctions/placeBid.js';
 export { tickAuctions } from './auctions/tickAuctions.js';

@@ -21,6 +21,27 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // Payment proofs (comprobantes de seña). A winning buyer uploads a
+    // transfer receipt (image or PDF). Path is
+    // payment-proofs/{auctionId}/{uid}-{ts}.{ext}. Write is allowed for
+    // any active buyer writing under their OWN uid prefix; the
+    // submitPaymentProof callable then validates that the uid is the
+    // auction's actual winnerUid before emailing the admin. Reads are
+    // admin/staff only (the receipt holds the buyer's bank info).
+    match /payment-proofs/{auctionId}/{file=**} {
+      allow read: if request.auth != null
+                  && request.auth.token.status == 'active'
+                  && request.auth.token.role in ['staff', 'admin'];
+      allow write: if request.auth != null
+                   && request.auth.token.status == 'active'
+                   && request.auth.token.role == 'buyer'
+                   && request.resource.size < 10 * 1024 * 1024
+                   && (
+                     request.resource.contentType.matches('image/.*')
+                     || request.resource.contentType == 'application/pdf'
+                   );
+    }
+
     // Avatars are intentionally world-readable so they can appear in
     // notification cards and audit-log rows without a signed-URL
     // dance. The upload side is locked to the avatar's owner, capped

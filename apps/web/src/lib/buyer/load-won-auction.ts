@@ -14,6 +14,7 @@ export interface WonAuctionDetail {
   paymentDeadlineMs: number | null;
   paymentDepositUsd: number | null;
   paymentDepositPercent: number;
+  paymentProofUrl: string | null;
   bank: {
     accountHolder: string;
     bankName: string;
@@ -65,6 +66,7 @@ export async function loadWonAuction(
     paymentDepositUsd: (a['paymentDepositUsd'] as number | undefined) ?? null,
     paymentDepositPercent:
       (a['paymentDepositPercent'] as number | undefined) ?? p.depositPercent ?? 0.1,
+    paymentProofUrl: (a['paymentProofUrl'] as string | undefined) ?? null,
     bank: {
       accountHolder: p.bankAccountHolder,
       bankName: p.bankName,
