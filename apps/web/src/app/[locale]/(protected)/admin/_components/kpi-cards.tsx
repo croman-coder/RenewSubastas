@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { Users, Gavel, DollarSign, TrendingUp, type LucideIcon } from 'lucide-react';
+import { BlurNumber } from '@/components/brand/blur-number';
 
 interface Props {
   usersTotal: number;
@@ -10,7 +11,8 @@ interface Props {
 
 interface KpiItem {
   label: string;
-  value: string;
+  value: number;
+  prefix?: string;
   icon: LucideIcon;
   accent: 'copper' | 'mint' | 'lavender' | 'amber';
   caption?: string;
@@ -21,28 +23,29 @@ export function KpiCards({ usersTotal, liveAuctions, gmvUsd, bidsToday }: Props)
   const items: KpiItem[] = [
     {
       label: t('activeUsers'),
-      value: usersTotal.toLocaleString(),
+      value: usersTotal,
       icon: Users,
       accent: 'lavender',
       caption: 'Total con sesión activa',
     },
     {
       label: t('liveAuctions'),
-      value: liveAuctions.toLocaleString(),
+      value: liveAuctions,
       icon: Gavel,
       accent: 'mint',
       caption: 'Subastas en curso',
     },
     {
       label: t('gmv'),
-      value: gmvUsd.toLocaleString(),
+      value: gmvUsd,
+      prefix: 'USD ',
       icon: DollarSign,
       accent: 'copper',
       caption: 'Valor bruto vendido',
     },
     {
       label: t('bidsToday'),
-      value: bidsToday.toLocaleString(),
+      value: bidsToday,
       icon: TrendingUp,
       accent: 'amber',
       caption: 'Pujas en las últimas 24h',
@@ -110,7 +113,13 @@ function KpiCard({ item, index }: { item: KpiItem; index: number }) {
             {item.label}
           </p>
           <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
-            {item.value}
+            {item.prefix}
+            <BlurNumber
+              value={item.value}
+              animateOnMount
+              duration={1.1}
+              format={(n) => Math.round(n).toLocaleString('es-PY')}
+            />
           </p>
         </div>
         <div

@@ -1,11 +1,14 @@
 import { getTranslations } from 'next-intl/server';
 import { loadDashboardStats } from '@/lib/admin/load-dashboard-stats';
 import { TodayLabel } from '@/components/shell/today-label';
+import { SplineRobot } from '@/components/brand/spline-robot';
 import { KpiCards } from './_components/kpi-cards';
 import { AuctionsByStatusChart } from './_components/auctions-by-status-chart';
 import { BidsPerDayChart } from './_components/bids-per-day-chart';
 import { ClosingSoonList } from './_components/closing-soon-list';
 import { RecentAuditList } from './_components/recent-audit-list';
+
+const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 
 export default async function AdminHome({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations('admin.home');
@@ -15,7 +18,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
 
   return (
     <div className="space-y-8">
-      {/* Hero header with gradient accent */}
+      {/* Hero header with gradient accent + subtle 3D robot on wide screens */}
       <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-6 py-6 animate-in fade-in slide-in-from-top-2 duration-500">
         <div
           aria-hidden
@@ -25,7 +28,13 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
           aria-hidden
           className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-text-strong/5 blur-3xl pointer-events-none"
         />
-        <div className="relative">
+        {/* Interactive 3D robot, subtle: low opacity, masked, far right, only
+            on very wide screens to keep the dashboard light elsewhere. */}
+        <SplineRobot
+          scene={ROBOT_SCENE_URL}
+          className="pointer-events-none absolute -right-10 -top-24 z-0 hidden h-[22rem] w-[30rem] opacity-30 xl:block [mask-image:radial-gradient(60%_60%_at_70%_50%,black,transparent_80%)]"
+        />
+        <div className="relative z-10">
           <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
             <TodayLabel locale={locale} />
           </p>
@@ -43,18 +52,26 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
         bidsToday={s.bidsToday}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <AuctionsByStatusChart
-          live={s.liveAuctions}
-          scheduled={s.scheduledAuctions}
-          ended={s.endedAuctions}
-        />
-        <BidsPerDayChart data={s.bidsByDay} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ClosingSoonList locale={locale} items={s.closingSoon} />
-        <RecentAuditList locale={locale} items={s.recentAudit} />
+      {/* Bento grid: asymmetric tiles. Bids chart and audit feed get the wide
+          columns; status donut and closing-soon take the narrower ones. Each
+          tile stretches to the row height and fades in with a small stagger. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-6 [&>*]:animate-in [&>*]:fade-in [&>*]:slide-in-from-bottom-2 [&>*]:duration-500 [&>*]:fill-mode-both">
+        <div className="lg:col-span-2 [&>*]:h-full" style={{ animationDelay: '60ms' }}>
+          <AuctionsByStatusChart
+            live={s.liveAuctions}
+            scheduled={s.scheduledAuctions}
+            ended={s.endedAuctions}
+          />
+        </div>
+        <div className="lg:col-span-4 [&>*]:h-full" style={{ animationDelay: '120ms' }}>
+          <BidsPerDayChart data={s.bidsByDay} />
+        </div>
+        <div className="lg:col-span-3 [&>*]:h-full" style={{ animationDelay: '180ms' }}>
+          <ClosingSoonList locale={locale} items={s.closingSoon} />
+        </div>
+        <div className="lg:col-span-3 [&>*]:h-full" style={{ animationDelay: '240ms' }}>
+          <RecentAuditList locale={locale} items={s.recentAudit} />
+        </div>
       </div>
     </div>
   );

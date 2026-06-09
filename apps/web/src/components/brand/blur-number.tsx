@@ -11,6 +11,8 @@ interface Props {
   className?: string;
   /** Tween duration in seconds. */
   duration?: number;
+  /** Count up from 0 to value once on mount (for dashboard KPIs). */
+  animateOnMount?: boolean;
 }
 
 /**
@@ -19,12 +21,18 @@ interface Props {
  * settling crisp. On mount it shows the value instantly; only later changes
  * animate. Monochrome: inherits text color. Honors prefers-reduced-motion.
  */
-export function BlurNumber({ value, format, className, duration = 0.7 }: Props) {
+export function BlurNumber({
+  value,
+  format,
+  className,
+  duration = 0.7,
+  animateOnMount = false,
+}: Props) {
   const fmt = format ?? ((n: number) => Math.round(n).toLocaleString('es-PY'));
-  const mv = useMotionValue(value);
+  const mv = useMotionValue(animateOnMount ? 0 : value);
   const text = useTransform(mv, (n) => fmt(n));
   const [blur, setBlur] = useState(false);
-  const prev = useRef(value);
+  const prev = useRef(animateOnMount ? 0 : value);
 
   useEffect(() => {
     if (value === prev.current) return;
