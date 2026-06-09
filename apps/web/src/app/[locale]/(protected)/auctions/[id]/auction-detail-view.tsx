@@ -121,9 +121,9 @@ export function AuctionDetailView({
     <div className="space-y-6">
       <a
         href={`/${locale}/auctions`}
-        className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-copper transition-colors"
+        className="group inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-strong transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
         {t('back')}
       </a>
 
@@ -131,12 +131,12 @@ export function AuctionDetailView({
         <div className="space-y-6">
           {/* Photo gallery */}
           <div className="space-y-2">
-            <div className="aspect-[4/3] bg-bg-deep rounded-2xl overflow-hidden ring-1 ring-text-subtle/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.5)]">
+            <div className="group aspect-[4/3] bg-bg-deep rounded-2xl overflow-hidden ring-1 ring-text-subtle/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.5)]">
               {initial.images[activeImg] ? (
                 <img
                   src={initial.images[activeImg].url}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.03]"
                 />
               ) : (
                 <div className="w-full h-full grid place-items-center text-text-subtle">
@@ -154,8 +154,8 @@ export function AuctionDetailView({
                     className={
                       'aspect-square rounded-lg overflow-hidden ring-2 transition-all duration-200 ' +
                       (i === activeImg
-                        ? 'ring-copper scale-[0.98]'
-                        : 'ring-transparent opacity-70 hover:opacity-100')
+                        ? 'ring-text-strong scale-[0.98]'
+                        : 'ring-transparent opacity-60 hover:opacity-100 hover:ring-text-subtle/30')
                     }
                   >
                     <img src={img.thumbnailUrl} alt="" className="w-full h-full object-cover" />
@@ -214,7 +214,7 @@ export function AuctionDetailView({
           />
 
           {/* Price card */}
-          <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+          <div className="ink-mesh sheen rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
               {live.currentBid > 0 ? 'Puja actual' : t('startingPrice')}
             </p>
@@ -290,7 +290,7 @@ export function AuctionDetailView({
 
 function Spec({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-text-subtle/10 bg-bg-elev/30 px-3 py-2.5">
+    <div className="hover-lift rounded-lg border border-text-subtle/10 bg-bg-elev/30 px-3 py-2.5 hover:border-text-subtle/25 hover:bg-bg-elev/50">
       <dt className="text-text-muted text-[10px] uppercase tracking-[0.1em] font-semibold">
         {label}
       </dt>
