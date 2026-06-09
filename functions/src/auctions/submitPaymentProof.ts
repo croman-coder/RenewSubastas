@@ -6,6 +6,17 @@ import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { loadAppConfig } from '../lib/config.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
+import {
+  emailShell,
+  body,
+  badge,
+  heading,
+  sectionLabel,
+  dataRows,
+  callout,
+  ctaButton,
+  SITE_URL,
+} from '../lib/email-templates.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const InputSchema = z.object({
@@ -19,7 +30,6 @@ export interface SubmitPaymentProofResult {
   ok: true;
 }
 
-const LOGO = 'https://renewsubastas.netlify.app/brand/renew-wordmark-black.png';
 const ADMIN_TO = 'croman@santarosa.com.py';
 
 const fmtUsd = (n: number) =>
@@ -125,70 +135,50 @@ export async function submitPaymentProofHandler(
   const cfg = await loadAppConfig();
   const p = cfg.payment;
 
-  const row = (label: string, value: string) =>
-    `<tr><td style="padding:5px 0;color:#71717a;width:150px;font-size:13px;">${label}</td><td style="padding:5px 0;font-weight:600;font-size:13px;color:#0f0f0f;">${value || '—'}</td></tr>`;
+  const vehName = `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`;
+  const vehicleRows: Array<[string, string]> = [
+    ['Vehículo', vehName],
+    ['Chasis / VIN', vin],
+    ['Chapa', plate],
+  ];
+  if (mileage != null) vehicleRows.push(['Kilometraje', `${mileage.toLocaleString('es-PY')} km`]);
+  if (color) vehicleRows.push(['Color', color]);
+  if (transmission) vehicleRows.push(['Transmisión', transmission]);
+  if (fuelType) vehicleRows.push(['Combustible', fuelType]);
+  vehicleRows.push(['Precio final', `USD ${fmtUsd(finalPrice)}`]);
+  vehicleRows.push(['Seña esperada', `USD ${fmtUsd(depositUsd)}`]);
+  vehicleRows.push(['Subasta', vanity]);
 
-  const html = `
-  <div style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-    <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
-      <div style="background:#fff;border:1px solid #e4e4e7;border-radius:16px;overflow:hidden;">
-        <div style="padding:28px 32px 0;">
-          <img src="${LOGO}" alt="Renew Subastas" height="24" style="display:block;height:24px;width:auto;" />
-        </div>
-        <div style="padding:20px 32px 8px;">
-          <div style="display:inline-block;background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:4px 10px;border-radius:999px;">
-            Comprobante de seña recibido
-          </div>
-          <h1 style="margin:14px 0 4px;font-size:22px;color:#0f0f0f;font-weight:800;">
-            ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}
-          </h1>
-          <p style="margin:0 0 4px;font-size:12px;color:#71717a;font-weight:600;letter-spacing:0.5px;">
-            Subasta ${vanity}
-          </p>
-          <p style="margin:0 0 18px;font-size:14px;color:#52525b;">
-            Un ganador subió su comprobante. Revisá el adjunto y confirmá la seña en el panel.
-          </p>
+  const clientRows: Array<[string, string]> = [
+    ['Nombre', buyerName],
+    ['Email', buyerEmail],
+    ['Teléfono', buyerPhone],
+    ['Documento', docType && docNumber ? `${docType} ${docNumber}` : ''],
+    [
+      'Dirección',
+      [address['street'], address['city'], address['department']].filter(Boolean).join(', '),
+    ],
+  ];
 
-          <h2 style="margin:18px 0 4px;font-size:13px;color:#0f0f0f;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Vehículo</h2>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            ${row('Vehículo', `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`)}
-            ${row('Chasis / VIN', vin)}
-            ${row('Chapa', plate)}
-            ${mileage != null ? row('Kilometraje', `${mileage.toLocaleString('es-PY')} km`) : ''}
-            ${color ? row('Color', color) : ''}
-            ${transmission ? row('Transmisión', transmission) : ''}
-            ${fuelType ? row('Combustible', fuelType) : ''}
-            ${row('Precio final', `USD ${fmtUsd(finalPrice)}`)}
-            ${row('Seña esperada', `USD ${fmtUsd(depositUsd)}`)}
-            ${row('Subasta', vanity)}
-          </table>
-
-          <h2 style="margin:20px 0 4px;font-size:13px;color:#0f0f0f;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Cliente</h2>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            ${row('Nombre', buyerName)}
-            ${row('Email', buyerEmail)}
-            ${row('Teléfono', buyerPhone)}
-            ${row('Documento', docType && docNumber ? `${docType} ${docNumber}` : '')}
-            ${row('Dirección', [address['street'], address['city'], address['department']].filter(Boolean).join(', '))}
-          </table>
-
-          <div style="background:#f5f5f5;border-radius:10px;padding:12px 14px;margin:18px 0;">
-            <p style="margin:0;font-size:12px;color:#52525b;">
-              Comprobante adjunto a este correo${attachment ? '' : ' (no se pudo adjuntar el archivo — revisá el panel)'}.
-              ${p.contactPhone ? `Contacto cargado: ${p.contactPhone}.` : ''}
-            </p>
-          </div>
-
-          <a href="https://renewsubastas.netlify.app/es/staff/auctions/${auctionId}" style="display:inline-block;background:#0f0f0f;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">
-            Abrir en el panel
-          </a>
-        </div>
-        <div style="padding:20px 32px 28px;border-top:1px solid #f0f0f0;margin-top:8px;">
-          <p style="margin:0;font-size:11px;color:#a1a1aa;">Renew Subastas · Santa Rosa Automotores</p>
-        </div>
-      </div>
-    </div>
-  </div>`;
+  const html = emailShell(
+    body(
+      badge('Comprobante recibido', 'info') +
+        heading(
+          vehName,
+          'Un ganador subió su comprobante de seña. Revisá el adjunto y confirmá el pago en el panel.',
+        ) +
+        `<p style="margin:6px 0 0;font-size:12px;color:#71717a;font-weight:700;letter-spacing:0.5px;">Subasta ${vanity}</p>` +
+        sectionLabel('Vehículo') +
+        dataRows(vehicleRows) +
+        sectionLabel('Cliente') +
+        dataRows(clientRows) +
+        callout(
+          `Comprobante adjunto a este correo${attachment ? '' : ' (no se pudo adjuntar el archivo, revisá el panel)'}.`,
+          'neutral',
+        ) +
+        ctaButton(`${SITE_URL}/es/staff/auctions/${auctionId}`, 'Abrir en el panel'),
+    ),
+  );
 
   await sendEmail({
     to: ADMIN_TO,

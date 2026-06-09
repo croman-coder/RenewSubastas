@@ -16,6 +16,7 @@ import { loadAppConfig } from '../lib/config.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
+import { emailShell, body, badge, heading, callout, ctaButton } from '../lib/email-templates.js';
 
 // Names are capped at 40 chars and restricted to letters/spaces/apostrophes/
 // hyphens (Unicode-aware). This is the server-side enforcement of the same
@@ -152,50 +153,21 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
           ? 'Wholesale (mayorista)'
           : 'Retail (público general)';
 
-  const LOGO = 'https://renewsubastas.netlify.app/brand/renew-wordmark-black.png';
-  const welcomeHtml = `
-  <div style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
-      <div style="background:#fff;border:1px solid #e4e4e7;border-radius:16px;overflow:hidden;">
-        <div style="padding:28px 32px 0;">
-          <img src="${LOGO}" alt="Renew Subastas" height="26" style="display:block;height:26px;width:auto;" />
-        </div>
-        <div style="padding:22px 32px 8px;">
-          <div style="display:inline-block;background:#f5f5f5;color:#0f0f0f;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:4px 10px;border-radius:999px;">
-            Cuenta creada
-          </div>
-          <h1 style="margin:14px 0 4px;font-size:26px;color:#0f0f0f;font-weight:800;line-height:1.2;">
-            ¡Bienvenido, ${input.firstName}!
-          </h1>
-          <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#52525b;">
-            Tu cuenta en <strong style="color:#0f0f0f;">Renew Subastas</strong> está lista.
-            Tipo de cuenta: <strong style="color:#0f0f0f;">${kindLabel}</strong>.
-          </p>
-
-          <div style="background:#f5f5f5;border-radius:12px;padding:16px 18px;margin:0 0 18px;">
-            <p style="margin:0 0 4px;font-size:13px;color:#52525b;">
-              Para entrar, primero creá tu contraseña con el botón de abajo.
-              El enlace es personal — no lo compartas.
-            </p>
-          </div>
-
-          <a href="${resetLink}" style="display:inline-block;background:#0f0f0f;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 24px;border-radius:10px;">
-            Crear mi contraseña
-          </a>
-
-          <p style="margin:18px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5;">
-            Si el botón no funciona, copiá y pegá este enlace en tu navegador:<br>
-            <span style="color:#71717a;word-break:break-all;">${resetLink}</span>
-          </p>
-        </div>
-        <div style="padding:20px 32px 28px;border-top:1px solid #f0f0f0;margin-top:8px;">
-          <p style="margin:0;font-size:11px;color:#a1a1aa;">
-            Renew Subastas · Santa Rosa Automotores · Paraguay
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>`;
+  const welcomeHtml = emailShell(
+    body(
+      badge('Cuenta creada', 'neutral') +
+        heading(
+          `¡Bienvenido, ${input.firstName}!`,
+          `Tu cuenta en <strong style="color:#0a0a0a;">Renew Subastas</strong> está lista. Tipo de cuenta: <strong style="color:#0a0a0a;">${kindLabel}</strong>.`,
+        ) +
+        callout(
+          'Para entrar, primero creá tu contraseña con el botón de abajo. El enlace es personal, no lo compartas.',
+          'info',
+        ) +
+        ctaButton(resetLink, 'Crear mi contraseña') +
+        `<p style="margin:18px 0 0;font-size:12px;color:#a1a1aa;line-height:1.5;">Si el botón no funciona, copiá y pegá este enlace:<br><span style="color:#71717a;word-break:break-all;">${resetLink}</span></p>`,
+    ),
+  );
 
   await sendEmail({
     to: input.email,
