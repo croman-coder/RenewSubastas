@@ -1,0 +1,121 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Manual del Administrador · Renew Subastas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"/>
+<link rel="stylesheet" href="theme.css"/>
+<style>
+  /* enable print-to-pdf: open with ?print-pdf then Cmd/Ctrl+P */
+  .reveal .slides section { font-size: 1rem; }
+</style>
+</head><body>
+<div class="reveal"><div class="slides">
+<section class="cover" data-transition="fade">
+      <img class="cover-mark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <span class="eyebrow">Manual · Rol Admin</span>
+      <h1>Administrador</h1>
+      <p>Tenés el control total de la plataforma. Esta guía cubre todo lo que podés hacer, paso a paso.</p>
+      <div class="deckfoot"><span>Admin</span><span class="pg">Santa Rosa Automotores · Paraguay</span></div>
+    </section>
+<section>
+    <span class="eyebrow pill">Tu rol</span>
+    <h1>Qué significa ser admin</h1>
+    <p class="intro">El admin es la máxima autoridad de la plataforma. Al iniciar sesión entrás directo a /admin.</p>
+    <ul class="lead-list"><li><span class="lead">Usuarios</span><span class="txt">creás cuentas de cualquier tipo y cambiás roles o estado.</span></li><li><span class="lead">Empresa</span><span class="txt">configurás moneda, pujas, financiación, correos y datos de pago.</span></li><li><span class="lead">Operación</span><span class="txt">hacés todo lo de staff (vehículos y subastas) y todo lo de finanzas (pagos).</span></li><li><span class="lead">Auditoría</span><span class="txt">cada acción sensible queda registrada para tu control.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 1</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">01</div>
+      <h1>Gestión de usuarios</h1>
+      <p>Crear cuentas, asignar roles y controlar accesos.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Crear usuario</span>
+    <h1>Dar de alta una cuenta</h1>
+    <p class="intro">Desde Usuarios, botón «Nuevo». Elegís el tipo de cuenta y completás los datos.</p>
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">Elegí el tipo de cuenta</p><p class="sd">Retail, Wholesale, Staff, Finanzas o Admin. El tipo define qué verá y podrá hacer la persona.</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Completá email y nombre</p><p class="sd">Nombre y apellido (hasta 40 caracteres). El email del equipo debe ser del dominio de la empresa.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">Documento</p><p class="sd">Tipo (CI o RUC) y número, según Paraguay.</p></div></div><div class="step"><div class="n">4</div><div class="body"><p class="st">Guardá</p><p class="sd">Se crea la cuenta y se envía un correo de bienvenida con un enlace para que la persona cree su contraseña.</p></div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 2</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Tipos de cuenta</span>
+    <h1>Qué elegir en cada caso</h1>
+    
+    <table class="dtable"><thead><tr><th>Tipo</th><th>Para quién</th><th>Email del dominio</th></tr></thead><tbody><tr><td>Retail</td><td>Comprador del público general.</td><td>No requerido</td></tr><tr><td>Wholesale</td><td>Comprador mayorista.</td><td>No requerido</td></tr><tr><td>Staff</td><td>Equipo que carga vehículos y subastas.</td><td>Sí, @santarosa.com.py</td></tr><tr><td>Finanzas</td><td>Equipo que confirma pagos.</td><td>Sí, @santarosa.com.py</td></tr><tr><td>Admin</td><td>Administrador con control total.</td><td>Sí, @santarosa.com.py</td></tr></tbody></table><div class="callout warning"><span class="ct">Cuidado con admin</span>Dar rol admin entrega control total. Asignalo solo a personas de máxima confianza.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 3</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Editar usuario</span>
+    <h1>Cambiar rol, estado o eliminar</h1>
+    <p class="intro">Desde la ficha de un usuario podés ajustar su cuenta en cualquier momento.</p>
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">Cambiar el tipo de cuenta</p><p class="sd">Elegís otro tipo (por ejemplo, de retail a wholesale, o promover a staff) y guardás.</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Activar o desactivar</p><p class="sd">Una cuenta desactivada no puede ingresar. Útil sin borrar el historial.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">Eliminar</p><p class="sd">Borra la cuenta. Pide confirmación porque es una acción definitiva.</p></div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 4</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Contraseñas</span>
+    <h1>Restablecer la contraseña de alguien</h1>
+    <p class="intro">Si un usuario no puede entrar, generás y le enviás un enlace de restablecimiento.</p>
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">Generá el enlace</p><p class="sd">Desde la ficha del usuario, la plataforma crea un enlace seguro de restablecimiento.</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Se envía por correo</p><p class="sd">El usuario recibe «Restablecé tu contraseña · Renew Subastas» con el enlace.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">También lo ves vos</p><p class="sd">El enlace queda visible para que puedas pasarlo por otro medio si hiciera falta.</p></div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 5</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">02</div>
+      <h1>Configuración de la empresa</h1>
+      <p>Los parámetros del negocio, sin tocar código.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Config global</span>
+    <h1>Las secciones de configuración</h1>
+    
+    <table class="dtable"><thead><tr><th>Sección</th><th>Qué controla</th></tr></thead><tbody><tr><td>Moneda</td><td>Moneda principal (USD/PYG), tipo de cambio, mostrar valor secundario.</td></tr><tr><td>Pujas</td><td>Incremento fijo por oferta y segundos de anti-sniping.</td></tr><tr><td>Financiación</td><td>Activar/desactivar, cuotas permitidas, tasa anual, anticipo, monto mínimo.</td></tr><tr><td>Correos</td><td>Dominio del equipo, dirección y nombre del remitente.</td></tr><tr><td>Pagos</td><td>Cuenta bancaria, % de seña, plazo en horas, instrucciones y contacto.</td></tr></tbody></table><div class="callout info">Cada cambio queda auditado con el valor anterior y el nuevo.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 6</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Datos de pago</span>
+    <h1>La cuenta donde paga el ganador</h1>
+    <p class="intro">Lo que cargues acá es lo que verá el comprador en su página de ganador.</p>
+    <ul class="lead-list"><li><span class="lead">Banco y cuenta</span><span class="txt">titular, banco, número, tipo de cuenta y RUC.</span></li><li><span class="lead">Seña</span><span class="txt">porcentaje del valor (por defecto 10%) y plazo en horas para pagar.</span></li><li><span class="lead">Instrucciones</span><span class="txt">texto que guía al comprador, en español e inglés.</span></li><li><span class="lead">Contacto</span><span class="txt">email y teléfono para dudas de pago.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 7</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">03</div>
+      <h1>Operación y pagos</h1>
+      <p>El admin también hace lo de staff y finanzas.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Alcance total</span>
+    <h1>Vehículos, subastas y pagos</h1>
+    <p class="intro">No tenés límites operativos: cubrís cualquier tarea de los otros roles.</p>
+    <ul class="lead-list"><li><span class="lead">Vehículos y subastas</span><span class="txt">cargás, editás, cancelás y eliminás igual que el staff (ver manual de Staff).</span></li><li><span class="lead">Confirmar pagos</span><span class="txt">confirmás o liberás señas igual que finanzas (ver manual de Finanzas).</span></li><li><span class="lead">Ventas</span><span class="txt">ves el registro de ventas en /sales en tiempo real.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 8</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Auditoría</span>
+    <h1>Todo queda registrado</h1>
+    <p class="intro">El registro de auditoría es tu respaldo: muestra quién hizo qué y cuándo.</p>
+    <ul class="lead-list"><li><span class="lead">Acciones sensibles</span><span class="txt">creación y borrado de usuarios, cambios de rol, confirmación de pagos, borrado de subastas.</span></li><li><span class="lead">Antes y después</span><span class="txt">guarda el estado previo y el nuevo para cada cambio de configuración.</span></li><li><span class="lead">Trazabilidad</span><span class="txt">siempre podés reconstruir qué pasó con una cuenta o una subasta.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 9</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Buenas prácticas</span>
+    <h1>Recomendaciones de seguridad</h1>
+    
+    <ul class="lead-list"><li><span class="lead">Mínimos admins</span><span class="txt">cuantos menos administradores, más control.</span></li><li><span class="lead">Desactivar, no borrar</span><span class="txt">si alguien deja el equipo, desactivá la cuenta para conservar el historial.</span></li><li><span class="lead">Email del dominio</span><span class="txt">exigí siempre el dominio de la empresa para staff, finanzas y admin.</span></li><li><span class="lead">Revisá la auditoría</span><span class="txt">ante cualquier duda, el registro tiene la respuesta.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Admin · 10</span></div>
+  </section>
+<section class="closing" data-transition="fade">
+      <img class="cmark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <h1>Tenés el control completo</h1>
+      <p>Usá tu acceso con criterio: cada acción deja huella.</p><p>Renew Subastas · Santa Rosa Automotores</p>
+      <div class="deckfoot"><span>Admin</span><span class="pg">Renew Subastas</span></div>
+    </section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0, center: false,
+    hash: true, transition: 'slide', transitionSpeed: 'default',
+    controls: true, progress: true, slideNumber: false,
+    pdfSeparateFragments: false,
+  });
+</script>
+</body></html>

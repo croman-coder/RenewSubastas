@@ -1,0 +1,224 @@
+{
+  "title": "Manual del Comprador",
+  "short": "Comprador",
+  "meta": { "blurb": "Registrarse, explorar, pujar, ganar o perder, y pagar la seña." },
+  "slides": [
+    {
+      "type": "cover",
+      "eyebrow": "Manual · Comprador",
+      "title": "Comprador",
+      "subtitle": "Cómo participar en las subastas de Renew, pujar y, si ganás, asegurar tu vehículo."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Bienvenida",
+      "title": "Tu camino en pocas palabras",
+      "items": [
+        { "lead": "Entrás", "text": "con la cuenta que te crea el equipo de Renew." },
+        { "lead": "Explorás", "text": "el catálogo de tu segmento (retail o wholesale)." },
+        { "lead": "Pujás", "text": "en las subastas en vivo." },
+        { "lead": "Ganás y pagás", "text": "una seña para asegurar el vehículo." }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "01",
+      "title": "Tu cuenta",
+      "subtitle": "Cómo entrar la primera vez."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Primer ingreso",
+      "title": "De la bienvenida a tu contraseña",
+      "steps": [
+        {
+          "title": "Recibís el correo",
+          "text": "«¡Bienvenido a Renew Subastas! Creá tu contraseña», con un enlace seguro."
+        },
+        { "title": "Creá tu contraseña", "text": "Tocás el enlace y definís tu clave personal." },
+        {
+          "title": "Iniciás sesión",
+          "text": "Con tu email y tu nueva contraseña entrás a la plataforma."
+        }
+      ],
+      "callout": {
+        "tone": "info",
+        "title": "¿Olvidaste la contraseña?",
+        "text": "Pedí un restablecimiento; el equipo te envía un nuevo enlace para crearla otra vez."
+      }
+    },
+    {
+      "type": "statpair",
+      "eyebrow": "Tu segmento",
+      "title": "Retail o wholesale",
+      "intro": "Tu cuenta pertenece a un segmento y solo ves ese catálogo.",
+      "tiles": [
+        { "label": "Retail", "value": "Público general" },
+        { "label": "Wholesale", "value": "Mayorista", "strong": true }
+      ],
+      "callout": {
+        "tone": "neutral",
+        "text": "No te preocupes por elegir: ves automáticamente las subastas que te corresponden."
+      }
+    },
+    {
+      "type": "divider",
+      "num": "02",
+      "title": "Explorar y pujar",
+      "subtitle": "El corazón de la experiencia."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Explorar",
+      "title": "Ver un vehículo y su subasta",
+      "steps": [
+        {
+          "title": "Abrí el catálogo",
+          "text": "Recorrés los vehículos disponibles de tu segmento."
+        },
+        {
+          "title": "Entrá al detalle",
+          "text": "Ves fotos, especificaciones y la descripción del vehículo."
+        },
+        {
+          "title": "Mirá la subasta",
+          "text": "Precio actual, oferta mínima, incremento y cuánto tiempo queda."
+        }
+      ]
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Pujar",
+      "title": "Cómo hacer una oferta",
+      "intro": "Cuando la subasta está en vivo, podés ofertar en segundos.",
+      "steps": [
+        {
+          "title": "Mirá el mínimo",
+          "text": "La oferta debe alcanzar el mínimo: precio actual más el incremento (o el precio inicial si nadie pujó)."
+        },
+        {
+          "title": "Usá los botones rápidos",
+          "text": "Ofertá el mínimo, mínimo + un incremento o mínimo + dos, con un toque."
+        },
+        {
+          "title": "O ingresá un monto",
+          "text": "Si está habilitado, escribís el monto que quieras (dentro de los límites)."
+        },
+        {
+          "title": "Confirmá",
+          "text": "Si sos el mejor postor, ves «Sos el mejor postor por ahora»."
+        }
+      ],
+      "callout": {
+        "tone": "info",
+        "title": "Anti-sniping",
+        "text": "Si pujás en los últimos 60 segundos, el cierre se extiende para que la subasta sea justa."
+      }
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Te superaron",
+      "title": "Cuando alguien ofrece más",
+      "intro": "No te quedás sin enterarte.",
+      "items": [
+        {
+          "lead": "Te llega un correo",
+          "text": "«Te superaron · {vehículo}», con tu oferta y la nueva oferta líder."
+        },
+        {
+          "lead": "Volvé a pujar",
+          "text": "Tocás el enlace y subís tu oferta si aún querés el vehículo."
+        },
+        {
+          "lead": "Push opcional",
+          "text": "También podés recibir avisos en el navegador si los activás."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "03",
+      "title": "Ganar y pagar",
+      "subtitle": "Asegurá tu vehículo con la seña."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "¡Ganaste!",
+      "title": "Qué pasa cuando ganás",
+      "steps": [
+        {
+          "title": "Recibís el correo",
+          "text": "«¡Ganaste la subasta! {vehículo}», con el monto, la seña y los datos para pagar."
+        },
+        {
+          "title": "Abrí tu página de ganador",
+          "text": "Ves el vehículo, el precio final, la seña a pagar, los datos bancarios y el plazo."
+        },
+        {
+          "title": "Transferí la seña",
+          "text": "A la cuenta bancaria que se muestra, dentro del plazo indicado."
+        },
+        {
+          "title": "Subí el comprobante",
+          "text": "Adjuntás el recibo desde la misma página. Listo: el equipo lo verifica."
+        }
+      ]
+    },
+    {
+      "type": "statpair",
+      "eyebrow": "La seña",
+      "title": "Cuánto y hasta cuándo",
+      "tiles": [
+        { "label": "Monto", "value": "Seña del valor", "strong": true },
+        { "label": "Plazo", "value": "Cuenta regresiva" }
+      ],
+      "callout": {
+        "tone": "warning",
+        "title": "No te demores",
+        "text": "Si no pagás antes del plazo, perdés la reserva y el vehículo vuelve a estar disponible para otros."
+      }
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Si no ganás",
+      "title": "Perder o reserva no alcanzada",
+      "intro": "No siempre se gana, y está bien: siempre hay más oportunidades.",
+      "items": [
+        {
+          "lead": "Te superaron al cierre",
+          "text": "otro postor ofreció más. El vehículo es para esa persona."
+        },
+        {
+          "lead": "Reserva no alcanzada",
+          "text": "hubo ofertas pero no llegaron al mínimo de venta; nadie se lo lleva esta vez."
+        },
+        {
+          "lead": "Volvé a intentar",
+          "text": "el vehículo puede re-subastarse, y siempre entran nuevas unidades."
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Notificaciones",
+      "title": "Mantenete al tanto",
+      "items": [
+        {
+          "lead": "Nueva subasta",
+          "text": "aviso cuando sale en vivo una subasta de tu segmento."
+        },
+        { "lead": "Te superaron", "text": "cuando alguien supera tu oferta." },
+        { "lead": "Ganaste", "text": "cuando te adjudicás un vehículo." },
+        { "lead": "Tus preferencias", "text": "elegís qué correos y avisos querés recibir." }
+      ]
+    },
+    {
+      "type": "closing",
+      "title": "Listo para pujar",
+      "lines": [
+        "Encontrá tu próximo vehículo en Renew Subastas.",
+        "Renew Subastas · Santa Rosa Automotores"
+      ]
+    }
+  ]
+}

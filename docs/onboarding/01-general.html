@@ -1,0 +1,169 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Visión general de la plataforma · Renew Subastas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"/>
+<link rel="stylesheet" href="theme.css"/>
+<style>
+  /* enable print-to-pdf: open with ?print-pdf then Cmd/Ctrl+P */
+  .reveal .slides section { font-size: 1rem; }
+</style>
+</head><body>
+<div class="reveal"><div class="slides">
+<section class="cover" data-transition="fade">
+      <img class="cover-mark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <span class="eyebrow">Manual general</span>
+      <h1>Cómo funciona Renew Subastas</h1>
+      <p>La plataforma de subastas de vehículos de Santa Rosa Automotores, explicada de principio a fin.</p>
+      <div class="deckfoot"><span>General</span><span class="pg">Santa Rosa Automotores · Paraguay</span></div>
+    </section>
+<section>
+    <span class="eyebrow pill">Contenido</span>
+    <h1>Lo que vas a ver</h1>
+    
+    <ul class="lead-list"><li><span class="lead idx">01</span><span class="txt">Qué es la plataforma y para qué sirve</span></li><li><span class="lead idx">02</span><span class="txt">Los cuatro tipos de usuario</span></li><li><span class="lead idx">03</span><span class="txt">Retail y wholesale: dos públicos separados</span></li><li><span class="lead idx">04</span><span class="txt">El flujo completo, de un vehículo a una venta</span></li><li><span class="lead idx">05</span><span class="txt">El ciclo de vida de una subasta</span></li><li><span class="lead idx">06</span><span class="txt">Las pujas, ganar y perder</span></li><li><span class="lead idx">07</span><span class="txt">El pago de la seña</span></li><li><span class="lead idx">08</span><span class="txt">Notificaciones por correo y push</span></li><li><span class="lead idx">09</span><span class="txt">Configuración de la empresa y seguridad</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 1</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Qué es</span>
+    <h1>Una casa de subastas, en línea</h1>
+    <p class="intro">Renew Subastas digitaliza el remate de vehículos de Santa Rosa Automotores. El equipo carga autos y programa subastas con horario; los compradores registrados ofertan en vivo desde la web.</p>
+    <ul class="lead-list"><li><span class="lead">Para el equipo</span><span class="txt">cargar vehículos, crear subastas, seguir las ventas y confirmar pagos, todo desde un panel.</span></li><li><span class="lead">Para el comprador</span><span class="txt">ver el catálogo de su segmento, pujar, y pagar la seña si gana.</span></li><li><span class="lead">Web hoy, app mañana</span><span class="txt">toda la lógica vive en el servidor, así la futura app móvil reusa exactamente las mismas reglas.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 2</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">01</div>
+      <h1>Los cuatro roles</h1>
+      <p>Cada persona ve y puede hacer únicamente lo que su rol permite.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Roles</span>
+    <h1>Quién hace qué</h1>
+    
+    <table class="dtable"><thead><tr><th>Rol</th><th>Para qué sirve</th><th>Dónde entra</th></tr></thead><tbody><tr><td>Admin</td><td>Control total: usuarios, configuración, subastas, pagos, auditoría.</td><td>/admin</td></tr><tr><td>Staff</td><td>Carga vehículos y crea/gestiona subastas. No crea admins ni confirma pagos.</td><td>/staff</td></tr><tr><td>Finanzas</td><td>Solo pagos: ve ventas, confirma o libera señas, ve datos del ganador.</td><td>/sales</td></tr><tr><td>Comprador</td><td>El que puja. Ve solo el catálogo de su segmento (retail o wholesale).</td><td>/retail o /wholesale</td></tr></tbody></table><div class="callout info"><span class="ct">Regla clave</span>El rol se guarda en el token de sesión (claims). Nadie puede cambiarse el rol a sí mismo: solo un admin lo asigna.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 3</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Audiencias</span>
+    <h1>Retail y wholesale nunca se mezclan</h1>
+    <p class="intro">Cada vehículo y cada subasta pertenece a un segmento. Un comprador solo ve y puja en el suyo.</p>
+    <ul class="lead-list"><li><span class="lead">Retail</span><span class="txt">público general. Ve el catálogo minorista.</span></li><li><span class="lead">Wholesale</span><span class="txt">mayoristas. Ve únicamente subastas mayoristas.</span></li><li><span class="lead">Aislamiento</span><span class="txt">las reglas del servidor impiden que un comprador retail vea o puje en wholesale, y viceversa.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 4</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">02</div>
+      <h1>El flujo completo</h1>
+      <p>De un vehículo en el depósito a una venta confirmada.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Punta a punta</span>
+    <h1>El recorrido de una venta</h1>
+    
+    <div class="flow"><div class="stage"><div class="sl">Vehículo</div><div class="ss">Staff lo carga con fotos y datos. Queda listo.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">Subasta</div><div class="ss">Staff la programa: precio, reserva, horario.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">Pujas</div><div class="ss">Compradores ofertan en vivo mientras está abierta.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">Cierre</div><div class="ss">Al llegar la hora, el sistema decide el resultado.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">Pago</div><div class="ss">El ganador paga la seña; finanzas la confirma.</div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 5</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">03</div>
+      <h1>Ciclo de vida de una subasta</h1>
+      <p>Estados y resultados que puede tener.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Estados</span>
+    <h1>Cómo avanza, sola</h1>
+    <p class="intro">Un proceso automático revisa las subastas cada minuto y las hace avanzar sin intervención.</p>
+    <div class="flow"><div class="stage"><div class="sl">Programada</div><div class="ss">Creada, esperando su hora de inicio.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">En vivo</div><div class="ss">Llegó la hora: acepta pujas.</div></div><div class="arr">&rsaquo;</div><div class="stage"><div class="sl">Finalizada</div><div class="ss">Pasó la hora de cierre: se calcula el resultado.</div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 6</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Resultados</span>
+    <h1>Tres finales posibles</h1>
+    
+    <table class="dtable"><thead><tr><th>Resultado</th><th>Cuándo ocurre</th><th>Qué pasa con el vehículo</th></tr></thead><tbody><tr><td>Vendida</td><td>Hubo pujas y se superó la reserva (si había).</td><td>Pasa a vendido; arranca el pago.</td></tr><tr><td>Reserva no alcanzada</td><td>Hubo pujas pero no llegaron al precio de reserva.</td><td>Vuelve al catálogo, re-subastable.</td></tr><tr><td>Sin ofertas</td><td>Nadie pujó.</td><td>Vuelve al catálogo, re-subastable.</td></tr></tbody></table><div class="callout warning"><span class="ct">Seña no pagada a tiempo</span>Si el ganador no paga antes del plazo, la subasta se marca como vencida (forfeited) y el vehículo vuelve a estar disponible.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 7</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">04</div>
+      <h1>Las pujas</h1>
+      <p>Cómo se oferta y cómo se protege la subasta.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Pujar</span>
+    <h1>Cómo funciona una oferta</h1>
+    
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">Oferta mínima</p><p class="sd">La primera puja parte del precio inicial. Luego, cada oferta debe superar la actual por el incremento mínimo.</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Botones rápidos</p><p class="sd">El comprador puede ofertar el mínimo, mínimo + un incremento, o mínimo + dos, con un toque.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">Anti-sniping</p><p class="sd">Si alguien puja en los últimos 60 segundos, el cierre se extiende para dar tiempo a responder.</p></div></div><div class="step"><div class="n">4</div><div class="body"><p class="st">Te superaron</p><p class="sd">Cuando otra persona supera tu oferta, recibís un correo para volver a pujar.</p></div></div></div><div class="callout neutral"><span class="ct">Juego limpio</span>Admin y staff no pueden pujar. La plataforma lo bloquea para evitar inflar precios.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 8</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">05</div>
+      <h1>Ganar, perder y pagar</h1>
+      <p>Qué sucede al cerrarse la subasta.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Si ganás</span>
+    <h1>Asegurás el vehículo con una seña</h1>
+    <p class="intro">Al cerrar una subasta vendida, el mejor postor es el ganador y se le pide un depósito para reservar la unidad.</p>
+    <div class="statpair"><div class="tile strong"><div class="tl">Seña típica</div><div class="tv">10% del valor</div></div><div class="tile "><div class="tl">Plazo para pagar</div><div class="tv">Cuenta regresiva</div></div></div><div class="callout success"><span class="ct">Página de ganador</span>El ganador ve los datos bancarios, el monto, el plazo y un botón para subir el comprobante.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 9</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">El pago</span>
+    <h1>De la transferencia a la confirmación</h1>
+    
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">El ganador transfiere</p><p class="sd">A la cuenta bancaria que muestra la plataforma (configurada por la empresa).</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Sube el comprobante</p><p class="sd">Adjunta el recibo desde la página de ganador. Se guarda de forma segura.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">Finanzas recibe aviso</p><p class="sd">Llega un correo con todos los datos del vehículo, el comprador y el comprobante adjunto.</p></div></div><div class="step"><div class="n">4</div><div class="body"><p class="st">Finanzas confirma o libera</p><p class="sd">Marca el pago como confirmado, o lo libera si no corresponde (el vehículo vuelve al catálogo).</p></div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 10</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">06</div>
+      <h1>Notificaciones</h1>
+      <p>La plataforma avisa en cada momento clave.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Correos</span>
+    <h1>Correos automáticos</h1>
+    
+    <table class="dtable"><thead><tr><th>Cuándo</th><th>A quién</th><th>Asunto</th></tr></thead><tbody><tr><td>Se crea la cuenta</td><td>Nuevo usuario</td><td>¡Bienvenido a Renew Subastas! Creá tu contraseña</td></tr><tr><td>Restablecer contraseña</td><td>Usuario</td><td>Restablecé tu contraseña · Renew Subastas</td></tr><tr><td>Te superaron en una puja</td><td>Postor anterior</td><td>Te superaron · {vehículo}</td></tr><tr><td>Ganaste una subasta</td><td>Ganador</td><td>¡Ganaste la subasta! {vehículo}</td></tr><tr><td>Llega un comprobante</td><td>Administración</td><td>Comprobante RNW-XXXXXX · {vehículo} · {comprador}</td></tr></tbody></table><div class="callout info">Los correos salen desde subastas@santarosaparaguay.com.py, con el diseño de marca de Renew.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 11</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Push</span>
+    <h1>Avisos en el navegador</h1>
+    <p class="intro">Además del correo, hay notificaciones push para no perderse oportunidades.</p>
+    <ul class="lead-list"><li><span class="lead">Nueva subasta</span><span class="txt">cuando una subasta de su segmento sale en vivo, los compradores reciben un aviso: «Nueva subasta · {vehículo}».</span></li><li><span class="lead">Preferencias</span><span class="txt">cada usuario elige qué avisos quiere recibir (te superaron, ganaste, nuevas subastas).</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 12</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">07</div>
+      <h1>Configuración y seguridad</h1>
+      <p>Lo que sostiene a la plataforma por detrás.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">Datos de empresa</span>
+    <h1>Todo configurable, sin tocar código</h1>
+    <p class="intro">Desde el panel de admin se ajustan los parámetros del negocio.</p>
+    <ul class="lead-list"><li><span class="lead">Moneda</span><span class="txt">USD o guaraníes, con tipo de cambio y vista secundaria.</span></li><li><span class="lead">Pujas</span><span class="txt">incremento fijo y segundos de anti-sniping.</span></li><li><span class="lead">Financiación</span><span class="txt">cuotas, tasa, anticipo y montos mínimos.</span></li><li><span class="lead">Pagos</span><span class="txt">cuenta bancaria, porcentaje de seña, plazo e instrucciones.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 13</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Seguridad</span>
+    <h1>Confianza por diseño</h1>
+    
+    <ul class="lead-list"><li><span class="lead">Permisos por rol</span><span class="txt">el servidor verifica el rol en cada acción; nadie hace lo que no le toca.</span></li><li><span class="lead">Segmentos aislados</span><span class="txt">retail y wholesale separados por reglas, no por la interfaz.</span></li><li><span class="lead">Anti-manipulación</span><span class="txt">el equipo no puede pujar; los límites de frecuencia frenan abusos.</span></li><li><span class="lead">Auditoría</span><span class="txt">cada acción sensible queda registrada con quién, qué y cuándo.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">General · 14</span></div>
+  </section>
+<section class="closing" data-transition="fade">
+      <img class="cmark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <h1>Esa es la plataforma, completa</h1>
+      <p>Cada rol tiene su propio manual paso a paso.</p><p>Renew Subastas · Santa Rosa Automotores · Paraguay</p>
+      <div class="deckfoot"><span>General</span><span class="pg">Renew Subastas</span></div>
+    </section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0, center: false,
+    hash: true, transition: 'slide', transitionSpeed: 'default',
+    controls: true, progress: true, slideNumber: false,
+    pdfSeparateFragments: false,
+  });
+</script>
+</body></html>

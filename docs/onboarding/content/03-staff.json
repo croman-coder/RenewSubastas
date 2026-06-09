@@ -1,0 +1,197 @@
+{
+  "title": "Manual del Staff",
+  "short": "Staff",
+  "meta": { "blurb": "Cargar vehículos, crear y gestionar subastas, y seguirlas en vivo." },
+  "slides": [
+    {
+      "type": "cover",
+      "eyebrow": "Manual · Rol Staff",
+      "title": "Staff",
+      "subtitle": "Sos quien arma el catálogo: cargás vehículos y creás las subastas. Esta es tu guía operativa."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Tu rol",
+      "title": "Qué hacés como staff",
+      "intro": "Al iniciar sesión entrás a /staff. Tu trabajo alimenta toda la plataforma.",
+      "items": [
+        { "lead": "Cargar vehículos", "text": "con fotos, especificaciones y descripción." },
+        { "lead": "Crear subastas", "text": "definís precio, reserva, incremento y horario." },
+        { "lead": "Gestionar", "text": "editás, cancelás o eliminás subastas según haga falta." },
+        {
+          "lead": "Seguir en vivo",
+          "text": "ves el detalle de cada subasta actualizándose en tiempo real."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "01",
+      "title": "Cargar un vehículo",
+      "subtitle": "El primer paso para poder subastar."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Nuevo vehículo",
+      "title": "Paso a paso",
+      "intro": "Desde Vehículos, botón «Nuevo». Completá las secciones del formulario.",
+      "steps": [
+        {
+          "title": "Audiencia",
+          "text": "Retail (público general) o Wholesale (solo mayoristas). Define quién verá este vehículo."
+        },
+        {
+          "title": "Identificación",
+          "text": "Marca, modelo y año (obligatorios). Chapa y VIN opcionales."
+        },
+        {
+          "title": "Especificaciones",
+          "text": "Kilometraje, color, condición (nuevo/usado/dañado), transmisión y combustible."
+        },
+        { "title": "Descripción", "text": "Texto en español (obligatorio); inglés opcional." },
+        {
+          "title": "Fotos",
+          "text": "Hasta 20 imágenes. Arrastrá para ordenarlas; la primera es la portada."
+        }
+      ]
+    },
+    {
+      "type": "flow",
+      "eyebrow": "Estados del vehículo",
+      "title": "El ciclo de un vehículo",
+      "stages": [
+        { "label": "Borrador", "sub": "Recién creado, todavía no publicado." },
+        { "label": "Listo", "sub": "Publicado al catálogo, disponible para subastar." },
+        { "label": "En subasta", "sub": "Vinculado a una subasta activa." },
+        { "label": "Vendido", "sub": "La subasta cerró con venta." }
+      ],
+      "callout": {
+        "tone": "info",
+        "text": "Si una subasta se cancela o no se vende, el vehículo vuelve a «Listo» y se puede re-subastar."
+      }
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Editar / eliminar",
+      "title": "Modificar o quitar un vehículo",
+      "steps": [
+        { "title": "Editar", "text": "Actualizás datos o fotos desde la ficha del vehículo." },
+        {
+          "title": "Eliminar",
+          "text": "Borra el vehículo y todas sus imágenes. Queda registrado en la auditoría."
+        }
+      ],
+      "callout": {
+        "tone": "warning",
+        "title": "No se puede borrar si...",
+        "text": "El vehículo está «En subasta» o ya fue «Vendido». Primero cancelá o cerrá la subasta."
+      }
+    },
+    {
+      "type": "divider",
+      "num": "02",
+      "title": "Crear una subasta",
+      "subtitle": "Poné un vehículo listo a la venta con horario."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Nueva subasta",
+      "title": "Configurar la subasta",
+      "intro": "Desde Subastas, botón «Nueva». Elegís un vehículo en estado «Listo».",
+      "steps": [
+        { "title": "Precio inicial", "text": "El punto de partida de las ofertas." },
+        {
+          "title": "Precio de reserva (opcional)",
+          "text": "El mínimo para vender. Debe ser igual o mayor al inicial. Si no se alcanza, no hay venta."
+        },
+        {
+          "title": "Incremento mínimo",
+          "text": "Cuánto debe subir cada oferta respecto de la actual."
+        },
+        {
+          "title": "Inicio y fin",
+          "text": "Fecha y hora de apertura y cierre. El fin debe ser al menos 1 minuto después del inicio."
+        }
+      ]
+    },
+    {
+      "type": "statpair",
+      "eyebrow": "Cómo se ve el inicio",
+      "title": "Programada o en vivo al instante",
+      "intro": "El estado inicial depende del horario que elijas.",
+      "tiles": [
+        { "label": "Si el inicio es futuro", "value": "Programada" },
+        { "label": "Si el inicio ya pasó", "value": "En vivo", "strong": true }
+      ],
+      "callout": {
+        "tone": "neutral",
+        "text": "Un proceso automático revisa cada minuto y pasa las subastas de programada a en vivo, y de en vivo a finalizada."
+      }
+    },
+    {
+      "type": "table",
+      "eyebrow": "Gestionar",
+      "title": "Editar, cancelar, eliminar",
+      "head": ["Acción", "Cuándo se permite", "Efecto"],
+      "rows": [
+        ["Editar", "Programada o en vivo.", "Ajustás precio de reserva u otros datos."],
+        ["Cancelar", "Programada o en vivo.", "Detiene la subasta; el vehículo vuelve a «Listo»."],
+        [
+          "Eliminar",
+          "Programada, cancelada o finalizada sin venta.",
+          "Borra la subasta. Queda en auditoría."
+        ]
+      ],
+      "callout": {
+        "tone": "danger",
+        "title": "Protecciones",
+        "text": "No se puede eliminar una subasta vendida, ni una en vivo que ya tenga ofertas. Cancelala primero."
+      }
+    },
+    {
+      "type": "divider",
+      "num": "03",
+      "title": "Seguir en vivo",
+      "subtitle": "Monitoreo de la subasta en tiempo real."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Detalle de subasta",
+      "title": "Lo que ves mientras corre",
+      "intro": "La pantalla de detalle se actualiza sola, sin recargar.",
+      "items": [
+        { "lead": "Oferta actual", "text": "el monto líder y la cantidad de pujas." },
+        {
+          "lead": "Tiempo",
+          "text": "cuándo cierra; el anti-sniping puede extenderlo si hay pujas de último momento."
+        },
+        {
+          "lead": "Estado y resultado",
+          "text": "programada, en vivo, finalizada; y el resultado al cerrar."
+        },
+        { "lead": "Ganador", "text": "al venderse, ves nombre y correo del ganador." }
+      ]
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Límites",
+      "title": "Lo que el staff no puede hacer",
+      "items": [
+        {
+          "lead": "No crea admins",
+          "text": "podés crear compradores y staff, pero no cuentas admin."
+        },
+        { "lead": "No confirma pagos", "text": "la confirmación de señas es de finanzas y admin." },
+        { "lead": "No puja", "text": "el equipo no puede ofertar, para no influir en los precios." }
+      ]
+    },
+    {
+      "type": "closing",
+      "title": "Listo para operar",
+      "lines": [
+        "Cargá bien las fotos y los datos: es lo que enamora al comprador.",
+        "Renew Subastas · Santa Rosa Automotores"
+      ]
+    }
+  ]
+}

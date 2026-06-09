@@ -1,0 +1,95 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Manual de Finanzas · Renew Subastas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"/>
+<link rel="stylesheet" href="theme.css"/>
+<style>
+  /* enable print-to-pdf: open with ?print-pdf then Cmd/Ctrl+P */
+  .reveal .slides section { font-size: 1rem; }
+</style>
+</head><body>
+<div class="reveal"><div class="slides">
+<section class="cover" data-transition="fade">
+      <img class="cover-mark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <span class="eyebrow">Manual · Rol Finanzas</span>
+      <h1>Finanzas</h1>
+      <p>Tu foco es el dinero: confirmás los pagos de las señas y seguís las ventas. Esta es tu guía.</p>
+      <div class="deckfoot"><span>Finanzas</span><span class="pg">Santa Rosa Automotores · Paraguay</span></div>
+    </section>
+<section>
+    <span class="eyebrow pill">Tu rol</span>
+    <h1>Qué hacés como finanzas</h1>
+    <p class="intro">Al iniciar sesión entrás directo a /sales, el registro de ventas. Tu rol es de solo lectura, salvo confirmar pagos.</p>
+    <ul class="lead-list"><li><span class="lead">Ver ventas</span><span class="txt">todas las subastas vendidas, con su ganador y estado de pago.</span></li><li><span class="lead">Recibir comprobantes</span><span class="txt">te llega un correo cuando el ganador sube su recibo.</span></li><li><span class="lead">Confirmar o liberar</span><span class="txt">marcás el pago como confirmado, o liberás la seña si no corresponde.</span></li><li><span class="lead">Datos del ganador</span><span class="txt">ves nombre, contacto y comprobante para verificar.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 1</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">01</div>
+      <h1>El registro de ventas</h1>
+      <p>Tu pantalla principal, en tiempo real.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">/sales</span>
+    <h1>Subastas vendidas</h1>
+    <p class="intro">La tabla muestra cada vehículo adjudicado y se actualiza sola.</p>
+    <ul class="lead-list"><li><span class="lead">Vehículo y ganador</span><span class="txt">qué se vendió y a quién.</span></li><li><span class="lead">Monto final</span><span class="txt">el precio de cierre de la subasta.</span></li><li><span class="lead">Seña</span><span class="txt">el monto del depósito que debe pagar el ganador.</span></li><li><span class="lead">Estado de pago</span><span class="txt">pendiente, confirmado o vencido.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 2</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Estados de pago</span>
+    <h1>Qué significa cada estado</h1>
+    
+    <table class="dtable"><thead><tr><th>Estado</th><th>Significa</th></tr></thead><tbody><tr><td>Pendiente de pago</td><td>La subasta se vendió; el ganador aún debe pagar la seña.</td></tr><tr><td>Pagado</td><td>Vos (o un admin) confirmaste el pago. La unidad queda asegurada.</td></tr><tr><td>Vencido</td><td>Pasó el plazo sin pago. El vehículo vuelve al catálogo automáticamente.</td></tr></tbody></table>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 3</span></div>
+  </section>
+<section class="divider" data-transition="fade">
+      <div class="secnum">02</div>
+      <h1>Recibir y confirmar el pago</h1>
+      <p>Del comprobante a la confirmación.</p>
+    </section>
+<section>
+    <span class="eyebrow pill">El flujo</span>
+    <h1>Cómo procesás un pago</h1>
+    
+    <div class="steps"><div class="step"><div class="n">1</div><div class="body"><p class="st">Llega el comprobante</p><p class="sd">Recibís un correo: «Comprobante RNW-XXXXXX · {vehículo} · {comprador}», con el recibo adjunto.</p></div></div><div class="step"><div class="n">2</div><div class="body"><p class="st">Verificá los datos</p><p class="sd">El correo trae datos del vehículo, del comprador (nombre, email, teléfono, documento) y los montos esperados.</p></div></div><div class="step"><div class="n">3</div><div class="body"><p class="st">Confirmá en /sales</p><p class="sd">Si la transferencia es correcta, marcás el pago como confirmado. Podés dejar una nota.</p></div></div><div class="step"><div class="n">4</div><div class="body"><p class="st">O liberá la seña</p><p class="sd">Si no corresponde, liberás (forfeited): el vehículo vuelve al catálogo para re-subastarse.</p></div></div></div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 4</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Qué verificás</span>
+    <h1>Monto y plazo</h1>
+    <p class="intro">El correo y la pantalla te dan todo lo necesario para validar.</p>
+    <div class="statpair"><div class="tile strong"><div class="tl">Seña esperada</div><div class="tv">% del valor final</div></div><div class="tile "><div class="tl">Vencimiento</div><div class="tv">Plazo configurado</div></div></div><div class="callout success"><span class="ct">Al confirmar</span>El estado pasa a «Pagado» y el equipo sabe que la unidad está asegurada para ese comprador.</div>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 5</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Datos del ganador</span>
+    <h1>Información para gestionar el cobro</h1>
+    <p class="intro">Para confirmar, accedés a los datos de contacto del ganador.</p>
+    <ul class="lead-list"><li><span class="lead">Contacto</span><span class="txt">nombre, email y teléfono para coordinar si hace falta.</span></li><li><span class="lead">Documento</span><span class="txt">CI o RUC del comprador.</span></li><li><span class="lead">Comprobante</span><span class="txt">el archivo que subió, guardado de forma segura.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 6</span></div>
+  </section>
+<section>
+    <span class="eyebrow pill">Límites</span>
+    <h1>Lo que finanzas no hace</h1>
+    <p class="intro">Tu rol está acotado a pagos y ventas.</p>
+    <ul class="lead-list"><li><span class="lead">No carga vehículos</span><span class="txt">eso es de staff y admin.</span></li><li><span class="lead">No crea ni edita subastas</span><span class="txt">solo ve las ventas resultantes.</span></li><li><span class="lead">No gestiona usuarios</span><span class="txt">la administración de cuentas es del admin.</span></li></ul>
+    <div class="deckfoot"><img src="assets/renew-wordmark-black.png" alt="Renew Subastas"/><span class="pg">Finanzas · 7</span></div>
+  </section>
+<section class="closing" data-transition="fade">
+      <img class="cmark" src="assets/renew-wordmark-white.png" alt="Renew Subastas"/>
+      <h1>Tu control mantiene el dinero en orden</h1>
+      <p>Verificá siempre el comprobante antes de confirmar.</p><p>Renew Subastas · Santa Rosa Automotores</p>
+      <div class="deckfoot"><span>Finanzas</span><span class="pg">Renew Subastas</span></div>
+    </section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1280, height: 720, margin: 0, center: false,
+    hash: true, transition: 'slide', transitionSpeed: 'default',
+    controls: true, progress: true, slideNumber: false,
+    pdfSeparateFragments: false,
+  });
+</script>
+</body></html>

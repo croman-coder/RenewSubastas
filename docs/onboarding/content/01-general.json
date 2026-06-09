@@ -1,0 +1,327 @@
+{
+  "title": "Visión general de la plataforma",
+  "short": "General",
+  "meta": { "blurb": "Qué es Renew Subastas, los roles, y el flujo completo de punta a punta." },
+  "slides": [
+    {
+      "type": "cover",
+      "eyebrow": "Manual general",
+      "title": "Cómo funciona Renew Subastas",
+      "subtitle": "La plataforma de subastas de vehículos de Santa Rosa Automotores, explicada de principio a fin."
+    },
+    {
+      "type": "toc",
+      "eyebrow": "Contenido",
+      "title": "Lo que vas a ver",
+      "items": [
+        { "text": "Qué es la plataforma y para qué sirve" },
+        { "text": "Los cuatro tipos de usuario" },
+        { "text": "Retail y wholesale: dos públicos separados" },
+        { "text": "El flujo completo, de un vehículo a una venta" },
+        { "text": "El ciclo de vida de una subasta" },
+        { "text": "Las pujas, ganar y perder" },
+        { "text": "El pago de la seña" },
+        { "text": "Notificaciones por correo y push" },
+        { "text": "Configuración de la empresa y seguridad" }
+      ]
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Qué es",
+      "title": "Una casa de subastas, en línea",
+      "intro": "Renew Subastas digitaliza el remate de vehículos de Santa Rosa Automotores. El equipo carga autos y programa subastas con horario; los compradores registrados ofertan en vivo desde la web.",
+      "items": [
+        {
+          "lead": "Para el equipo",
+          "text": "cargar vehículos, crear subastas, seguir las ventas y confirmar pagos, todo desde un panel."
+        },
+        {
+          "lead": "Para el comprador",
+          "text": "ver el catálogo de su segmento, pujar, y pagar la seña si gana."
+        },
+        {
+          "lead": "Web hoy, app mañana",
+          "text": "toda la lógica vive en el servidor, así la futura app móvil reusa exactamente las mismas reglas."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "01",
+      "title": "Los cuatro roles",
+      "subtitle": "Cada persona ve y puede hacer únicamente lo que su rol permite."
+    },
+    {
+      "type": "table",
+      "eyebrow": "Roles",
+      "title": "Quién hace qué",
+      "head": ["Rol", "Para qué sirve", "Dónde entra"],
+      "rows": [
+        ["Admin", "Control total: usuarios, configuración, subastas, pagos, auditoría.", "/admin"],
+        [
+          "Staff",
+          "Carga vehículos y crea/gestiona subastas. No crea admins ni confirma pagos.",
+          "/staff"
+        ],
+        [
+          "Finanzas",
+          "Solo pagos: ve ventas, confirma o libera señas, ve datos del ganador.",
+          "/sales"
+        ],
+        [
+          "Comprador",
+          "El que puja. Ve solo el catálogo de su segmento (retail o wholesale).",
+          "/retail o /wholesale"
+        ]
+      ],
+      "callout": {
+        "tone": "info",
+        "title": "Regla clave",
+        "text": "El rol se guarda en el token de sesión (claims). Nadie puede cambiarse el rol a sí mismo: solo un admin lo asigna."
+      }
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Audiencias",
+      "title": "Retail y wholesale nunca se mezclan",
+      "intro": "Cada vehículo y cada subasta pertenece a un segmento. Un comprador solo ve y puja en el suyo.",
+      "items": [
+        { "lead": "Retail", "text": "público general. Ve el catálogo minorista." },
+        { "lead": "Wholesale", "text": "mayoristas. Ve únicamente subastas mayoristas." },
+        {
+          "lead": "Aislamiento",
+          "text": "las reglas del servidor impiden que un comprador retail vea o puje en wholesale, y viceversa."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "02",
+      "title": "El flujo completo",
+      "subtitle": "De un vehículo en el depósito a una venta confirmada."
+    },
+    {
+      "type": "flow",
+      "eyebrow": "Punta a punta",
+      "title": "El recorrido de una venta",
+      "stages": [
+        { "label": "Vehículo", "sub": "Staff lo carga con fotos y datos. Queda listo." },
+        { "label": "Subasta", "sub": "Staff la programa: precio, reserva, horario." },
+        { "label": "Pujas", "sub": "Compradores ofertan en vivo mientras está abierta." },
+        { "label": "Cierre", "sub": "Al llegar la hora, el sistema decide el resultado." },
+        { "label": "Pago", "sub": "El ganador paga la seña; finanzas la confirma." }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "03",
+      "title": "Ciclo de vida de una subasta",
+      "subtitle": "Estados y resultados que puede tener."
+    },
+    {
+      "type": "flow",
+      "eyebrow": "Estados",
+      "title": "Cómo avanza, sola",
+      "intro": "Un proceso automático revisa las subastas cada minuto y las hace avanzar sin intervención.",
+      "stages": [
+        { "label": "Programada", "sub": "Creada, esperando su hora de inicio." },
+        { "label": "En vivo", "sub": "Llegó la hora: acepta pujas." },
+        { "label": "Finalizada", "sub": "Pasó la hora de cierre: se calcula el resultado." }
+      ]
+    },
+    {
+      "type": "table",
+      "eyebrow": "Resultados",
+      "title": "Tres finales posibles",
+      "head": ["Resultado", "Cuándo ocurre", "Qué pasa con el vehículo"],
+      "rows": [
+        [
+          "Vendida",
+          "Hubo pujas y se superó la reserva (si había).",
+          "Pasa a vendido; arranca el pago."
+        ],
+        [
+          "Reserva no alcanzada",
+          "Hubo pujas pero no llegaron al precio de reserva.",
+          "Vuelve al catálogo, re-subastable."
+        ],
+        ["Sin ofertas", "Nadie pujó.", "Vuelve al catálogo, re-subastable."]
+      ],
+      "callout": {
+        "tone": "warning",
+        "title": "Seña no pagada a tiempo",
+        "text": "Si el ganador no paga antes del plazo, la subasta se marca como vencida (forfeited) y el vehículo vuelve a estar disponible."
+      }
+    },
+    {
+      "type": "divider",
+      "num": "04",
+      "title": "Las pujas",
+      "subtitle": "Cómo se oferta y cómo se protege la subasta."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "Pujar",
+      "title": "Cómo funciona una oferta",
+      "steps": [
+        {
+          "title": "Oferta mínima",
+          "text": "La primera puja parte del precio inicial. Luego, cada oferta debe superar la actual por el incremento mínimo."
+        },
+        {
+          "title": "Botones rápidos",
+          "text": "El comprador puede ofertar el mínimo, mínimo + un incremento, o mínimo + dos, con un toque."
+        },
+        {
+          "title": "Anti-sniping",
+          "text": "Si alguien puja en los últimos 60 segundos, el cierre se extiende para dar tiempo a responder."
+        },
+        {
+          "title": "Te superaron",
+          "text": "Cuando otra persona supera tu oferta, recibís un correo para volver a pujar."
+        }
+      ],
+      "callout": {
+        "tone": "neutral",
+        "title": "Juego limpio",
+        "text": "Admin y staff no pueden pujar. La plataforma lo bloquea para evitar inflar precios."
+      }
+    },
+    {
+      "type": "divider",
+      "num": "05",
+      "title": "Ganar, perder y pagar",
+      "subtitle": "Qué sucede al cerrarse la subasta."
+    },
+    {
+      "type": "statpair",
+      "eyebrow": "Si ganás",
+      "title": "Asegurás el vehículo con una seña",
+      "intro": "Al cerrar una subasta vendida, el mejor postor es el ganador y se le pide un depósito para reservar la unidad.",
+      "tiles": [
+        { "label": "Seña típica", "value": "10% del valor", "strong": true },
+        { "label": "Plazo para pagar", "value": "Cuenta regresiva" }
+      ],
+      "callout": {
+        "tone": "success",
+        "title": "Página de ganador",
+        "text": "El ganador ve los datos bancarios, el monto, el plazo y un botón para subir el comprobante."
+      }
+    },
+    {
+      "type": "steps",
+      "eyebrow": "El pago",
+      "title": "De la transferencia a la confirmación",
+      "steps": [
+        {
+          "title": "El ganador transfiere",
+          "text": "A la cuenta bancaria que muestra la plataforma (configurada por la empresa)."
+        },
+        {
+          "title": "Sube el comprobante",
+          "text": "Adjunta el recibo desde la página de ganador. Se guarda de forma segura."
+        },
+        {
+          "title": "Finanzas recibe aviso",
+          "text": "Llega un correo con todos los datos del vehículo, el comprador y el comprobante adjunto."
+        },
+        {
+          "title": "Finanzas confirma o libera",
+          "text": "Marca el pago como confirmado, o lo libera si no corresponde (el vehículo vuelve al catálogo)."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "06",
+      "title": "Notificaciones",
+      "subtitle": "La plataforma avisa en cada momento clave."
+    },
+    {
+      "type": "table",
+      "eyebrow": "Correos",
+      "title": "Correos automáticos",
+      "head": ["Cuándo", "A quién", "Asunto"],
+      "rows": [
+        ["Se crea la cuenta", "Nuevo usuario", "¡Bienvenido a Renew Subastas! Creá tu contraseña"],
+        ["Restablecer contraseña", "Usuario", "Restablecé tu contraseña · Renew Subastas"],
+        ["Te superaron en una puja", "Postor anterior", "Te superaron · {vehículo}"],
+        ["Ganaste una subasta", "Ganador", "¡Ganaste la subasta! {vehículo}"],
+        [
+          "Llega un comprobante",
+          "Administración",
+          "Comprobante RNW-XXXXXX · {vehículo} · {comprador}"
+        ]
+      ],
+      "callout": {
+        "tone": "info",
+        "text": "Los correos salen desde subastas@santarosaparaguay.com.py, con el diseño de marca de Renew."
+      }
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Push",
+      "title": "Avisos en el navegador",
+      "intro": "Además del correo, hay notificaciones push para no perderse oportunidades.",
+      "items": [
+        {
+          "lead": "Nueva subasta",
+          "text": "cuando una subasta de su segmento sale en vivo, los compradores reciben un aviso: «Nueva subasta · {vehículo}»."
+        },
+        {
+          "lead": "Preferencias",
+          "text": "cada usuario elige qué avisos quiere recibir (te superaron, ganaste, nuevas subastas)."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "07",
+      "title": "Configuración y seguridad",
+      "subtitle": "Lo que sostiene a la plataforma por detrás."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Datos de empresa",
+      "title": "Todo configurable, sin tocar código",
+      "intro": "Desde el panel de admin se ajustan los parámetros del negocio.",
+      "items": [
+        { "lead": "Moneda", "text": "USD o guaraníes, con tipo de cambio y vista secundaria." },
+        { "lead": "Pujas", "text": "incremento fijo y segundos de anti-sniping." },
+        { "lead": "Financiación", "text": "cuotas, tasa, anticipo y montos mínimos." },
+        { "lead": "Pagos", "text": "cuenta bancaria, porcentaje de seña, plazo e instrucciones." }
+      ]
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Seguridad",
+      "title": "Confianza por diseño",
+      "items": [
+        {
+          "lead": "Permisos por rol",
+          "text": "el servidor verifica el rol en cada acción; nadie hace lo que no le toca."
+        },
+        {
+          "lead": "Segmentos aislados",
+          "text": "retail y wholesale separados por reglas, no por la interfaz."
+        },
+        {
+          "lead": "Anti-manipulación",
+          "text": "el equipo no puede pujar; los límites de frecuencia frenan abusos."
+        },
+        {
+          "lead": "Auditoría",
+          "text": "cada acción sensible queda registrada con quién, qué y cuándo."
+        }
+      ]
+    },
+    {
+      "type": "closing",
+      "title": "Esa es la plataforma, completa",
+      "lines": [
+        "Cada rol tiene su propio manual paso a paso.",
+        "Renew Subastas · Santa Rosa Automotores · Paraguay"
+      ]
+    }
+  ]
+}

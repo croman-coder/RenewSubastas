@@ -1,0 +1,140 @@
+{
+  "title": "Manual de Finanzas",
+  "short": "Finanzas",
+  "meta": { "blurb": "Ver ventas, recibir comprobantes y confirmar o liberar las señas." },
+  "slides": [
+    {
+      "type": "cover",
+      "eyebrow": "Manual · Rol Finanzas",
+      "title": "Finanzas",
+      "subtitle": "Tu foco es el dinero: confirmás los pagos de las señas y seguís las ventas. Esta es tu guía."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Tu rol",
+      "title": "Qué hacés como finanzas",
+      "intro": "Al iniciar sesión entrás directo a /sales, el registro de ventas. Tu rol es de solo lectura, salvo confirmar pagos.",
+      "items": [
+        {
+          "lead": "Ver ventas",
+          "text": "todas las subastas vendidas, con su ganador y estado de pago."
+        },
+        {
+          "lead": "Recibir comprobantes",
+          "text": "te llega un correo cuando el ganador sube su recibo."
+        },
+        {
+          "lead": "Confirmar o liberar",
+          "text": "marcás el pago como confirmado, o liberás la seña si no corresponde."
+        },
+        {
+          "lead": "Datos del ganador",
+          "text": "ves nombre, contacto y comprobante para verificar."
+        }
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "01",
+      "title": "El registro de ventas",
+      "subtitle": "Tu pantalla principal, en tiempo real."
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "/sales",
+      "title": "Subastas vendidas",
+      "intro": "La tabla muestra cada vehículo adjudicado y se actualiza sola.",
+      "items": [
+        { "lead": "Vehículo y ganador", "text": "qué se vendió y a quién." },
+        { "lead": "Monto final", "text": "el precio de cierre de la subasta." },
+        { "lead": "Seña", "text": "el monto del depósito que debe pagar el ganador." },
+        { "lead": "Estado de pago", "text": "pendiente, confirmado o vencido." }
+      ]
+    },
+    {
+      "type": "table",
+      "eyebrow": "Estados de pago",
+      "title": "Qué significa cada estado",
+      "head": ["Estado", "Significa"],
+      "rows": [
+        ["Pendiente de pago", "La subasta se vendió; el ganador aún debe pagar la seña."],
+        ["Pagado", "Vos (o un admin) confirmaste el pago. La unidad queda asegurada."],
+        ["Vencido", "Pasó el plazo sin pago. El vehículo vuelve al catálogo automáticamente."]
+      ]
+    },
+    {
+      "type": "divider",
+      "num": "02",
+      "title": "Recibir y confirmar el pago",
+      "subtitle": "Del comprobante a la confirmación."
+    },
+    {
+      "type": "steps",
+      "eyebrow": "El flujo",
+      "title": "Cómo procesás un pago",
+      "steps": [
+        {
+          "title": "Llega el comprobante",
+          "text": "Recibís un correo: «Comprobante RNW-XXXXXX · {vehículo} · {comprador}», con el recibo adjunto."
+        },
+        {
+          "title": "Verificá los datos",
+          "text": "El correo trae datos del vehículo, del comprador (nombre, email, teléfono, documento) y los montos esperados."
+        },
+        {
+          "title": "Confirmá en /sales",
+          "text": "Si la transferencia es correcta, marcás el pago como confirmado. Podés dejar una nota."
+        },
+        {
+          "title": "O liberá la seña",
+          "text": "Si no corresponde, liberás (forfeited): el vehículo vuelve al catálogo para re-subastarse."
+        }
+      ]
+    },
+    {
+      "type": "statpair",
+      "eyebrow": "Qué verificás",
+      "title": "Monto y plazo",
+      "intro": "El correo y la pantalla te dan todo lo necesario para validar.",
+      "tiles": [
+        { "label": "Seña esperada", "value": "% del valor final", "strong": true },
+        { "label": "Vencimiento", "value": "Plazo configurado" }
+      ],
+      "callout": {
+        "tone": "success",
+        "title": "Al confirmar",
+        "text": "El estado pasa a «Pagado» y el equipo sabe que la unidad está asegurada para ese comprador."
+      }
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Datos del ganador",
+      "title": "Información para gestionar el cobro",
+      "intro": "Para confirmar, accedés a los datos de contacto del ganador.",
+      "items": [
+        { "lead": "Contacto", "text": "nombre, email y teléfono para coordinar si hace falta." },
+        { "lead": "Documento", "text": "CI o RUC del comprador." },
+        { "lead": "Comprobante", "text": "el archivo que subió, guardado de forma segura." }
+      ]
+    },
+    {
+      "type": "bullets",
+      "eyebrow": "Límites",
+      "title": "Lo que finanzas no hace",
+      "intro": "Tu rol está acotado a pagos y ventas.",
+      "items": [
+        { "lead": "No carga vehículos", "text": "eso es de staff y admin." },
+        { "lead": "No crea ni edita subastas", "text": "solo ve las ventas resultantes." },
+        { "lead": "No gestiona usuarios", "text": "la administración de cuentas es del admin." }
+      ]
+    },
+    {
+      "type": "closing",
+      "title": "Tu control mantiene el dinero en orden",
+      "lines": [
+        "Verificá siempre el comprobante antes de confirmar.",
+        "Renew Subastas · Santa Rosa Automotores"
+      ]
+    }
+  ]
+}
