@@ -378,24 +378,56 @@
   .glass-primary {
     position: relative;
     overflow: hidden;
-    background-color: oklch(var(--text-strong) / 0.9);
+    background-color: oklch(var(--text-strong) / 0.86);
     backdrop-filter: blur(12px) saturate(1.4);
     -webkit-backdrop-filter: blur(12px) saturate(1.4);
-    border: 1px solid oklch(1 0 0 / 0.16);
+    border: 1px solid oklch(1 0 0 / 0.14);
+    /* 21st.dev liquid-glass bezel: layered inset highlights/lowlights carve a
+       refractive glass rim, plus a soft drop + faint outer glow. Tuned for the
+       light theme (ink fill); the .dark override below flips it for white fill. */
     box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.28),
-      0 10px 30px -14px oklch(var(--text-strong) / 0.6);
+      inset 2px 2px 0.5px -2px oklch(1 0 0 / 0.85),
+      inset -2px -2px 0.5px -2px oklch(1 0 0 / 0.55),
+      inset 1px 1px 1px -0.5px oklch(1 0 0 / 0.4),
+      inset 0 0 8px 4px oklch(1 0 0 / 0.06),
+      0 8px 24px -12px oklch(var(--text-strong) / 0.6),
+      0 0 12px oklch(1 0 0 / 0.1);
     transition:
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
       background-color 220ms ease-out,
       box-shadow 220ms ease-out;
   }
   .glass-primary:hover {
-    background-color: oklch(var(--text-strong) / 0.98);
+    background-color: oklch(var(--text-strong) / 0.97);
     transform: translateY(-1px);
     box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.32),
-      0 14px 34px -14px oklch(var(--text-strong) / 0.7);
+      inset 2px 2px 0.5px -2px oklch(1 0 0 / 0.95),
+      inset -2px -2px 0.5px -2px oklch(1 0 0 / 0.6),
+      inset 1px 1px 1px -0.5px oklch(1 0 0 / 0.5),
+      inset 0 0 8px 4px oklch(1 0 0 / 0.08),
+      0 14px 34px -14px oklch(var(--text-strong) / 0.7),
+      0 0 16px oklch(1 0 0 / 0.14);
+  }
+  /* Dark theme: fill is white, so the refractive rim is carved with dark
+     inset shadows instead of white ones (mirrors 21st's dark recipe). */
+  .dark .glass-primary {
+    border-color: oklch(0 0 0 / 0.2);
+    box-shadow:
+      inset 2px 2px 0.5px -2px oklch(0 0 0 / 0.55),
+      inset -2px -2px 0.5px -2px oklch(0 0 0 / 0.4),
+      inset 1px 1px 1px -0.5px oklch(0 0 0 / 0.3),
+      inset 0 0 8px 4px oklch(0 0 0 / 0.06),
+      0 8px 24px -12px oklch(0 0 0 / 0.7),
+      0 0 12px oklch(1 0 0 / 0.08);
+  }
+  .dark .glass-primary:hover {
+    box-shadow:
+      inset 2px 2px 0.5px -2px oklch(0 0 0 / 0.6),
+      inset -2px -2px 0.5px -2px oklch(0 0 0 / 0.45),
+      inset 1px 1px 1px -0.5px oklch(0 0 0 / 0.35),
+      inset 0 0 8px 4px oklch(0 0 0 / 0.08),
+      0 14px 34px -14px oklch(0 0 0 / 0.8),
+      0 0 16px oklch(1 0 0 / 0.12);
   }
   .glass-primary:active {
     transform: translateY(0);
