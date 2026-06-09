@@ -423,6 +423,80 @@ section.divider p {
   flex: 1;
 }
 
+/* text + screenshot split */
+.shotcols {
+  gap: 48px;
+  align-items: flex-start;
+}
+.shotcols .coltext {
+  flex: 1.05;
+  min-width: 0;
+}
+.shotcols .colshot {
+  flex: 1.25;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.shotframe {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -24px rgba(10, 10, 10, 0.45);
+}
+.shotframe .dots {
+  display: flex;
+  gap: 7px;
+  padding: 11px 14px;
+  background: var(--soft2);
+  border-bottom: 1px solid var(--hair2);
+}
+.shotframe .dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #d4d4d8;
+  display: block;
+}
+.shotframe img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.shotcap {
+  font-size: 0.42em;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+.shotmissing {
+  width: 100%;
+  min-height: 360px;
+  border: 1px dashed var(--faint);
+  border-radius: 14px;
+  background: repeating-linear-gradient(45deg, #f3f3f5, #f3f3f5 14px, #ececed 14px, #ececed 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.5em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.shotmissing span {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--faint);
+  font-size: 0.85em;
+}
+
 /* intro paragraph under h1 */
 .intro {
   font-size: 0.86em;

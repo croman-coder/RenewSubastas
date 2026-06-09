@@ -71,6 +71,8 @@
       "type": "steps",
       "eyebrow": "Explorar",
       "title": "Ver un vehículo y su subasta",
+      "shot": "comprador-catalog.png",
+      "shotCaption": "Catálogo y detalle de vehículo",
       "steps": [
         {
           "title": "Abrí el catálogo",
@@ -90,6 +92,8 @@
       "type": "steps",
       "eyebrow": "Pujar",
       "title": "Cómo hacer una oferta",
+      "shot": "comprador-bid.png",
+      "shotCaption": "Panel de pujas",
       "intro": "Cuando la subasta está en vivo, podés ofertar en segundos.",
       "steps": [
         {
@@ -145,6 +149,8 @@
       "type": "steps",
       "eyebrow": "¡Ganaste!",
       "title": "Qué pasa cuando ganás",
+      "shot": "comprador-won.png",
+      "shotCaption": "Página de ganador",
       "steps": [
         {
           "title": "Recibís el correo",

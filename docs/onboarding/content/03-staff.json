@@ -34,6 +34,8 @@
       "type": "steps",
       "eyebrow": "Nuevo vehículo",
       "title": "Paso a paso",
+      "shot": "staff-vehicle-form.png",
+      "shotCaption": "Formulario de carga de vehículo",
       "intro": "Desde Vehículos, botón «Nuevo». Completá las secciones del formulario.",
       "steps": [
         {
@@ -97,6 +99,8 @@
       "type": "steps",
       "eyebrow": "Nueva subasta",
       "title": "Configurar la subasta",
+      "shot": "staff-auction-form.png",
+      "shotCaption": "Formulario de creación de subasta",
       "intro": "Desde Subastas, botón «Nueva». Elegís un vehículo en estado «Listo».",
       "steps": [
         { "title": "Precio inicial", "text": "El punto de partida de las ofertas." },
@@ -158,6 +162,8 @@
       "type": "bullets",
       "eyebrow": "Detalle de subasta",
       "title": "Lo que ves mientras corre",
+      "shot": "staff-auction-detail.png",
+      "shotCaption": "Detalle de subasta en vivo",
       "intro": "La pantalla de detalle se actualiza sola, sin recargar.",
       "items": [
         { "lead": "Oferta actual", "text": "el monto líder y la cantidad de pujas." },

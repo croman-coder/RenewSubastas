@@ -39,6 +39,8 @@
       "type": "steps",
       "eyebrow": "Crear usuario",
       "title": "Dar de alta una cuenta",
+      "shot": "admin-create-user.png",
+      "shotCaption": "Formulario «Nuevo usuario»",
       "intro": "Desde Usuarios, botón «Nuevo». Elegís el tipo de cuenta y completás los datos.",
       "steps": [
         {
@@ -78,6 +80,8 @@
       "type": "steps",
       "eyebrow": "Editar usuario",
       "title": "Cambiar rol, estado o eliminar",
+      "shot": "admin-edit-role.png",
+      "shotCaption": "Edición de rol y estado",
       "intro": "Desde la ficha de un usuario podés ajustar su cuenta en cualquier momento.",
       "steps": [
         {
@@ -144,6 +148,8 @@
       "type": "bullets",
       "eyebrow": "Datos de pago",
       "title": "La cuenta donde paga el ganador",
+      "shot": "admin-config-pago.png",
+      "shotCaption": "Configuración · sección Pagos",
       "intro": "Lo que cargues acá es lo que verá el comprador en su página de ganador.",
       "items": [
         { "lead": "Banco y cuenta", "text": "titular, banco, número, tipo de cuenta y RUC." },

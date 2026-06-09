@@ -43,6 +43,8 @@
       "type": "bullets",
       "eyebrow": "/sales",
       "title": "Subastas vendidas",
+      "shot": "finanzas-sales.png",
+      "shotCaption": "Registro de ventas en tiempo real",
       "intro": "La tabla muestra cada vehículo adjudicado y se actualiza sola.",
       "items": [
         { "lead": "Vehículo y ganador", "text": "qué se vendió y a quién." },
@@ -72,6 +74,8 @@
       "type": "steps",
       "eyebrow": "El flujo",
       "title": "Cómo procesás un pago",
+      "shot": "finanzas-confirm.png",
+      "shotCaption": "Confirmar o liberar la seña",
       "steps": [
         {
           "title": "Llega el comprobante",

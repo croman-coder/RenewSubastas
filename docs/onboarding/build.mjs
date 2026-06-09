@@ -2,7 +2,7 @@
 // Single source of truth: content/*.json (shared with build_pptx.py).
 // Usage: node docs/onboarding/build.mjs
 
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -114,10 +114,28 @@ function slideHTML(s, deckName, pg) {
     </section>`;
   }
   // generic content slide
-  return `<section>
+  const head = `
     ${s.eyebrow ? `<span class="eyebrow pill">${esc(s.eyebrow)}</span>` : ''}
     ${s.title ? `<h1>${rich(s.title)}</h1>` : ''}
-    ${s.intro ? `<p class="intro">${rich(s.intro)}</p>` : ''}
+    ${s.intro ? `<p class="intro">${rich(s.intro)}</p>` : ''}`;
+
+  if (s.shot) {
+    const cap = s.shotCaption ? `<div class="shotcap">${rich(s.shotCaption)}</div>` : '';
+    const hasShot = existsSync(join(ROOT, 'shots', s.shot));
+    const visual = hasShot
+      ? `<div class="shotframe"><span class="dots"><i></i><i></i><i></i></span><img src="shots/${esc(s.shot)}" alt="${esc(s.shotCaption || s.title || '')}"/></div>${cap}`
+      : `<div class="shotmissing">Captura pendiente${s.shotCaption ? `<span>${esc(s.shotCaption)}</span>` : ''}</div>`;
+    return `<section>
+      <div class="cols shotcols">
+        <div class="coltext">${head}${block(s)}</div>
+        <div class="colshot">${visual}</div>
+      </div>
+      ${foot(deckName, pg)}
+    </section>`;
+  }
+
+  return `<section>
+    ${head}
     ${block(s)}
     ${foot(deckName, pg)}
   </section>`;

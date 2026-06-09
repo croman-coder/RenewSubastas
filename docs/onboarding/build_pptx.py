@@ -295,7 +295,132 @@ def add_callout(sl, x, y, c, w=None):
     return y + h + Emu(int(0.2 * EMU_IN))
 
 
+SHOTS = ROOT / "shots"
+
+
+def add_shot(sl, x, y, w, maxh, name, caption):
+    """Framed screenshot (or labeled placeholder if the file is absent)."""
+    path = SHOTS / name if name else None
+    if path and path.exists():
+        try:
+            from PIL import Image
+            iw, ih = Image.open(path).size
+        except Exception:
+            iw, ih = 16, 10
+        barh = Emu(int(0.34 * EMU_IN))
+        avail_img_h = maxh - barh
+        scale = min(w / iw, avail_img_h / ih)
+        pw = int(iw * scale)
+        ph = int(ih * scale)
+        fw = pw
+        fx = x + int((w - fw) / 2)
+        # frame
+        frame = rrect(sl, fx, y, fw, barh + ph, CARD, radius=0.04, line=HAIR, line_w=Pt(1))
+        bar = sl.shapes.add_shape(MSO_SHAPE.RECTANGLE, fx, y, fw, barh)
+        bar.fill.solid(); bar.fill.fore_color.rgb = RGBColor(0xFA, 0xFA, 0xFA)
+        bar.line.fill.background(); bar.shadow.inherit = False
+        dd = Emu(int(0.09 * EMU_IN))
+        for k in range(3):
+            dot = sl.shapes.add_shape(MSO_SHAPE.OVAL, fx + Emu(int((0.16 + k * 0.18) * EMU_IN)),
+                                      y + int(barh / 2) - int(dd / 2), dd, dd)
+            dot.fill.solid(); dot.fill.fore_color.rgb = RGBColor(0xD4, 0xD4, 0xD8)
+            dot.line.fill.background(); dot.shadow.inherit = False
+        sl.shapes.add_picture(str(path), fx, y + barh, width=pw, height=ph)
+        bottom = y + barh + ph
+    else:
+        ph = int(maxh)
+        box = sl.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, ph)
+        box.adjustments[0] = 0.04
+        box.fill.solid(); box.fill.fore_color.rgb = RGBColor(0xF1, 0xF1, 0xF3)
+        box.line.color.rgb = FAINT; box.line.width = Pt(1)
+        box.line.dash_style = None
+        box.shadow.inherit = False
+        tf = box.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE; tf.word_wrap = True
+        p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+        run(p, "CAPTURA PENDIENTE", Pt(12), MUTED, bold=True, caps=True, spacing=1.2)
+        if caption:
+            p2 = tf.add_paragraph(); p2.alignment = PP_ALIGN.CENTER
+            run(p2, _strip(caption), Pt(10.5), FAINT)
+        bottom = y + ph
+        return bottom
+    if caption:
+        tb, tf = txt(sl, x, bottom + Emu(int(0.12 * EMU_IN)), w, Emu(int(0.5 * EMU_IN)))
+        p = tf.paragraphs[0]; p.line_spacing = 1.2; p.alignment = PP_ALIGN.CENTER
+        _bold_runs(p, caption, MUTED, Pt(10.5))
+    return bottom
+
+
+def build_content_shot(prs, s, deck_short, pg):
+    """Two-column: text/steps on the left, framed screenshot on the right."""
+    sl = slide_blank(prs)
+    add_bg(sl, PAPER)
+    text_w = Emu(int(5.6 * EMU_IN))
+    gap = Emu(int(0.5 * EMU_IN))
+    # header (constrained to left column)
+    x = MARGIN
+    y = MARGIN
+    if s.get("eyebrow"):
+        y = eyebrow_pill(sl, x, y, s["eyebrow"]) + Emu(int(0.22 * EMU_IN))
+    if s.get("title"):
+        tb, tf = txt(sl, x, y, text_w, Emu(int(1.4 * EMU_IN)))
+        run(tf.paragraphs[0], _strip(s["title"]), Pt(27), INK, bold=True, spacing=-0.4)
+        lines = max(1, int(len(_strip(s["title"])) / 26) + 1)
+        y += Emu(int((0.52 * lines + 0.12) * EMU_IN))
+    if s.get("intro"):
+        tb, tf = txt(sl, x, y, text_w, Emu(int(1.2 * EMU_IN)))
+        p = tf.paragraphs[0]; p.line_spacing = 1.3
+        _bold_runs(p, s["intro"], T2, Pt(13))
+        lines = max(1, int(len(_strip(s["intro"])) / 48) + 1)
+        y += Emu(int((0.3 * lines + 0.16) * EMU_IN))
+
+    t = s["type"]
+    if t == "steps":
+        steps = s.get("steps", [])
+        avail = SH - y - Emu(int(0.9 * EMU_IN))
+        rowh = min(Emu(int(1.0 * EMU_IN)), int(avail / max(1, len(steps))))
+        d = Emu(int(0.44 * EMU_IN))
+        for i, st in enumerate(steps):
+            ry = y + i * rowh
+            circ = sl.shapes.add_shape(MSO_SHAPE.OVAL, x, ry, d, d)
+            circ.fill.solid(); circ.fill.fore_color.rgb = INK; circ.line.fill.background(); circ.shadow.inherit = False
+            ctf = circ.text_frame; ctf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            cp = ctf.paragraphs[0]; cp.alignment = PP_ALIGN.CENTER
+            run(cp, str(i + 1), Pt(13), WHITE, bold=True)
+            tx = x + d + Emu(int(0.24 * EMU_IN))
+            tw = text_w - d - Emu(int(0.24 * EMU_IN))
+            tb, tf = txt(sl, tx, ry - Emu(int(0.02 * EMU_IN)), tw, rowh)
+            p = tf.paragraphs[0]
+            run(p, _strip(st["title"]), Pt(13.5), INK, bold=True)
+            p2 = tf.add_paragraph(); p2.line_spacing = 1.25
+            _bold_runs(p2, st["text"], T2, Pt(11))
+    elif t in ("bullets", "toc"):
+        items = s.get("items", [])
+        avail = SH - y - Emu(int(0.9 * EMU_IN))
+        rowh = min(Emu(int(0.78 * EMU_IN)), int(avail / max(1, len(items))))
+        for i, it in enumerate(items):
+            ry = y + i * rowh
+            lead = it.get("lead", "") if isinstance(it, dict) else ""
+            text = it["text"] if isinstance(it, dict) else it
+            tb, tf = txt(sl, x, ry, text_w, rowh, MSO_ANCHOR.MIDDLE)
+            p = tf.paragraphs[0]; p.line_spacing = 1.25
+            if lead:
+                run(p, _strip(lead) + ":  ", Pt(13), INK, bold=True)
+            _bold_runs(p, text, T2, Pt(13))
+
+    # screenshot column
+    sx = MARGIN + text_w + gap
+    sw = SW - sx - MARGIN
+    sy = MARGIN + Emu(int(0.1 * EMU_IN))
+    smaxh = SH - sy - Emu(int(1.0 * EMU_IN))
+    add_shot(sl, sx, sy, sw, smaxh, s.get("shot"), s.get("shotCaption"))
+
+    foot(sl, deck_short, pg)
+    return sl
+
+
 def build_content(prs, s, deck_short, pg):
+    if s.get("shot"):
+        return build_content_shot(prs, s, deck_short, pg)
     sl = slide_blank(prs)
     add_bg(sl, PAPER)
     x, y = content_header(sl, s)
