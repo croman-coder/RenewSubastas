@@ -107,10 +107,18 @@ export function BidPanel({
     toCents(minRequired + bidIncrement * 2),
   ];
 
+  // Delta labels for the quick-bid chips: first is the minimum, the
+  // next two show how far above the minimum they jump (+inc, +2·inc).
+  const quickMeta = [
+    { amt: quickIncrements[0]!, tag: 'Mínimo' },
+    { amt: quickIncrements[1]!, tag: `+${fmtUsd(bidIncrement)}` },
+    { amt: quickIncrements[2]!, tag: `+${fmtUsd(bidIncrement * 2)}` },
+  ];
+
   return (
-    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
+    <div className="ink-mesh rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <span className="w-7 h-7 rounded-md bg-copper/15 text-copper grid place-items-center">
+        <span className="w-7 h-7 rounded-md bg-text-strong text-bg-base grid place-items-center">
           <Gavel className="w-4 h-4" strokeWidth={2.5} />
         </span>
         <h3 className="text-sm font-semibold tracking-tight text-text-strong">{t('title')}</h3>
@@ -143,30 +151,52 @@ export function BidPanel({
         </div>
       )}
 
-      <p className="text-xs text-text-muted num-tab">
-        Mínimo: <span className="text-text-strong font-medium">USD {fmtUsd(minRequired)}</span> ·
-        Incremento: <span className="text-text-strong font-medium">USD {fmtUsd(bidIncrement)}</span>{' '}
-        · Máximo: <span className="text-text-strong font-medium">USD {fmtUsd(MAX_BID_USD)}</span>
-      </p>
+      {/* Min / Increment / Max as three compact stat tiles — easier to
+          scan than a cramped run-on sentence. */}
       <div className="grid grid-cols-3 gap-2">
-        {quickIncrements.map((amt) => (
-          <Button
-            key={amt}
+        <StatTile label="Mínimo" value={`USD ${fmtUsd(minRequired)}`} strong />
+        <StatTile label="Incremento" value={`USD ${fmtUsd(bidIncrement)}`} />
+        <StatTile label="Máximo" value={`USD ${fmtUsd(MAX_BID_USD)}`} />
+      </div>
+
+      {/* Quick-bid chips: prominent amount + a small delta tag so the
+          buyer knows what each jump costs at a glance. The first chip
+          (minimum) is filled ink as the recommended one-tap action. */}
+      <div className="grid grid-cols-3 gap-2">
+        {quickMeta.map((q, i) => (
+          <button
+            key={q.amt}
             type="button"
-            variant="outline"
-            size="sm"
             disabled={busy}
-            onClick={() => placeBid(amt)}
-            className="num-tab"
+            onClick={() => placeBid(q.amt)}
+            className={
+              'group rounded-xl px-2 py-2.5 text-center transition-all duration-200 ' +
+              'disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] ' +
+              (i === 0
+                ? 'bg-text-strong text-bg-base hover:opacity-90'
+                : 'border border-text-subtle/25 text-text-strong hover:border-text-strong/50 hover:bg-bg-deep/40')
+            }
           >
-            USD {fmtUsd(amt)}
-          </Button>
+            <span className="block text-[10px] uppercase tracking-[0.06em] opacity-70">
+              {q.tag}
+            </span>
+            <span className="block num-tab text-sm font-semibold mt-0.5">USD {fmtUsd(q.amt)}</span>
+          </button>
         ))}
       </div>
+
       {allowManualIncrement && (
         <div className="space-y-2 pt-3 border-t border-text-subtle/15">
-          <Label htmlFor="manual">{t('amount')}</Label>
-          <div className="flex gap-2">
+          <Label htmlFor="manual" className="text-xs uppercase tracking-[0.08em] text-text-muted">
+            {t('amount')}
+          </Label>
+          {/* USD prefix sits inside the field so the input reads as a
+              currency amount, and the submit is a full-width primary
+              CTA below — bigger tap target, clearer hierarchy. */}
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted pointer-events-none">
+              USD
+            </span>
             <Input
               id="manual"
               type="number"
@@ -176,9 +206,6 @@ export function BidPanel({
               max={MAX_BID_USD}
               value={manual}
               onChange={(e) => {
-                // Clamp the typed value to 2 decimals while the user is
-                // typing — accept "16002", "16002.5", "16002.55" but
-                // truncate "16002.555" before it ever reaches state.
                 const v = e.target.value;
                 if (v === '' || /^\d+(\.\d{0,2})?$/.test(v)) setManual(v);
               }}
@@ -186,21 +213,54 @@ export function BidPanel({
                 const n = Number(manual);
                 if (Number.isFinite(n) && n > 0) setManual(toCents(n).toFixed(2));
               }}
-              className="num-tab"
+              className="num-tab h-12 pl-12 text-lg font-semibold"
             />
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                const n = Number(manual);
-                if (Number.isFinite(n)) placeBid(n);
-              }}
-            >
-              {busy ? t('submitting') : t('submit')}
-            </Button>
           </div>
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              const n = Number(manual);
+              if (Number.isFinite(n)) placeBid(n);
+            }}
+            className="w-full h-12 text-base"
+          >
+            {busy ? (
+              t('submitting')
+            ) : (
+              <>
+                <Gavel className="w-4 h-4 mr-1.5" strokeWidth={2.5} /> {t('submit')}
+              </>
+            )}
+          </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
+  return (
+    <div
+      className={
+        'rounded-xl px-2.5 py-2 ' +
+        (strong
+          ? 'bg-text-strong/[0.06] ring-1 ring-text-subtle/25'
+          : 'bg-bg-deep/40 ring-1 ring-text-subtle/10')
+      }
+    >
+      <p className="text-[9px] uppercase tracking-[0.08em] text-text-muted font-semibold">
+        {label}
+      </p>
+      <p className="num-tab text-xs font-semibold text-text-strong mt-0.5 truncate">{value}</p>
     </div>
   );
 }
