@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { ArrowLeft, Clock, Flame } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Separator } from '@/components/ui/separator';
-import { AnimatedNumber } from '@/components/brand/animated-number';
+import { BlurNumber } from '@/components/brand/blur-number';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
 import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { BidPanel } from './bid-panel';
@@ -220,7 +220,7 @@ export function AuctionDetailView({
               {live.currentBid > 0 ? 'Puja actual' : t('startingPrice')}
             </p>
             <p className="text-4xl sm:text-5xl font-bold tracking-tight num-tab text-text-strong">
-              USD <AnimatedNumber value={displayPrice} format={fmtUsd} />
+              USD <BlurNumber value={displayPrice} format={fmtUsd} />
             </p>
             <p className="text-xs text-text-muted num-tab">
               {live.currentBid > 0 && <span>Inicial: USD {fmtUsd(initial.startingPrice)} · </span>}
