@@ -44,6 +44,15 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
         >
           <PixelGrid className="h-full w-full" />
         </div>
+        {/* 21st.dev Sign In Flow accent lines drawing in over the grid. */}
+        <div className="accent-lines">
+          <div className="hline" />
+          <div className="hline" />
+          <div className="hline" />
+          <div className="vline" />
+          <div className="vline" />
+          <div className="vline" />
+        </div>
       </div>
 
       <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
