@@ -6,6 +6,7 @@ import { writeAuditLog } from '../lib/audit.js';
 import { requireAdmin } from '../lib/errors.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import { emailShell, body, badge, heading, callout, ctaButton } from '../lib/email-templates.js';
+import { brandActionLink } from './brand-action-link.js';
 
 const InputSchema = z.object({ uid: z.string().min(1) });
 
@@ -32,7 +33,7 @@ export async function generatePasswordResetHandler(
   }
   if (!user.email) throw new HttpsError('failed-precondition', 'User has no email');
 
-  const resetLink = await adminAuth().generatePasswordResetLink(user.email);
+  const resetLink = brandActionLink(await adminAuth().generatePasswordResetLink(user.email));
 
   // Greeting name from the Firestore profile (fallback to email local-part).
   const uSnap = await adminDb().doc(`users/${parsed.data.uid}`).get();
