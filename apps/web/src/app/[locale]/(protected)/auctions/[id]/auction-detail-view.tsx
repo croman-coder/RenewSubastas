@@ -114,7 +114,11 @@ export function AuctionDetailView({
   const displayPrice = live.currentBid > 0 ? live.currentBid : initial.startingPrice;
   const description =
     locale === 'en' && initial.descriptionEn ? initial.descriptionEn : initial.descriptionEs;
-  const isLive = live.status === 'live';
+  // Once the clock runs out, treat the auction as ended even though the
+  // scheduled tick may not have flipped the status field yet (it runs ~1/min).
+  // Otherwise the UI keeps saying "En curso" with a live timer at 0.
+  const effectiveStatus = live.status === 'live' && remainingMs <= 0 ? 'ended' : live.status;
+  const isLive = effectiveStatus === 'live';
   const isUrgent = isLive && remainingMs > 0 && remainingMs < 60 * 60 * 1000;
   const isCritical = isLive && remainingMs > 0 && remainingMs < 60 * 1000;
 
@@ -168,7 +172,7 @@ export function AuctionDetailView({
 
           <header className="space-y-3">
             <div className="flex items-center gap-2">
-              <StatusChip status={live.status} label={tStatus(live.status)} />
+              <StatusChip status={effectiveStatus} label={tStatus(effectiveStatus)} />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-strong leading-[1.05]">
               {initial.make} {initial.model}{' '}
@@ -232,6 +236,7 @@ export function AuctionDetailView({
           <BidPanel
             auctionId={initial.id}
             status={live.status}
+            endsAtMs={live.endsAtMs}
             startingPrice={initial.startingPrice}
             currentBid={live.currentBid}
             bidIncrement={initial.bidIncrement}
