@@ -21,14 +21,14 @@ export function KpiCards({ usersTotal, liveAuctions, gmvUsd, bidsToday, bidsSpar
         index={0}
         label={t('activeUsers')}
         value={usersTotal}
-        icon={Users}
+        icon={<Users className="w-5 h-5" strokeWidth={2.25} />}
         caption="Total con sesión activa"
       />
       <KpiCard
         index={1}
         label={t('liveAuctions')}
         value={liveAuctions}
-        icon={Gavel}
+        icon={<Gavel className="w-5 h-5" strokeWidth={2.25} />}
         caption="Subastas en curso"
       />
       <KpiCard
@@ -36,7 +36,7 @@ export function KpiCards({ usersTotal, liveAuctions, gmvUsd, bidsToday, bidsSpar
         label={t('gmv')}
         value={gmvUsd}
         prefix="USD "
-        icon={DollarSign}
+        icon={<DollarSign className="w-5 h-5" strokeWidth={2.25} />}
         emphasis="solid"
         caption="Valor bruto vendido"
       />
@@ -44,7 +44,7 @@ export function KpiCards({ usersTotal, liveAuctions, gmvUsd, bidsToday, bidsSpar
         index={3}
         label={t('bidsToday')}
         value={bidsToday}
-        icon={TrendingUp}
+        icon={<TrendingUp className="w-5 h-5" strokeWidth={2.25} />}
         caption="Pujas en las últimas 24h"
         {...(bidsSpark && bidsSpark.length >= 2 ? { spark: bidsSpark } : {})}
       />

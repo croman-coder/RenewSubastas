@@ -71,28 +71,28 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
         <KpiCard
           label="Borrador"
           value={s.vehicles.draft}
-          icon={FileEdit}
+          icon={<FileEdit className="w-5 h-5" strokeWidth={2.25} />}
           caption="Sin completar"
           index={0}
         />
         <KpiCard
           label="Listos"
           value={s.vehicles.ready}
-          icon={CheckCircle2}
+          icon={<CheckCircle2 className="w-5 h-5" strokeWidth={2.25} />}
           caption="Listos para subastar"
           index={1}
         />
         <KpiCard
           label="En subasta"
           value={s.vehicles.inAuction}
-          icon={Hourglass}
+          icon={<Hourglass className="w-5 h-5" strokeWidth={2.25} />}
           caption="Subasta activa"
           index={2}
         />
         <KpiCard
           label="Vendidos"
           value={s.vehicles.sold}
-          icon={Trophy}
+          icon={<Trophy className="w-5 h-5" strokeWidth={2.25} />}
           emphasis="solid"
           caption="Histórico"
           index={3}

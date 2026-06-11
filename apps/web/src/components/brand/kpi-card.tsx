@@ -1,6 +1,6 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { BlurNumber } from '@/components/brand/blur-number';
 import { SparkLine } from '@/components/brand/spark-line';
 import { cn } from '@/lib/utils';
@@ -8,7 +8,10 @@ import { cn } from '@/lib/utils';
 interface Props {
   label: string;
   value: number;
-  icon: LucideIcon;
+  /** Rendered icon node (e.g. <Gavel className="w-5 h-5" />). Pass a rendered
+   *  element, not a component, so it serializes across the RSC boundary when a
+   *  server component renders this client card. */
+  icon: ReactNode;
   /** Prefix before the number, e.g. "USD ". */
   prefix?: string;
   caption?: string;
@@ -29,7 +32,7 @@ interface Props {
 export function KpiCard({
   label,
   value,
-  icon: Icon,
+  icon,
   prefix,
   caption,
   spark,
@@ -74,7 +77,7 @@ export function KpiCard({
               : 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25 text-text-strong',
           )}
         >
-          <Icon className="w-5 h-5" strokeWidth={2.25} />
+          {icon}
         </div>
       </div>
 
