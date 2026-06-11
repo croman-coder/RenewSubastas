@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 import { Users, Gavel, DollarSign, TrendingUp, type LucideIcon } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
