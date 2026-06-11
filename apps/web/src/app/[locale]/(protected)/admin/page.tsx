@@ -50,6 +50,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
         liveAuctions={s.liveAuctions}
         gmvUsd={s.gmvUsd}
         bidsToday={s.bidsToday}
+        bidsSpark={s.bidsByDay.map((d) => d.count)}
       />
 
       {/* Bento grid: asymmetric tiles. Bids chart and audit feed get the wide

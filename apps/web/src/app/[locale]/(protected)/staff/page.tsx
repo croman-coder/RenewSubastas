@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/lib/auth/server';
 import { loadStaffStats } from '@/lib/staff/load-staff-stats';
 import { TodayLabel } from '@/components/shell/today-label';
 import { Button } from '@/components/ui/button';
+import { KpiCard } from '@/components/brand/kpi-card';
 
 interface PageProps {
   params: { locale: string };
@@ -67,35 +68,32 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi
+        <KpiCard
           label="Borrador"
           value={s.vehicles.draft}
           icon={FileEdit}
-          accent="lavender"
           caption="Sin completar"
           index={0}
         />
-        <Kpi
+        <KpiCard
           label="Listos"
           value={s.vehicles.ready}
           icon={CheckCircle2}
-          accent="mint"
           caption="Listos para subastar"
           index={1}
         />
-        <Kpi
+        <KpiCard
           label="En subasta"
           value={s.vehicles.inAuction}
           icon={Hourglass}
-          accent="amber"
           caption="Subasta activa"
           index={2}
         />
-        <Kpi
+        <KpiCard
           label="Vendidos"
           value={s.vehicles.sold}
           icon={Trophy}
-          accent="copper"
+          emphasis="solid"
           caption="Histórico"
           index={3}
         />
@@ -136,85 +134,24 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
 }
 
 type Accent = 'copper' | 'mint' | 'lavender' | 'amber';
-// Same monochrome accent set as the buyer + admin dashboards so all
-// three "home" screens share one visual language. Solid ink chip for
-// the primary KPI, ringed neutral chip for the rest.
-const ACCENT: Record<Accent, { ring: string; iconBg: string; iconText: string }> = {
-  copper: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/80 before:to-text-strong/0',
-    iconBg: 'bg-text-strong',
-    iconText: 'text-bg-base',
-  },
+
+// Monochrome accent chips for panel headers. Solid ink for the primary,
+// ringed light for the rest.
+const ACCENT: Record<Accent, { iconBg: string; iconText: string }> = {
+  copper: { iconBg: 'bg-text-strong', iconText: 'text-bg-base' },
   mint: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
   lavender: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
   amber: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
 };
-
-function Kpi({
-  label,
-  value,
-  caption,
-  icon: Icon,
-  accent,
-  index,
-}: {
-  label: string;
-  value: number;
-  caption?: string;
-  icon: typeof Car;
-  accent: Accent;
-  index: number;
-}) {
-  const a = ACCENT[accent];
-  return (
-    <div
-      className={
-        'group relative overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-5 ' +
-        'transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 ' +
-        'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.45)] ' +
-        'animate-in fade-in slide-in-from-bottom-2 ' +
-        'before:absolute before:inset-x-0 before:top-0 before:h-px ' +
-        a.ring
-      }
-      style={{ animationDelay: `${index * 70}ms`, animationFillMode: 'both' }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium">
-            {label}
-          </p>
-          <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
-            {value.toLocaleString()}
-          </p>
-        </div>
-        <div
-          className={
-            'shrink-0 w-10 h-10 rounded-lg grid place-items-center ' +
-            'transition-transform duration-300 group-hover:scale-110 ' +
-            a.iconBg +
-            ' ' +
-            a.iconText
-          }
-        >
-          <Icon className="w-5 h-5" strokeWidth={2.25} />
-        </div>
-      </div>
-      {caption && <p className="mt-3 text-xs text-text-muted">{caption}</p>}
-    </div>
-  );
-}
 
 function SummaryPanel({
   title,

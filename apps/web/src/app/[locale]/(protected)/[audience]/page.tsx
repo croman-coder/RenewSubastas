@@ -13,8 +13,8 @@ import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
 import { TodayLabel } from '@/components/shell/today-label';
 import { RevealOnScroll } from '@/components/motion/reveal-on-scroll';
-import { CountUp } from '@/components/motion/count-up';
 import { Button } from '@/components/ui/button';
+import { KpiCard } from '@/components/brand/kpi-card';
 
 interface PageProps {
   params: { locale: string; audience: 'retail' | 'wholesale' };
@@ -66,31 +66,29 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
 
       {/* KPIs */}
       <RevealOnScroll className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Kpi
+        <KpiCard
           label="Subastas activas"
           value={s.liveAuctions}
           caption="En curso ahora"
           icon={Gavel}
-          accent="mint"
           index={0}
         />
-        <Kpi
+        <KpiCard
           label="Estoy ganando"
           value={s.myWinningCount}
           caption="Sos el mejor postor"
           icon={Trophy}
-          accent="copper"
+          emphasis="solid"
           index={1}
         />
-        <Kpi
+        <KpiCard
           label="Mis pujas"
           value={s.myActiveBidsCount}
           caption="Subastas en las que pujé"
           icon={Heart}
-          accent="lavender"
           index={2}
         />
-        <Kpi
+        <KpiCard
           label="Ganadas"
           value={s.myWonCount}
           caption={
@@ -99,7 +97,6 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
               : 'Aún no ganaste ninguna'
           }
           icon={Trophy}
-          accent="amber"
           index={3}
         />
       </RevealOnScroll>
@@ -215,90 +212,23 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
 
 type Accent = 'copper' | 'mint' | 'lavender' | 'amber';
 
-// Monochrome accents: solid ink chip carries the primary KPI; the
-// other three share a ringed light chip so the layout reads as one
-// cohesive set instead of a four-colour rainbow. Matches the admin
-// KPI cards 1:1.
-const ACCENT: Record<Accent, { ring: string; iconBg: string; iconText: string }> = {
-  copper: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/80 before:to-text-strong/0',
-    iconBg: 'bg-text-strong',
-    iconText: 'text-bg-base',
-  },
+// Monochrome accent chips for panel headers. Solid ink for the primary,
+// ringed light for the rest.
+const ACCENT: Record<Accent, { iconBg: string; iconText: string }> = {
+  copper: { iconBg: 'bg-text-strong', iconText: 'text-bg-base' },
   mint: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
   lavender: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
   amber: {
-    ring: 'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/55 before:to-text-strong/0',
     iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
     iconText: 'text-text-strong',
   },
 };
-
-function Kpi({
-  label,
-  value,
-  caption,
-  icon: Icon,
-  accent,
-  index,
-}: {
-  label: string;
-  value: number;
-  caption?: string;
-  icon: LucideIcon;
-  accent: Accent;
-  index: number;
-}) {
-  const a = ACCENT[accent];
-  return (
-    <div
-      className={
-        'sheen group relative overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-5 ' +
-        'transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 ' +
-        'hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.45)] ' +
-        'animate-in fade-in slide-in-from-bottom-2 ' +
-        'before:absolute before:inset-x-0 before:top-0 before:h-px ' +
-        a.ring
-      }
-      style={{ animationDelay: `${index * 70}ms`, animationFillMode: 'both' }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium truncate">
-            {label}
-          </p>
-          <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
-            <CountUp value={value} />
-          </p>
-        </div>
-        <div
-          className={
-            'shrink-0 w-10 h-10 rounded-lg grid place-items-center ' +
-            'transition-transform duration-300 group-hover:scale-110 ' +
-            a.iconBg +
-            ' ' +
-            a.iconText
-          }
-        >
-          <Icon className="w-5 h-5" strokeWidth={2.25} />
-        </div>
-      </div>
-      {caption && (
-        <p className="mt-3 text-xs text-text-muted truncate" title={caption}>
-          {caption}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function Panel({
   title,
