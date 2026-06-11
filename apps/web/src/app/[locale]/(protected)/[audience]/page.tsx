@@ -71,6 +71,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
           value={s.liveAuctions}
           caption="En curso ahora"
           icon={<Gavel className="w-5 h-5" strokeWidth={2.25} />}
+          href={`/${locale}/auctions`}
           index={0}
         />
         <KpiCard
@@ -79,6 +80,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
           caption="Sos el mejor postor"
           icon={<Trophy className="w-5 h-5" strokeWidth={2.25} />}
           emphasis="solid"
+          href={`/${locale}/${audience}/bids`}
           index={1}
         />
         <KpiCard
@@ -86,6 +88,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
           value={s.myActiveBidsCount}
           caption="Subastas en las que pujé"
           icon={<Heart className="w-5 h-5" strokeWidth={2.25} />}
+          href={`/${locale}/${audience}/bids`}
           index={2}
         />
         <KpiCard
@@ -97,6 +100,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
               : 'Aún no ganaste ninguna'
           }
           icon={<Trophy className="w-5 h-5" strokeWidth={2.25} />}
+          href={`/${locale}/${audience}/won`}
           index={3}
         />
       </RevealOnScroll>

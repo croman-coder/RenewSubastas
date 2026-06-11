@@ -1,6 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
 import { SparkLine } from '@/components/brand/spark-line';
 import { cn } from '@/lib/utils';
@@ -19,6 +21,8 @@ interface Props {
   spark?: number[];
   /** `solid` ink-fills the icon chip (use for the primary KPI). */
   emphasis?: 'solid' | 'soft';
+  /** When set, the whole card becomes a link to this route. */
+  href?: string;
   index?: number;
   className?: string;
 }
@@ -37,23 +41,12 @@ export function KpiCard({
   caption,
   spark,
   emphasis = 'soft',
+  href,
   index = 0,
   className,
 }: Props) {
-  return (
-    <div
-      className={cn(
-        'glass-surface group relative overflow-hidden rounded-xl p-5',
-        'transition-all duration-300 hover:-translate-y-0.5',
-        'hover:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.55)]',
-        'animate-in fade-in slide-in-from-bottom-2',
-        // top hairline accent
-        'before:absolute before:inset-x-0 before:top-0 before:h-px',
-        'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/40 before:to-text-strong/0',
-        className,
-      )}
-      style={{ animationDelay: `${index * 70}ms`, animationFillMode: 'both' }}
-    >
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium">
@@ -88,6 +81,39 @@ export function KpiCard({
       ) : (
         caption && <p className="mt-3 text-xs text-text-muted">{caption}</p>
       )}
+
+      {href && (
+        <span
+          aria-hidden
+          className="absolute right-4 top-4 text-text-subtle opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        >
+          <ArrowUpRight className="w-4 h-4" strokeWidth={2.25} />
+        </span>
+      )}
+    </>
+  );
+
+  const base = cn(
+    'glass-surface group relative overflow-hidden rounded-xl p-5',
+    'transition-all duration-300 hover:-translate-y-0.5',
+    'hover:shadow-[0_14px_36px_-18px_rgba(0,0,0,0.55)]',
+    'animate-in fade-in slide-in-from-bottom-2',
+    'before:absolute before:inset-x-0 before:top-0 before:h-px',
+    'before:bg-gradient-to-r before:from-text-strong/0 before:via-text-strong/40 before:to-text-strong/0',
+    className,
+  );
+  const style = { animationDelay: `${index * 70}ms`, animationFillMode: 'both' as const };
+
+  if (href) {
+    return (
+      <Link href={href as `/${string}`} className={cn(base, 'block')} style={style}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <div className={base} style={style}>
+      {inner}
     </div>
   );
 }
