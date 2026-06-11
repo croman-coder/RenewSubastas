@@ -1,14 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 import { loadDashboardStats } from '@/lib/admin/load-dashboard-stats';
 import { TodayLabel } from '@/components/shell/today-label';
-import { SplineRobot } from '@/components/brand/spline-robot';
 import { KpiCards } from './_components/kpi-cards';
 import { AuctionsByStatusChart } from './_components/auctions-by-status-chart';
 import { BidsPerDayChart } from './_components/bids-per-day-chart';
 import { ClosingSoonList } from './_components/closing-soon-list';
 import { RecentAuditList } from './_components/recent-audit-list';
-
-const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 
 export default async function AdminHome({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations('admin.home');
@@ -27,12 +24,6 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
         <div
           aria-hidden
           className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-text-strong/5 blur-3xl pointer-events-none"
-        />
-        {/* Interactive 3D robot, subtle: low opacity, masked, far right, only
-            on very wide screens to keep the dashboard light elsewhere. */}
-        <SplineRobot
-          scene={ROBOT_SCENE_URL}
-          className="pointer-events-none absolute -right-10 -top-24 z-0 hidden h-[22rem] w-[30rem] opacity-30 xl:block [mask-image:radial-gradient(60%_60%_at_70%_50%,black,transparent_80%)]"
         />
         <div className="relative z-10">
           <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
