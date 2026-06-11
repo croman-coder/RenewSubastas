@@ -17,7 +17,7 @@ import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import { emailShell, body, badge, heading, callout, ctaButton } from '../lib/email-templates.js';
-import { brandActionLink } from './brand-action-link.js';
+import { issuePasswordSetLink } from './reset-tokens.js';
 
 // Names are capped at 40 chars and restricted to letters/spaces/apostrophes/
 // hyphens (Unicode-aware). This is the server-side enforcement of the same
@@ -142,7 +142,7 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
     after: { role: input.role, email: input.email, status: 'active' },
   });
 
-  const resetLink = brandActionLink(await adminAuth().generatePasswordResetLink(input.email));
+  const resetLink = await issuePasswordSetLink(authUser.uid, input.email, 'welcome');
 
   // Friendly account-type label for the email body.
   const kindLabel =

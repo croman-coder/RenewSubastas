@@ -8,6 +8,7 @@ export { deleteUser } from './auth/deleteUser.js';
 export { hardDeleteUser } from './auth/hardDeleteUser.js';
 export { onUserSync } from './auth/onUserSync.js';
 export { generatePasswordReset } from './auth/changePassword.js';
+export { redeemPasswordReset } from './auth/redeemPasswordReset.js';
 export { requestPasswordReset } from './auth/requestPasswordReset.js';
 export { revokeMySessions } from './auth/revokeMySessions.js';
 export { updateGlobalConfig } from './config/updateGlobalConfig.js';
