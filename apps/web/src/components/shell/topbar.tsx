@@ -29,10 +29,14 @@ function roleLabel(role: Role, audience: AudienceLabel): string {
 }
 
 function roleTone(role: Role, audience: AudienceLabel): string {
+  // Text shade darkens on the light theme (700) and lightens on dark (300)
+  // so the chip stays high-contrast on both backgrounds.
   if (role === 'admin') return 'bg-copper/15 text-copper ring-copper/20';
-  if (role === 'staff') return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/20';
+  if (role === 'staff')
+    return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30';
   if (role === 'finanzas') return 'bg-text-strong/15 text-text-strong ring-text-strong/20';
-  if (audience === 'wholesale') return 'bg-amber-500/15 text-amber-300 ring-amber-500/20';
+  if (audience === 'wholesale')
+    return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30';
   return 'bg-text-strong/15 text-text-strong ring-text-strong/20';
 }
 

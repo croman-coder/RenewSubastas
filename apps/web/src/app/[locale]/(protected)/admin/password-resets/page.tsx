@@ -20,7 +20,7 @@ export default async function PasswordResetsPage({ params: { locale }, searchPar
     <div className="space-y-6">
       <header className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-300">
         <div className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-300 grid place-items-center">
+          <span className="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 grid place-items-center">
             <KeyRound className="w-4 h-4" strokeWidth={2.25} />
           </span>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">

@@ -196,7 +196,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
         >
           <div className="px-3 pb-2">
             <div className="rounded-lg bg-bg-deep/40 px-4 py-5 text-center">
-              <p className="text-3xl font-bold tracking-tight num-tab text-amber-300">
+              <p className="text-3xl font-bold tracking-tight num-tab text-amber-700 dark:text-amber-300">
                 {s.scheduledAuctions}
               </p>
               <p className="text-xs text-text-muted mt-1">

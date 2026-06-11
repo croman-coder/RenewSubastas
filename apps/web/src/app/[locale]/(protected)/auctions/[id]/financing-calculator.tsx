@@ -171,7 +171,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
       </dl>
 
       {usingPlaceholder && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-200">
           El admin todavía no configuró el tipo de cambio Gs./USD. La calculadora muestra valores
           1:1 hasta que se cargue.
         </div>

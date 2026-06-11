@@ -302,8 +302,8 @@ function Spec({ label, value }: { label: string; value: string | number }) {
 
 function StatusChip({ status, label }: { status: string; label: string }) {
   const map: Record<string, string> = {
-    live: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
-    scheduled: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    live: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30',
+    scheduled: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30',
     ended: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30',
     cancelled: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
   };
@@ -364,7 +364,7 @@ function CountdownCard({
       : urgent
         ? {
             glow: 'shadow-[0_0_36px_-6px_rgba(251,146,60,0.5)]',
-            text: 'text-amber-300',
+            text: 'text-amber-700 dark:text-amber-300',
             accent: 'from-amber-500/0 via-amber-400/70 to-amber-500/0',
           }
         : {

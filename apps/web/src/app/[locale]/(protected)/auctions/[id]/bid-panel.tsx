@@ -134,19 +134,21 @@ export function BidPanel({
           <div className="relative flex items-center gap-3">
             <span className="w-9 h-9 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
               <Trophy
-                className="w-5 h-5 text-emerald-300"
+                className="w-5 h-5 text-emerald-700 dark:text-emerald-300"
                 strokeWidth={2.5}
                 style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
               />
             </span>
             <div className="min-w-0">
               <p
-                className="text-base sm:text-lg font-bold tracking-tight text-emerald-300 leading-tight"
+                className="text-base sm:text-lg font-bold tracking-tight text-emerald-700 dark:text-emerald-300 leading-tight"
                 style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
               >
                 {t('winning')}
               </p>
-              <p className="text-xs text-emerald-300/70 mt-0.5">Sos el mejor postor por ahora</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300/70 mt-0.5">
+                Sos el mejor postor por ahora
+              </p>
             </div>
           </div>
         </div>
