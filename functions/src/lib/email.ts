@@ -37,7 +37,7 @@ export interface SendEmailArgs {
   from?: string;
 }
 
-const DEFAULT_FROM = 'Renew Subastas <subastas@santarosaparaguay.com.py>';
+const DEFAULT_FROM = 'Renew Subastas <noreply@renewsubastas.com.py>';
 
 export async function sendEmail({
   to,

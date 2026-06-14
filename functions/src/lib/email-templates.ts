@@ -4,8 +4,8 @@
 // Monochrome brand: ink header with the white wordmark, white content
 // card, ink CTA. Accent colour only for semantic status badges.
 
-const LOGO_WHITE = 'https://renewsubastas.netlify.app/brand/renew-wordmark-white.png';
-const SITE = 'https://renewsubastas.netlify.app';
+const LOGO_WHITE = 'https://renewsubastas.com.py/brand/renew-wordmark-white.png';
+const SITE = 'https://renewsubastas.com.py';
 
 export type BadgeTone = 'neutral' | 'success' | 'danger' | 'warning' | 'info';
 
