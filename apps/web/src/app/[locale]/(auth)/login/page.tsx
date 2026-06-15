@@ -101,7 +101,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             className="text-xs text-text-muted/70 animate-in fade-in duration-1000"
             style={{ animationDelay: '300ms', animationFillMode: 'both' }}
           >
-            © {new Date().getFullYear()} Renew Subastas · Santa Rosa Automotores
+            © {new Date().getFullYear()} Renew Subastas · Santa Rosa SA
           </p>
         </aside>
 
