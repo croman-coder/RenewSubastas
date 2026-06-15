@@ -74,8 +74,8 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               <span className="underline decoration-2 underline-offset-[6px]">con confianza</span>.
             </h2>
             <p className="text-base text-text-muted leading-relaxed">
-              Pujá en tiempo real, simulá tus cuotas en guaraníes, y recibí notificaciones al
-              instante cuando alguien supera tu oferta.
+              Pujá en tiempo real y recibí notificaciones al instante cuando alguien supera tu
+              oferta.
             </p>
 
             <ul className="space-y-4 pt-4">
@@ -86,8 +86,8 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               />
               <Feature
                 icon={Sparkles}
-                title="Cuotero en guaraníes"
-                description="Calculá la cuota mensual con la entrega inicial que vos definas."
+                title="Catálogo seleccionado"
+                description="Vehículos verificados por Santa Rosa Automotores, listos para subastar."
               />
               <Feature
                 icon={ShieldCheck}
