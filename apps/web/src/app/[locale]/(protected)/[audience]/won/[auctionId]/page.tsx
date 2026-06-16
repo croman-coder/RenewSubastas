@@ -92,7 +92,7 @@ export default async function WonDetailPage({
         <section className="rounded-2xl border border-danger/30 bg-danger/[0.06] p-5">
           <p className="text-sm text-text-strong">
             La adjudicación fue liberada porque venció el plazo para la seña. Si querés volver a
-            intentar la compra, contactá a Santa Rosa Automotores.
+            intentar la compra, contactá a Santa Rosa Paraguay SA.
           </p>
         </section>
       )}
@@ -167,7 +167,7 @@ export default async function WonDetailPage({
             </div>
           ) : (
             <p className="text-sm text-text-muted italic">
-              Santa Rosa SA se va a contactar con vos para enviarte los datos de la cuenta.
+              Santa Rosa Paraguay SA se va a contactar con vos para enviarte los datos de la cuenta.
             </p>
           )}
         </div>

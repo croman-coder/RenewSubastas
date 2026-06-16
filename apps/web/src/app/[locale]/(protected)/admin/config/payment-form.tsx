@@ -95,7 +95,7 @@ export function PaymentForm({ initial }: { initial: Initial }) {
             id="holder"
             value={v.bankAccountHolder}
             onChange={(e) => update('bankAccountHolder', e.target.value)}
-            placeholder="Santa Rosa SA"
+            placeholder="Santa Rosa Paraguay SA"
             maxLength={120}
           />
         </div>

@@ -87,7 +87,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               <Feature
                 icon={Sparkles}
                 title="Catálogo seleccionado"
-                description="Vehículos verificados por Santa Rosa Automotores, listos para subastar."
+                description="Vehículos verificados por Santa Rosa Paraguay SA, listos para subastar."
               />
               <Feature
                 icon={ShieldCheck}
@@ -101,7 +101,7 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             className="text-xs text-text-muted/70 animate-in fade-in duration-1000"
             style={{ animationDelay: '300ms', animationFillMode: 'both' }}
           >
-            © {new Date().getFullYear()} Renew Subastas · Santa Rosa SA
+            © {new Date().getFullYear()} Renew Subastas · Santa Rosa Paraguay SA
           </p>
         </aside>
 

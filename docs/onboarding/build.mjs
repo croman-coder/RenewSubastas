@@ -95,7 +95,7 @@ function slideHTML(s, deckName, pg) {
       ${s.eyebrow ? `<span class="eyebrow">${esc(s.eyebrow)}</span>` : ''}
       <h1>${rich(s.title)}</h1>
       ${s.subtitle ? `<p>${rich(s.subtitle)}</p>` : ''}
-      <div class="deckfoot"><span>${esc(deckName)}</span><span class="pg">Santa Rosa Automotores · Paraguay</span></div>
+      <div class="deckfoot"><span>${esc(deckName)}</span><span class="pg">Santa Rosa Paraguay SA · Paraguay</span></div>
     </section>`;
   }
   if (s.type === 'divider') {
@@ -220,7 +220,7 @@ writeFileSync(
   <h1>Manuales de la plataforma</h1>
   <p class="sub">Guía completa de Renew Subastas paso a paso: el proyecto general y un manual dedicado para cada tipo de usuario.</p>
   <div class="grid">${cards}</div>
-  <p class="foot">Renew Subastas · Santa Rosa Automotores · Paraguay</p>
+  <p class="foot">Renew Subastas · Santa Rosa Paraguay SA · Paraguay</p>
 </div>
 </body></html>`,
 );

@@ -42,7 +42,7 @@ export function emailShell(inner: string): string {
           <!-- Footer -->
           <tr><td style="background:#fafafa;border-radius:0 0 18px 18px;padding:22px 32px;border-top:1px solid #f0f0f0;">
             <p style="margin:0 0 6px;font-size:11px;line-height:1.5;color:#a1a1aa;">
-              Renew Subastas · Santa Rosa Automotores · Paraguay
+              Renew Subastas · Santa Rosa Paraguay SA · Paraguay
             </p>
             <p style="margin:0;font-size:11px;line-height:1.5;color:#c4c4c8;">
               Este es un correo automático. Por dudas, respondé a este mensaje.
