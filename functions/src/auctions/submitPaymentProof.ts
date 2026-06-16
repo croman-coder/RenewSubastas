@@ -30,7 +30,12 @@ export interface SubmitPaymentProofResult {
   ok: true;
 }
 
-const ADMIN_TO = 'croman@santarosa.com.py';
+// Payment-proof notifications go to administración (who verifies + approves
+// the deposit with the finanzas role), CC to rsanchez, BCC to croman for
+// oversight without exposing his address on the thread.
+const ADMIN_TO = 'administracion@santarosa.com.py';
+const ADMIN_CC = 'rsanchez@santarosa.com.py';
+const ADMIN_BCC = 'croman@santarosa.com.py';
 
 const fmtUsd = (n: number) =>
   n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -182,6 +187,8 @@ export async function submitPaymentProofHandler(
 
   await sendEmail({
     to: ADMIN_TO,
+    cc: ADMIN_CC,
+    bcc: ADMIN_BCC,
     subject: `Comprobante ${vanity} · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
     html,
     ...(attachment ? { attachments: [attachment] } : {}),

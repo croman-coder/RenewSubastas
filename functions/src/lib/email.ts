@@ -27,6 +27,10 @@ export interface SendEmailArgs {
   to: string;
   subject: string;
   html: string;
+  /** Carbon copy recipients. */
+  cc?: string | string[];
+  /** Blind carbon copy recipients. */
+  bcc?: string | string[];
   /** Optional file attachments (e.g. payment receipt). */
   attachments?: EmailAttachment[];
   /**
@@ -43,6 +47,8 @@ export async function sendEmail({
   to,
   subject,
   html,
+  cc,
+  bcc,
   attachments,
   from,
 }: SendEmailArgs): Promise<void> {
@@ -57,6 +63,8 @@ export async function sendEmail({
       to,
       subject,
       html,
+      ...(cc ? { cc } : {}),
+      ...(bcc ? { bcc } : {}),
       ...(attachments && attachments.length > 0 ? { attachments } : {}),
     });
     if (result.error) {
