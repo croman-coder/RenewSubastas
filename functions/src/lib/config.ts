@@ -6,6 +6,11 @@ export interface PaymentConfig {
   bankAccountNumber: string;
   bankAccountType: string;
   bankRuc: string;
+  /** Second bank account, denominated in guaraníes (PYG). Holder + RUC are
+   *  shared with the USD account above. Empty when not configured. */
+  bankNamePyg: string;
+  bankAccountNumberPyg: string;
+  bankAccountTypePyg: string;
   /** Deposit fraction (0..1). 0.10 = 10% seña. */
   depositPercent: number;
   /** Hours after auction close before the win is forfeited. */
@@ -37,6 +42,9 @@ const DEFAULT_CONFIG: RuntimeConfig = {
     bankAccountNumber: '',
     bankAccountType: '',
     bankRuc: '',
+    bankNamePyg: '',
+    bankAccountNumberPyg: '',
+    bankAccountTypePyg: '',
     depositPercent: 0.1,
     deadlineHours: 24,
     instructionsEs: '',
@@ -64,6 +72,10 @@ export async function loadAppConfig(): Promise<RuntimeConfig> {
       bankAccountNumber: payment.bankAccountNumber ?? DEFAULT_CONFIG.payment.bankAccountNumber,
       bankAccountType: payment.bankAccountType ?? DEFAULT_CONFIG.payment.bankAccountType,
       bankRuc: payment.bankRuc ?? DEFAULT_CONFIG.payment.bankRuc,
+      bankNamePyg: payment.bankNamePyg ?? DEFAULT_CONFIG.payment.bankNamePyg,
+      bankAccountNumberPyg:
+        payment.bankAccountNumberPyg ?? DEFAULT_CONFIG.payment.bankAccountNumberPyg,
+      bankAccountTypePyg: payment.bankAccountTypePyg ?? DEFAULT_CONFIG.payment.bankAccountTypePyg,
       depositPercent: payment.depositPercent ?? DEFAULT_CONFIG.payment.depositPercent,
       deadlineHours: payment.deadlineHours ?? DEFAULT_CONFIG.payment.deadlineHours,
       instructionsEs: payment.instructionsEs ?? DEFAULT_CONFIG.payment.instructionsEs,

@@ -16,6 +16,9 @@ interface Initial {
   bankAccountType: string;
   bankAccountNumber: string;
   bankRuc: string;
+  bankNamePyg: string;
+  bankAccountNumberPyg: string;
+  bankAccountTypePyg: string;
   depositPercent: number;
   deadlineHours: number;
   instructionsEs: string;
@@ -54,6 +57,9 @@ export function PaymentForm({ initial }: { initial: Initial }) {
           bankAccountType: v.bankAccountType,
           bankAccountNumber: v.bankAccountNumber,
           bankRuc: v.bankRuc,
+          bankNamePyg: v.bankNamePyg,
+          bankAccountNumberPyg: v.bankAccountNumberPyg,
+          bankAccountTypePyg: v.bankAccountTypePyg,
           depositPercent: v.depositPercent,
           deadlineHours: v.deadlineHours,
           instructionsEs: v.instructionsEs,
@@ -81,6 +87,7 @@ export function PaymentForm({ initial }: { initial: Initial }) {
         </p>
       </div>
 
+      {/* Titular + RUC: shared across both currency accounts. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
         <div className="space-y-2">
           <Label htmlFor="holder">Titular de la cuenta</Label>
@@ -88,38 +95,8 @@ export function PaymentForm({ initial }: { initial: Initial }) {
             id="holder"
             value={v.bankAccountHolder}
             onChange={(e) => update('bankAccountHolder', e.target.value)}
-            placeholder="Santa Rosa Automotores S.A."
+            placeholder="Santa Rosa SA"
             maxLength={120}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="bank">Banco</Label>
-          <Input
-            id="bank"
-            value={v.bankName}
-            onChange={(e) => update('bankName', e.target.value)}
-            placeholder="Banco Itaú Paraguay"
-            maxLength={120}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="type">Tipo de cuenta</Label>
-          <Input
-            id="type"
-            value={v.bankAccountType}
-            onChange={(e) => update('bankAccountType', e.target.value)}
-            placeholder="Cuenta corriente USD"
-            maxLength={40}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="num">Número de cuenta</Label>
-          <Input
-            id="num"
-            value={v.bankAccountNumber}
-            onChange={(e) => update('bankAccountNumber', e.target.value)}
-            placeholder="000-000000-0"
-            maxLength={60}
           />
         </div>
         <div className="space-y-2">
@@ -131,6 +108,84 @@ export function PaymentForm({ initial }: { initial: Initial }) {
             placeholder="80012345-6"
             maxLength={40}
           />
+        </div>
+      </div>
+
+      {/* USD account. */}
+      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev/30 p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
+          Cuenta en dólares (USD)
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="bank">Banco</Label>
+            <Input
+              id="bank"
+              value={v.bankName}
+              onChange={(e) => update('bankName', e.target.value)}
+              placeholder="Banco Itaú Paraguay"
+              maxLength={120}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Tipo de cuenta</Label>
+            <Input
+              id="type"
+              value={v.bankAccountType}
+              onChange={(e) => update('bankAccountType', e.target.value)}
+              placeholder="Cuenta corriente USD"
+              maxLength={40}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="num">Número de cuenta</Label>
+            <Input
+              id="num"
+              value={v.bankAccountNumber}
+              onChange={(e) => update('bankAccountNumber', e.target.value)}
+              placeholder="000-000000-0"
+              maxLength={60}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* PYG account. */}
+      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev/30 p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
+          Cuenta en guaraníes (PYG)
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="bankPyg">Banco</Label>
+            <Input
+              id="bankPyg"
+              value={v.bankNamePyg}
+              onChange={(e) => update('bankNamePyg', e.target.value)}
+              placeholder="Banco Itaú Paraguay"
+              maxLength={120}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="typePyg">Tipo de cuenta</Label>
+            <Input
+              id="typePyg"
+              value={v.bankAccountTypePyg}
+              onChange={(e) => update('bankAccountTypePyg', e.target.value)}
+              placeholder="Cuenta corriente Gs."
+              maxLength={40}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="numPyg">Número de cuenta</Label>
+            <Input
+              id="numPyg"
+              value={v.bankAccountNumberPyg}
+              onChange={(e) => update('bankAccountNumberPyg', e.target.value)}
+              placeholder="000-000000-0"
+              maxLength={60}
+            />
+          </div>
         </div>
       </div>
 

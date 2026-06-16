@@ -21,6 +21,9 @@ export interface WonAuctionDetail {
     accountType: string;
     accountNumber: string;
     ruc: string;
+    bankNamePyg: string;
+    accountTypePyg: string;
+    accountNumberPyg: string;
     instructionsEs: string;
     instructionsEn: string;
     contactEmail: string;
@@ -73,6 +76,9 @@ export async function loadWonAuction(
       accountType: p.bankAccountType,
       accountNumber: p.bankAccountNumber,
       ruc: p.bankRuc,
+      bankNamePyg: p.bankNamePyg,
+      accountTypePyg: p.bankAccountTypePyg,
+      accountNumberPyg: p.bankAccountNumberPyg,
       instructionsEs: p.instructionsEs,
       instructionsEn: p.instructionsEn,
       contactEmail: p.contactEmail,
