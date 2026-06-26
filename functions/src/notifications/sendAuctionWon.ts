@@ -2,6 +2,7 @@ import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { adminDb } from '../lib/admin.js';
 import { loadAppConfig } from '../lib/config.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
+import { recordNotification } from '../lib/notify.js';
 import {
   emailShell,
   body,
@@ -51,7 +52,26 @@ export const sendAuctionWon = onDocumentUpdated(
     const profile = (userData['profile'] ?? {}) as Record<string, string>;
     const wantsEmail =
       (userData['preferences']?.notifications?.auctionWonEmail as boolean | undefined) ?? true;
-    if (!email || !wantsEmail) return;
+    if (!email) {
+      await recordNotification({
+        type: 'auction_won',
+        toUid: winnerUid,
+        toEmail: '',
+        auctionId: event.params['auctionId'] as string,
+        result: { status: 'skipped', reason: 'no_email' },
+      });
+      return;
+    }
+    if (!wantsEmail) {
+      await recordNotification({
+        type: 'auction_won',
+        toUid: winnerUid,
+        toEmail: email,
+        auctionId: event.params['auctionId'] as string,
+        result: { status: 'skipped', reason: 'pref_off' },
+      });
+      return;
+    }
 
     const cfg = await loadAppConfig();
     const p = cfg.payment;
@@ -121,10 +141,17 @@ export const sendAuctionWon = onDocumentUpdated(
       ),
     );
 
-    await sendEmail({
+    const result = await sendEmail({
       to: email,
       subject: `¡Ganaste la subasta! ${v['make']} ${v['model']} ${v['year']}`,
       html,
+    });
+    await recordNotification({
+      type: 'auction_won',
+      toUid: winnerUid,
+      toEmail: email,
+      auctionId,
+      result,
     });
   },
 );
