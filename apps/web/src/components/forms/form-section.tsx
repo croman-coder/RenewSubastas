@@ -11,9 +11,9 @@ interface Props {
 
 const ACCENT_TILE: Record<NonNullable<Props['accent']>, string> = {
   copper: 'bg-copper/10 text-copper',
-  mint: 'bg-emerald-500/10 text-emerald-300',
+  mint: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   lavender: 'bg-text-strong/10 text-text-strong',
-  amber: 'bg-amber-500/10 text-amber-300',
+  amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
 };
 
 /**

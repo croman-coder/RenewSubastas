@@ -13,7 +13,7 @@ const display = Space_Grotesk({
 
 export const metadata = {
   title: 'Renew Subastas',
-  description: 'Subastas de vehículos · Santa Rosa Automotores',
+  description: 'Subastas de vehículos · Santa Rosa Paraguay SA',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

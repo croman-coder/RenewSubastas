@@ -92,7 +92,7 @@ export default async function WonDetailPage({
         <section className="rounded-2xl border border-danger/30 bg-danger/[0.06] p-5">
           <p className="text-sm text-text-strong">
             La adjudicación fue liberada porque venció el plazo para la seña. Si querés volver a
-            intentar la compra, contactá a Santa Rosa Automotores.
+            intentar la compra, contactá a Santa Rosa Paraguay SA.
           </p>
         </section>
       )}
@@ -120,23 +120,54 @@ export default async function WonDetailPage({
             ({depositPct}% del precio final · USD {fmtUsd(w.finalPrice)})
           </p>
 
-          {w.bank.accountHolder || w.bank.bankName ? (
-            <div className="divide-y divide-text-subtle/10">
-              {w.bank.accountHolder && (
-                <CopyableField label="Titular" value={w.bank.accountHolder} />
+          {w.bank.accountHolder || w.bank.bankName || w.bank.bankNamePyg ? (
+            <div className="space-y-4">
+              {(w.bank.accountHolder || w.bank.ruc) && (
+                <div className="divide-y divide-text-subtle/10">
+                  {w.bank.accountHolder && (
+                    <CopyableField label="Titular" value={w.bank.accountHolder} />
+                  )}
+                  {w.bank.ruc && <CopyableField label="RUC" value={w.bank.ruc} />}
+                </div>
               )}
-              {w.bank.bankName && <CopyableField label="Banco" value={w.bank.bankName} />}
-              {w.bank.accountType && (
-                <CopyableField label="Tipo de cuenta" value={w.bank.accountType} />
+              {(w.bank.bankName || w.bank.accountNumber) && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-text-muted font-semibold mb-1">
+                    Cuenta en dólares (USD)
+                  </p>
+                  <div className="divide-y divide-text-subtle/10">
+                    {w.bank.bankName && <CopyableField label="Banco" value={w.bank.bankName} />}
+                    {w.bank.accountType && (
+                      <CopyableField label="Tipo de cuenta" value={w.bank.accountType} />
+                    )}
+                    {w.bank.accountNumber && (
+                      <CopyableField label="Número de cuenta" value={w.bank.accountNumber} />
+                    )}
+                  </div>
+                </div>
               )}
-              {w.bank.accountNumber && (
-                <CopyableField label="Número de cuenta" value={w.bank.accountNumber} />
+              {(w.bank.bankNamePyg || w.bank.accountNumberPyg) && (
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.08em] text-text-muted font-semibold mb-1">
+                    Cuenta en guaraníes (PYG)
+                  </p>
+                  <div className="divide-y divide-text-subtle/10">
+                    {w.bank.bankNamePyg && (
+                      <CopyableField label="Banco" value={w.bank.bankNamePyg} />
+                    )}
+                    {w.bank.accountTypePyg && (
+                      <CopyableField label="Tipo de cuenta" value={w.bank.accountTypePyg} />
+                    )}
+                    {w.bank.accountNumberPyg && (
+                      <CopyableField label="Número de cuenta" value={w.bank.accountNumberPyg} />
+                    )}
+                  </div>
+                </div>
               )}
-              {w.bank.ruc && <CopyableField label="RUC" value={w.bank.ruc} />}
             </div>
           ) : (
             <p className="text-sm text-text-muted italic">
-              Santa Rosa Automotores se va a contactar con vos para enviarte los datos de la cuenta.
+              Santa Rosa Paraguay SA se va a contactar con vos para enviarte los datos de la cuenta.
             </p>
           )}
         </div>

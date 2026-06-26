@@ -244,10 +244,15 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
 
       {showInAuctionWarning && (
         <div className="mb-5 rounded-xl border border-amber-500/40 bg-amber-500/[0.06] px-4 py-3 flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
-          <AlertTriangle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" strokeWidth={2.25} />
+          <AlertTriangle
+            className="w-4 h-4 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5"
+            strokeWidth={2.25}
+          />
           <div>
-            <p className="text-sm font-medium text-amber-200">Vehículo en subasta activa</p>
-            <p className="text-xs text-amber-200/80 mt-1">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-200">
+              Vehículo en subasta activa
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-200/80 mt-1">
               Cualquier cambio que hagas será visible inmediatamente para los buyers que están
               pujando. Editá con cuidado.
             </p>

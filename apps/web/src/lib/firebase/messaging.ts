@@ -22,13 +22,43 @@ async function registerSw(): Promise<ServiceWorkerRegistration | null> {
     appId: process.env['NEXT_PUBLIC_FIREBASE_APP_ID'] ?? '',
   });
   try {
-    return await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, {
+    const reg = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, {
       scope: '/',
     });
+    // getToken -> PushManager.subscribe needs an ACTIVE service worker. Right
+    // after register() the worker is usually still 'installing'/'waiting', so
+    // subscribe throws "no active Service Worker". Wait until it's active.
+    if (!reg.active) {
+      await waitForActive(reg);
+    }
+    return reg;
   } catch (err) {
     console.warn('[messaging] SW registration failed', err);
     return null;
   }
+}
+
+function waitForActive(reg: ServiceWorkerRegistration): Promise<void> {
+  return new Promise((resolve) => {
+    // Already active by the time we check.
+    if (reg.active) return resolve();
+    const sw = reg.installing ?? reg.waiting;
+    if (!sw) {
+      // Fall back to the global ready promise (resolves once an active worker
+      // controls the page).
+      void navigator.serviceWorker.ready.then(() => resolve());
+      return;
+    }
+    const onChange = () => {
+      if (sw.state === 'activated') {
+        sw.removeEventListener('statechange', onChange);
+        resolve();
+      }
+    };
+    sw.addEventListener('statechange', onChange);
+    // Safety timeout so we never hang the opt-in flow forever.
+    setTimeout(resolve, 5000);
+  });
 }
 
 let cached: Messaging | null = null;

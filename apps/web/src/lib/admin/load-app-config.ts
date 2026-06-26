@@ -22,6 +22,9 @@ export interface AppConfigSnapshot {
     bankAccountType: string;
     bankAccountNumber: string;
     bankRuc: string;
+    bankNamePyg: string;
+    bankAccountNumberPyg: string;
+    bankAccountTypePyg: string;
     depositPercent: number;
     deadlineHours: number;
     instructionsEs: string;
@@ -54,6 +57,9 @@ const DEFAULTS: AppConfigSnapshot = {
     bankAccountType: '',
     bankAccountNumber: '',
     bankRuc: '',
+    bankNamePyg: '',
+    bankAccountNumberPyg: '',
+    bankAccountTypePyg: '',
     depositPercent: 0.1,
     deadlineHours: 24,
     instructionsEs: '',
@@ -112,6 +118,11 @@ export const loadAppConfigSnapshot = cache(async (): Promise<AppConfigSnapshot> 
       bankAccountType: (p['bankAccountType'] as string) ?? DEFAULTS.payment.bankAccountType,
       bankAccountNumber: (p['bankAccountNumber'] as string) ?? DEFAULTS.payment.bankAccountNumber,
       bankRuc: (p['bankRuc'] as string) ?? DEFAULTS.payment.bankRuc,
+      bankNamePyg: (p['bankNamePyg'] as string) ?? DEFAULTS.payment.bankNamePyg,
+      bankAccountNumberPyg:
+        (p['bankAccountNumberPyg'] as string) ?? DEFAULTS.payment.bankAccountNumberPyg,
+      bankAccountTypePyg:
+        (p['bankAccountTypePyg'] as string) ?? DEFAULTS.payment.bankAccountTypePyg,
       depositPercent: (p['depositPercent'] as number) ?? DEFAULTS.payment.depositPercent,
       deadlineHours: (p['deadlineHours'] as number) ?? DEFAULTS.payment.deadlineHours,
       instructionsEs: (p['instructionsEs'] as string) ?? DEFAULTS.payment.instructionsEs,

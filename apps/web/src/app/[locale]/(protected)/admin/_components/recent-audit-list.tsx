@@ -43,7 +43,7 @@ interface Descriptor {
 const DESCRIPTORS: Record<string, Descriptor> = {
   'user.create': {
     icon: UserPlus,
-    tone: { bg: 'bg-emerald-500/10', text: 'text-emerald-300' },
+    tone: { bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300' },
     title: 'Se creó un nuevo usuario',
   },
   'user.update_role': {
@@ -58,7 +58,7 @@ const DESCRIPTORS: Record<string, Descriptor> = {
   },
   'user.password_reset_generated': {
     icon: KeyRound,
-    tone: { bg: 'bg-amber-500/10', text: 'text-amber-300' },
+    tone: { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300' },
     title: 'Se generó un link para restablecer contraseña',
   },
   'user.revoke_sessions': {
@@ -78,12 +78,12 @@ const DESCRIPTORS: Record<string, Descriptor> = {
   },
   'auction.close': {
     icon: CheckCircle2,
-    tone: { bg: 'bg-emerald-500/10', text: 'text-emerald-300' },
+    tone: { bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300' },
     title: 'Se finalizó una subasta',
   },
   'app_config.update': {
     icon: Settings,
-    tone: { bg: 'bg-amber-500/10', text: 'text-amber-300' },
+    tone: { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300' },
     title: 'Se actualizó la configuración global',
   },
 };

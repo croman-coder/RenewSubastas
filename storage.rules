@@ -32,11 +32,10 @@ service firebase.storage {
       allow read: if request.auth != null
                   && request.auth.token.status == 'active'
                   && request.auth.token.role in ['staff', 'admin', 'finanzas'];
-      // A buyer may only write a file whose name starts with their own uid
-      // (the `{uid}-{ts}.{ext}` convention). Without this, any buyer could
-      // plant a forged receipt under another buyer's uid prefix or into an
-      // auction they didn't win. The submitPaymentProof callable still
-      // re-validates winnerUid before acting on the proof.
+      // Buyer may only write a file whose name starts with their own uid
+      // (the client uploads `{uid}-{ts}.{ext}`). This stops one buyer from
+      // overwriting another's proof or dumping files into someone else's
+      // auction folder. submitPaymentProof still verifies winnerUid.
       allow write: if request.auth != null
                    && request.auth.token.status == 'active'
                    && request.auth.token.role == 'buyer'

@@ -141,6 +141,10 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
         'won',
         query(
           collection(fb.db, 'auctions'),
+          // audience filter is required for the buyer auctions read rule to
+          // pass (rules only allow buyers to read their own segment). The
+          // winner is always in their own segment, so this never hides a win.
+          where('audience', '==', buyerAudience),
           where('winnerUid', '==', uid),
           where('status', '==', 'ended'),
           orderBy('updatedAt', 'desc'),

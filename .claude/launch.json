@@ -12,6 +12,12 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-lc", "cd apps/web && npx next dev --port 3010"],
       "port": 3010
+    },
+    {
+      "name": "web-prod",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd apps/web && npx next start --port 3011"],
+      "port": 3011
     }
   ]
 }

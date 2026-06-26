@@ -149,7 +149,7 @@ function RequestRow({
             <p className="text-[11px] text-text-muted/80 num-tab mt-0.5">
               Solicitado {requestedAt}
               {req.requestCount > 1 && (
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 text-[10px] uppercase tracking-wide">
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] uppercase tracking-wide">
                   {req.requestCount} intentos
                 </span>
               )}

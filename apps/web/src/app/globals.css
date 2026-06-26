@@ -430,8 +430,25 @@
       0 0 16px oklch(1 0 0 / 0.12);
   }
   .glass-primary:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.985);
     transition-duration: 80ms;
+  }
+  /* Soft white glow ring that blooms on hover (monochrome "neon" feel,
+     no color). Sits just outside the pill, behind it. */
+  .glass-primary::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    box-shadow: 0 0 0 0 oklch(1 0 0 / 0);
+    transition: box-shadow 260ms ease-out;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .glass-primary:hover::before {
+    box-shadow:
+      0 0 18px 1px oklch(1 0 0 / 0.18),
+      0 0 4px 0 oklch(1 0 0 / 0.25);
   }
   .glass-primary::after {
     content: '';

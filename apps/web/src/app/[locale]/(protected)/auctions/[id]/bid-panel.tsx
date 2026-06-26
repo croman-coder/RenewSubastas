@@ -1,6 +1,5 @@
 'use client';
 import { useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
@@ -26,6 +25,9 @@ const fmtUsd = (n: number) =>
 interface Props {
   auctionId: string;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  /** endsAt in ms. When it has passed, the auction is effectively over even
+   *  if the scheduled tick hasn't flipped status to 'ended' yet. */
+  endsAtMs: number;
   startingPrice: number;
   currentBid: number;
   bidIncrement: number;
@@ -37,6 +39,7 @@ interface Props {
 export function BidPanel({
   auctionId,
   status,
+  endsAtMs,
   startingPrice,
   currentBid,
   bidIncrement,
@@ -45,12 +48,18 @@ export function BidPanel({
   allowManualIncrement,
 }: Props) {
   const t = useTranslations('buyer.auctions.detail.bidPanel');
-  const router = useRouter();
   const minRequired = toCents(currentBid > 0 ? currentBid + bidIncrement : startingPrice);
   const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
-  const isLive = status === 'live';
+  // Time-based end: the status field flips to 'ended' only on the next
+  // scheduled tick (up to ~1 min late). The clock is the source of truth for
+  // whether bidding is still open, so we close the panel as soon as endsAt
+  // passes instead of waiting for the tick.
+  const timeEnded = Date.now() >= endsAtMs;
+  const isLive = status === 'live' && !timeEnded;
+  const ended = status === 'ended' || status === 'cancelled' || timeEnded;
   const isWinning = currentBidderUid === myUid && currentBid > 0;
+  const iWon = ended && status !== 'cancelled' && isWinning;
 
   async function placeBid(rawAmount: number) {
     if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
@@ -68,7 +77,11 @@ export function BidPanel({
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
       toast.success(t('success', { amount: fmtUsd(amount) }));
-      router.refresh();
+      // No router.refresh() here: the auction detail subscribes to the
+      // auction doc via onSnapshot, so the new price, bid count and end time
+      // stream in on their own. Forcing an RSC refetch added a full
+      // server round-trip that kept the button in "Pujando…" long after the
+      // bid had already landed.
     } catch (e) {
       const msg = (e as { message?: string }).message ?? '';
       const code = (e as { code?: string }).code ?? '';
@@ -89,6 +102,38 @@ export function BidPanel({
   }
 
   if (!isLive) {
+    // Auction over and this buyer holds the top bid -> they won.
+    if (iWon) {
+      return (
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 animate-in fade-in zoom-in-95 duration-300">
+          <div
+            aria-hidden
+            className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"
+          />
+          <div className="relative flex items-start gap-3">
+            <span className="w-10 h-10 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
+              <Trophy
+                className="w-5 h-5 text-emerald-700 dark:text-emerald-300"
+                strokeWidth={2.5}
+                style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
+              />
+            </span>
+            <div className="min-w-0">
+              <p
+                className="text-lg font-bold tracking-tight text-emerald-700 dark:text-emerald-300 leading-tight"
+                style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
+              >
+                ¡Ganaste la subasta!
+              </p>
+              <p className="text-sm text-emerald-700/80 dark:text-emerald-300/70 mt-1 leading-relaxed">
+                Adjudicaste este vehículo por USD {fmtUsd(currentBid)}. Te enviamos los pasos para
+                pagar la seña por correo.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
         <div className="flex items-center gap-2">
@@ -97,7 +142,9 @@ export function BidPanel({
           </span>
           <h3 className="text-sm font-semibold tracking-tight text-text-strong">{t('title')}</h3>
         </div>
-        <p className="text-sm text-text-muted">{t('errors.notLive')}</p>
+        <p className="text-sm text-text-muted">
+          {ended ? 'Subasta finalizada.' : t('errors.notLive')}
+        </p>
       </div>
     );
   }
@@ -134,19 +181,21 @@ export function BidPanel({
           <div className="relative flex items-center gap-3">
             <span className="w-9 h-9 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
               <Trophy
-                className="w-5 h-5 text-emerald-300"
+                className="w-5 h-5 text-emerald-700 dark:text-emerald-300"
                 strokeWidth={2.5}
                 style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
               />
             </span>
             <div className="min-w-0">
               <p
-                className="text-base sm:text-lg font-bold tracking-tight text-emerald-300 leading-tight"
+                className="text-base sm:text-lg font-bold tracking-tight text-emerald-700 dark:text-emerald-300 leading-tight"
                 style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
               >
                 {t('winning')}
               </p>
-              <p className="text-xs text-emerald-300/70 mt-0.5">Sos el mejor postor por ahora</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300/70 mt-0.5">
+                Sos el mejor postor por ahora
+              </p>
             </div>
           </div>
         </div>

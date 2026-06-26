@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { adminDb, adminStorage } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
-import { loadAppConfig } from '../lib/config.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import {
   emailShell,
@@ -30,7 +29,12 @@ export interface SubmitPaymentProofResult {
   ok: true;
 }
 
-const ADMIN_TO = 'croman@santarosa.com.py';
+// Payment-proof notifications go to administración (who verifies + approves
+// the deposit with the finanzas role), CC to rsanchez, BCC to croman for
+// oversight without exposing his address on the thread.
+const ADMIN_TO = 'administracion@santarosa.com.py';
+const ADMIN_CC = 'rsanchez@santarosa.com.py';
+const ADMIN_BCC = 'croman@santarosa.com.py';
 
 const fmtUsd = (n: number) =>
   n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -143,8 +147,6 @@ export async function submitPaymentProofHandler(
     console.warn('[submitPaymentProof] could not download proof for attachment', err);
   }
 
-  const cfg = await loadAppConfig();
-
   const vehName = `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`;
   const vehicleRows: Array<[string, string]> = [
     ['Vehículo', vehName],
@@ -191,9 +193,9 @@ export async function submitPaymentProofHandler(
   );
 
   await sendEmail({
-    // Prefer the admin-configured contact email (app_config.payment.contactEmail)
-    // and fall back to the built-in operations address.
-    to: cfg.payment.contactEmail || ADMIN_TO,
+    to: ADMIN_TO,
+    cc: ADMIN_CC,
+    bcc: ADMIN_BCC,
     subject: `Comprobante ${vanity} · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
     html,
     ...(attachment ? { attachments: [attachment] } : {}),

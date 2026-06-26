@@ -101,10 +101,15 @@ export const sendAuctionWon = onDocumentUpdated(
 
     const bankRows: Array<[string, string]> = [];
     if (p.bankAccountHolder) bankRows.push(['Titular', p.bankAccountHolder]);
-    if (p.bankName) bankRows.push(['Banco', p.bankName]);
-    if (p.bankAccountType) bankRows.push(['Tipo de cuenta', p.bankAccountType]);
-    if (p.bankAccountNumber) bankRows.push(['Número de cuenta', p.bankAccountNumber]);
     if (p.bankRuc) bankRows.push(['RUC', p.bankRuc]);
+    // USD account
+    if (p.bankName) bankRows.push(['Banco (USD)', p.bankName]);
+    if (p.bankAccountType) bankRows.push(['Tipo de cuenta (USD)', p.bankAccountType]);
+    if (p.bankAccountNumber) bankRows.push(['Cuenta (USD)', p.bankAccountNumber]);
+    // PYG account
+    if (p.bankNamePyg) bankRows.push(['Banco (Gs.)', p.bankNamePyg]);
+    if (p.bankAccountTypePyg) bankRows.push(['Tipo de cuenta (Gs.)', p.bankAccountTypePyg]);
+    if (p.bankAccountNumberPyg) bankRows.push(['Cuenta (Gs.)', p.bankAccountNumberPyg]);
 
     const contactLine = [p.contactEmail, p.contactPhone].filter(Boolean).join(' · ');
 

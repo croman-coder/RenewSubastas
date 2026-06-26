@@ -105,5 +105,12 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
       allow create: if false;
     }
+
+    // Self-issued password-set tokens. Only the Admin SDK (Cloud Functions)
+    // ever touches these; clients have no access at all, so a leaked token
+    // hash can't be read or forged from the browser.
+    match /password_set_tokens/{id} {
+      allow read, write: if false;
+    }
   }
 }

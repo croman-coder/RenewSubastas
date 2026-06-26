@@ -28,6 +28,10 @@ export interface SendEmailArgs {
   to: string;
   subject: string;
   html: string;
+  /** Carbon copy recipients. */
+  cc?: string | string[];
+  /** Blind carbon copy recipients. */
+  bcc?: string | string[];
   /** Optional file attachments (e.g. payment receipt). */
   attachments?: EmailAttachment[];
   /**
@@ -44,7 +48,7 @@ export interface SendEmailResult {
   reason?: string;
 }
 
-const DEFAULT_FROM = 'Renew Subastas <subastas@renewsubastas.com.py>';
+const DEFAULT_FROM = 'Renew Subastas <noreply@renewsubastas.com.py>';
 
 /**
  * Resolve the From header. Precedence: explicit `from` arg > the
@@ -70,6 +74,8 @@ export async function sendEmail({
   to,
   subject,
   html,
+  cc,
+  bcc,
   attachments,
   from,
 }: SendEmailArgs): Promise<SendEmailResult> {
@@ -84,6 +90,8 @@ export async function sendEmail({
       to,
       subject,
       html,
+      ...(cc ? { cc } : {}),
+      ...(bcc ? { bcc } : {}),
       ...(attachments && attachments.length > 0 ? { attachments } : {}),
     });
     if (result.error) {

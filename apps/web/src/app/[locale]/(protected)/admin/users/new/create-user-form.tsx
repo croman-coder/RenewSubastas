@@ -317,13 +317,15 @@ export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
         {resetLink && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.06] p-5 animate-in fade-in zoom-in-95 duration-300">
             <div className="flex items-start gap-3">
-              <span className="shrink-0 w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-300 grid place-items-center">
+              <span className="shrink-0 w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 grid place-items-center">
                 <KeyRound className="w-4 h-4" strokeWidth={2.25} />
               </span>
               <div className="flex-1 min-w-0 space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-emerald-200">Usuario creado</p>
-                  <p className="text-xs text-emerald-200/80 mt-0.5">
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+                    Usuario creado
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-200/80 mt-0.5">
                     Se envió un email de bienvenida. Si no llega, copiá este link y mandalo
                     manualmente.
                   </p>

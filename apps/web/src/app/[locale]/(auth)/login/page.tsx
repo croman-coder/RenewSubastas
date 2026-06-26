@@ -2,10 +2,7 @@ import { useTranslations } from 'next-intl';
 import { Gavel, ShieldCheck, Sparkles } from 'lucide-react';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { PixelGrid } from '@/components/brand/pixel-grid';
-import { SplineRobot } from '@/components/brand/spline-robot';
 import { LoginForm } from './login-form';
-
-const ROBOT_SCENE_URL = 'https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PageProps {
@@ -77,8 +74,8 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               <span className="underline decoration-2 underline-offset-[6px]">con confianza</span>.
             </h2>
             <p className="text-base text-text-muted leading-relaxed">
-              Pujá en tiempo real, simulá tus cuotas en guaraníes, y recibí notificaciones al
-              instante cuando alguien supera tu oferta.
+              Pujá en tiempo real y recibí notificaciones al instante cuando alguien supera tu
+              oferta.
             </p>
 
             <ul className="space-y-4 pt-4">
@@ -89,8 +86,8 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               />
               <Feature
                 icon={Sparkles}
-                title="Cuotero en guaraníes"
-                description="Calculá la cuota mensual con la entrega inicial que vos definas."
+                title="Catálogo seleccionado"
+                description="Vehículos verificados por Santa Rosa Paraguay SA, listos para subastar."
               />
               <Feature
                 icon={ShieldCheck}
@@ -104,19 +101,12 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             className="text-xs text-text-muted/70 animate-in fade-in duration-1000"
             style={{ animationDelay: '300ms', animationFillMode: 'both' }}
           >
-            © {new Date().getFullYear()} Renew Subastas · Santa Rosa Automotores
+            © {new Date().getFullYear()} Renew Subastas · Santa Rosa Paraguay SA
           </p>
         </aside>
 
-        {/* Right side: login card, with the interactive 3D robot behind it */}
+        {/* Right side: login card */}
         <section className="relative flex items-center justify-center overflow-hidden px-5 py-10 sm:px-8 lg:px-12">
-          {/* Interactive 3D robot backdrop. Sits behind the card; a dark wash
-              keeps the form legible over it. Hidden on small screens for perf. */}
-          <SplineRobot
-            scene={ROBOT_SCENE_URL}
-            className="pointer-events-none absolute inset-0 z-0 hidden opacity-60 lg:block [mask-image:radial-gradient(75%_75%_at_55%_45%,black,transparent_85%)]"
-          />
-          <div aria-hidden className="absolute inset-0 z-[1] hidden bg-bg-base/45 lg:block" />
           <div className="relative z-10 w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Mobile-only wordmark. The desktop view shows it on the left aside. */}
             <div className="lg:hidden flex flex-col items-center mb-10">

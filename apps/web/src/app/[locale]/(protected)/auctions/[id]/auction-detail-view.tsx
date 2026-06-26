@@ -114,7 +114,11 @@ export function AuctionDetailView({
   const displayPrice = live.currentBid > 0 ? live.currentBid : initial.startingPrice;
   const description =
     locale === 'en' && initial.descriptionEn ? initial.descriptionEn : initial.descriptionEs;
-  const isLive = live.status === 'live';
+  // Once the clock runs out, treat the auction as ended even though the
+  // scheduled tick may not have flipped the status field yet (it runs ~1/min).
+  // Otherwise the UI keeps saying "En curso" with a live timer at 0.
+  const effectiveStatus = live.status === 'live' && remainingMs <= 0 ? 'ended' : live.status;
+  const isLive = effectiveStatus === 'live';
   const isUrgent = isLive && remainingMs > 0 && remainingMs < 60 * 60 * 1000;
   const isCritical = isLive && remainingMs > 0 && remainingMs < 60 * 1000;
 
@@ -168,7 +172,7 @@ export function AuctionDetailView({
 
           <header className="space-y-3">
             <div className="flex items-center gap-2">
-              <StatusChip status={live.status} label={tStatus(live.status)} />
+              <StatusChip status={effectiveStatus} label={tStatus(effectiveStatus)} />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-strong leading-[1.05]">
               {initial.make} {initial.model}{' '}
@@ -232,6 +236,7 @@ export function AuctionDetailView({
           <BidPanel
             auctionId={initial.id}
             status={live.status}
+            endsAtMs={live.endsAtMs}
             startingPrice={initial.startingPrice}
             currentBid={live.currentBid}
             bidIncrement={initial.bidIncrement}
@@ -302,8 +307,8 @@ function Spec({ label, value }: { label: string; value: string | number }) {
 
 function StatusChip({ status, label }: { status: string; label: string }) {
   const map: Record<string, string> = {
-    live: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
-    scheduled: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    live: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30',
+    scheduled: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30',
     ended: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30',
     cancelled: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
   };
@@ -364,7 +369,7 @@ function CountdownCard({
       : urgent
         ? {
             glow: 'shadow-[0_0_36px_-6px_rgba(251,146,60,0.5)]',
-            text: 'text-amber-300',
+            text: 'text-amber-700 dark:text-amber-300',
             accent: 'from-amber-500/0 via-amber-400/70 to-amber-500/0',
           }
         : {

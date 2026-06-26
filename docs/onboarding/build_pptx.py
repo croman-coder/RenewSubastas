@@ -207,7 +207,7 @@ def build_cover(prs, s, deck_short):
     tb, tf = txt(sl, x, SH - Emu(int(0.7 * EMU_IN)), CONTENT_W, Emu(int(0.3 * EMU_IN)))
     p = tf.paragraphs[0]
     run(p, deck_short, Pt(9), MUTED, bold=True, spacing=0.6)
-    run(p, "    Santa Rosa Automotores \u00b7 Paraguay", Pt(9), RGBColor(0x52, 0x52, 0x5B))
+    run(p, "    Santa Rosa Paraguay SA \u00b7 Paraguay", Pt(9), RGBColor(0x52, 0x52, 0x5B))
     return sl
 
 

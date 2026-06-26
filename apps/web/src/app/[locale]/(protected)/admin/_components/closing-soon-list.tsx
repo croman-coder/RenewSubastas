@@ -26,7 +26,7 @@ export function ClosingSoonList({ locale, items }: Props) {
     >
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-md bg-amber-500/10 text-amber-300 grid place-items-center">
+          <span className="w-7 h-7 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 grid place-items-center">
             <Timer className="w-3.5 h-3.5" strokeWidth={2.25} />
           </span>
           <h2 className="text-sm font-semibold text-text-strong tracking-tight">
@@ -73,7 +73,9 @@ export function ClosingSoonList({ locale, items }: Props) {
                     <span
                       className={
                         'inline-flex items-center gap-1 text-xs num-tab ' +
-                        (urgent ? 'text-amber-300 font-medium' : 'text-text-muted')
+                        (urgent
+                          ? 'text-amber-700 dark:text-amber-300 font-medium'
+                          : 'text-text-muted')
                       }
                     >
                       <Clock className="w-3 h-3" />
