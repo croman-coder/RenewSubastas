@@ -18,36 +18,22 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      // Finanzas can read user docs to resolve winner identity + contact
-      // on the sales ledger. Admin sees all; everyone reads their own.
-      allow read:   if isAdmin() || isFinanzas() || request.auth.uid == uid;
-      // A user editing their own doc cannot change any of the privileged
-      // fields. `role` and `status` gate access; `createdBy` is an audit
-      // anchor; `profile.audience` decides which catalog they can see (a
-      // retail buyer could otherwise self-promote to wholesale and read
-      // the opposite segment). All four must stay equal to their previous
-      // value — checked with the explicit-equality pattern so missing
-      // fields can't be used to bypass the check.
+      // Admin sees all; everyone reads their own. Finanzas no longer reads
+      // user docs directly — it would otherwise expose every user's PII
+      // (documentNumber, email, phone). Winner contact for the sales ledger
+      // is resolved through the `getWinnerContact` Cloud Function, which
+      // returns only name + email + phone and only for an actual winner.
+      allow read:   if isAdmin() || request.auth.uid == uid;
+      // Allowlist (fail-closed): from the client a user may only change
+      // `favorites` (the favorite-toggle). Everything else on the user doc —
+      // role, status, createdBy, profile, audience, fcmTokens, preferences,
+      // and any field added in the future — is server-managed and written via
+      // the Admin SDK (which bypasses rules). Because the allowlist names only
+      // the safe field, no privileged field can be tampered with from the
+      // client, and new sensitive fields are protected automatically.
       allow update: if request.auth.uid == uid
-                    && request.resource.data.role == resource.data.role
-                    && request.resource.data.status == resource.data.status
-                    && request.resource.data.createdBy == resource.data.createdBy
-                    // Use the map-of-keys trick so this also blocks deletes
-                    // of the audience field (a delete would set the
-                    // post-write value to undefined and bypass an equality
-                    // check). `get(...).audience` returns null when the
-                    // field doesn't exist on either side, so legacy users
-                    // without profile.audience can still update other
-                    // fields freely.
-                    && request.resource.data.get(['profile', 'audience'], null)
-                       == resource.data.get(['profile', 'audience'], null)
-                    // `fcmTokens` is written only by the savePushToken
-                    // callable (which runs with admin SDK and bypasses
-                    // rules). A buyer cannot read or modify it from the
-                    // client — leaks would expose every device the user
-                    // has registered for push.
-                    && request.resource.data.get('fcmTokens', null)
-                       == resource.data.get('fcmTokens', null);
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['favorites']);
       allow create, delete: if false;
     }
 
@@ -69,20 +55,29 @@ service cloud.firestore {
       allow create, update, delete: if false;
 
       match /bids/{bidId} {
-        // Bid history of an auction follows the auction's read rule via the
-        // parent's audience, but Firestore evaluates each rule independently
-        // so we replicate the audience guard against the parent doc here.
-        allow read: if isAdmin() || isStaff() || isBuyer();
+        // Bid history follows the auction's audience. Firestore evaluates each
+        // rule independently, so we actually re-apply the audience guard here
+        // by reading the parent auction's `audience` — without this a retail
+        // buyer could read wholesale bid history (amounts + bidder uids) and
+        // vice-versa. Admin/staff see all.
+        allow read: if isAdmin()
+                    || isStaff()
+                    || (isBuyer()
+                        && audienceMatches(
+                             get(/databases/$(db)/documents/auctions/$(id)).data.audience));
         allow create, update, delete: if false;
       }
     }
 
-    // Collection group rule: enables collectionGroup('bids') queries (used
-    // by the admin/staff notification bell to surface every new bid across
-    // all auctions in real time). Without this wildcard, Firestore rejects
-    // collection group reads even though the per-document rule allows them.
+    // Collection group rule: enables collectionGroup('bids') queries (used by
+    // the staff/admin/finanzas notification bell to surface every new bid
+    // across all auctions in real time). Restricted to internal roles only — a
+    // buyer has no need to read bids across all auctions, and allowing it would
+    // leak the other audience's bid history (the wildcard can't cheaply
+    // re-check each parent's audience). Buyers read bids per-auction via the
+    // rule above, which does re-check audience.
     match /{path=**}/bids/{bidId} {
-      allow read: if isSignedIn() && isActive();
+      allow read: if isAdmin() || isStaff() || isFinanzas();
     }
 
     match /app_config/{doc} {
@@ -92,6 +87,14 @@ service cloud.firestore {
 
     match /audit_logs/{id} {
       allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // Email notification log (te-superaron / ganaste). Written only by the
+    // server (Admin SDK bypasses rules); read by admin/staff for the Pujas
+    // panel. Holds toEmail, so it stays off-limits to buyers/finanzas.
+    match /notifications/{id} {
+      allow read:  if isAdmin() || isStaff();
       allow write: if false;
     }
 

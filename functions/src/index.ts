@@ -18,6 +18,8 @@ export { updateAuction } from './auctions/updateAuction.js';
 export { deleteAuction } from './auctions/deleteAuction.js';
 export { confirmAuctionPayment } from './auctions/confirmAuctionPayment.js';
 export { submitPaymentProof } from './auctions/submitPaymentProof.js';
+export { getWinnerContact } from './auctions/getWinnerContact.js';
+export { resolveBidders } from './auctions/resolveBidders.js';
 export { deleteVehicle } from './vehicles/deleteVehicle.js';
 export { placeBid } from './auctions/placeBid.js';
 export { tickAuctions } from './auctions/tickAuctions.js';

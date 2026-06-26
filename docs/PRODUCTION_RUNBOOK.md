@@ -22,7 +22,7 @@ Before the first prod deploy (`carbid-59ef5`):
 
 1. https://console.cloud.google.com/apis/credentials?project=carbid-59ef5
 2. Edit the auto-generated browser key:
-   - Application restrictions → HTTP referrers: `carbid.com.py/*`, `*.netlify.app/*`
+   - Application restrictions → HTTP referrers: `renewsubastas.com.py/*`, `*.netlify.app/*`
    - API restrictions → Restrict to: Identity Toolkit, Firestore, Cloud Storage, Cloud Functions, Firebase App Check, Firebase Installations
 3. Save.
 

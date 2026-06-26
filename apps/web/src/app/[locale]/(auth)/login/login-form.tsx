@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
@@ -34,6 +34,19 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   const [entering, setEntering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // If we landed here because the server bounced a disabled/revoked/expired
+  // session, the (httpOnly) __session cookie is still set — only a server
+  // route can clear it. Clear it (and any client auth state) on mount so the
+  // user isn't stuck in a redirect loop and a fresh login can proceed cleanly.
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('error');
+    if (reason === 'disabled' || reason === 'expired' || reason === 'no_role') {
+      void fetch('/api/session', { method: 'DELETE' }).catch(() => {});
+      void fb.auth.signOut().catch(() => {});
+      if (reason === 'disabled') setError(t('errors.accountDisabled'));
+    }
+  }, [t]);
 
   const {
     register,
@@ -73,7 +86,12 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         return;
       }
       const { role, audience } = (await res.json()) as { role: Role; audience: Audience | null };
-      const target = from && from.startsWith('/') ? from : homeFor(role, audience ?? undefined);
+      // Only accept a `from` that is a single-slash absolute path. Reject
+      // protocol-relative ("//evil.com") and backslash ("/\evil.com") forms
+      // that a browser can normalize into an off-site redirect — otherwise a
+      // crafted ?from= turns the login into an open-redirect.
+      const safeFrom = from && /^\/(?![/\\])/.test(from) ? from : null;
+      const target = safeFrom ?? homeFor(role, audience ?? undefined);
       // Flip to "entering" before the navigation kicks off so the user sees
       // the handoff screen for the entire RSC fetch, not just for the part
       // before router.replace returns.

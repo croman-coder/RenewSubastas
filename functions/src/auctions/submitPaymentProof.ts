@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { adminDb, adminStorage } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
-import { loadAppConfig } from '../lib/config.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import {
   emailShell,
@@ -76,6 +75,17 @@ export async function submitPaymentProofHandler(
   if (a['status'] !== 'ended' || a['outcome'] !== 'sold') {
     throw new HttpsError('failed-precondition', 'Auction is not in a sold state');
   }
+  // Reject proofs once the payment window is closed: a 'forfeited' (deadline
+  // passed, swept by tickAuctions) or already 'paid' auction must not accept a
+  // late comprobante — otherwise a buyer could "pay" for a car that was
+  // already returned to the catalog and possibly re-sold.
+  if (a['paymentStatus'] && a['paymentStatus'] !== 'pending_payment') {
+    const reason =
+      a['paymentStatus'] === 'paid'
+        ? 'El pago de esta subasta ya fue confirmado.'
+        : 'El plazo para enviar el comprobante venció.';
+    throw new HttpsError('failed-precondition', reason);
+  }
 
   // Buyer dossier.
   const uSnap = await adminDb().doc(`users/${uid}`).get();
@@ -136,9 +146,6 @@ export async function submitPaymentProofHandler(
   } catch (err) {
     console.warn('[submitPaymentProof] could not download proof for attachment', err);
   }
-
-  const cfg = await loadAppConfig();
-  const p = cfg.payment;
 
   const vehName = `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`;
   const vehicleRows: Array<[string, string]> = [

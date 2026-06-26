@@ -57,17 +57,7 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
   const amount = Math.round(parsed.data.amount * 100) / 100;
 
   const db = adminDb();
-
-  // ---- Rate limit (outside transaction) ----
   const rlRef = db.doc(`rate_limits/bids_${uid}`);
-  const rlSnap = await rlRef.get();
-  const now = Date.now();
-  const recent = ((rlSnap.data()?.['timestamps'] as number[] | undefined) ?? []).filter(
-    (t) => now - t < RATE_LIMIT_WINDOW_MS,
-  );
-  if (recent.length >= RATE_LIMIT_MAX) {
-    throw new HttpsError('resource-exhausted', 'Bid rate limit exceeded (10/min)');
-  }
 
   // ---- Anti-sniping config + max-bid cap (outside transaction; cached doc) ----
   const cfgSnap = await db.doc('app_config/global').get();
@@ -100,6 +90,26 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
   };
 
   const result = await db.runTransaction(async (tx) => {
+    // Capture the clock inside the transaction so each optimistic retry
+    // re-reads it — keeps the "ended" check and the anti-sniping extension
+    // consistent with the attempt that actually commits (not a stale value
+    // from before contention forced a retry).
+    const now = Date.now();
+
+    // ---- Rate limit (inside the transaction) ----
+    // Read-check-write must be atomic: doing it outside the transaction let
+    // concurrent bids all read the same sub-limit array, pass the check, and
+    // clobber each other's append — effectively no limit under a burst. The
+    // rlRef read here joins the transaction's read set, so Firestore's
+    // optimistic concurrency serializes rapid bids from the same buyer.
+    const rlSnap = await tx.get(rlRef);
+    const recent = ((rlSnap.data()?.['timestamps'] as number[] | undefined) ?? []).filter(
+      (t) => now - t < RATE_LIMIT_WINDOW_MS,
+    );
+    if (recent.length >= RATE_LIMIT_MAX) {
+      throw new HttpsError('resource-exhausted', 'Bid rate limit exceeded (10/min)');
+    }
+
     const aSnap = await tx.get(auctionRef);
     if (!aSnap.exists) throw new HttpsError('not-found', 'Auction not found');
     const a = aSnap.data()!;
@@ -125,10 +135,14 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     if (endsAt.toMillis() <= now) {
       throw new HttpsError('failed-precondition', 'Auction has ended');
     }
-    // Self-outbid is intentionally allowed: a buyer who is already winning can
-    // raise their own bid above the current top to defend it preemptively or
-    // to register a higher proxy ceiling. The minRequired check below still
-    // enforces a strictly increasing bid amount.
+    // Self-outbid is forbidden: a buyer who is already the highest bidder
+    // cannot bid again. Raising your own winning bid only inflates the price
+    // you'll pay with no benefit, and it muddies the outbid-notification
+    // logic. The UI also hides the bid action while you're winning; this is
+    // the server-side enforcement of the same rule.
+    if (a['currentBidderUid'] === uid) {
+      throw new HttpsError('failed-precondition', 'Ya sos el mejor postor de esta subasta.');
+    }
 
     const currentBid = (a['currentBid'] as number) ?? 0;
     const startingPrice = (a['startingPrice'] as number) ?? 0;
@@ -145,8 +159,13 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
       nextEndsAt = Timestamp.fromMillis(now + antiSnipingSeconds * 1000);
     }
 
+    // The bidder we're displacing (the prior top bidder). Recorded on the
+    // new bid doc so sendBidOutbid can email exactly the right person instead
+    // of querying bid history by timestamp (which is racy and needs an index).
+    const displacedBuyerUid = (a['currentBidderUid'] as string | undefined) ?? null;
+
     // Mark previous winning bid as outbid
-    if (a['currentBidderUid']) {
+    if (displacedBuyerUid) {
       const prevQ = await tx.get(
         auctionRef.collection('bids').where('status', '==', 'winning').limit(1),
       );
@@ -162,6 +181,10 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
       amount,
       createdAt: FieldValue.serverTimestamp(),
       status: 'winning',
+      displacedBuyerUid,
+      // Prior top bid amount, so the outbid email can show the displaced
+      // bidder their own previous figure without an extra query.
+      displacedAmount: displacedBuyerUid ? currentBid : null,
     });
 
     tx.update(auctionRef, {
@@ -172,11 +195,12 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    // Record this bid's timestamp in the rate-limit window (atomic with the
+    // bid itself).
+    tx.set(rlRef, { timestamps: [...recent, now] });
+
     return { bidId: bidRef.id, newCurrentBid: amount, endsAtMs: nextEndsAt.toMillis() };
   });
-
-  // ---- Update rate limit doc (outside transaction) ----
-  await rlRef.set({ timestamps: [...recent, now] }, { merge: true });
 
   return result;
 }

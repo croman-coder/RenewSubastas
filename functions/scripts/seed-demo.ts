@@ -127,6 +127,7 @@ async function main() {
       fuelType: v.fuelType,
       color: v.color,
       condition: v.condition,
+      audience: 'retail',
       description: { es: v.descriptionEs },
       images: v.imageSeeds.map((seed, order) => ({
         url: imageUrl(seed, 1200),
@@ -195,6 +196,7 @@ async function main() {
     await auctionRef.set({
       id: auctionRef.id,
       vehicleId,
+      audience: 'retail',
       vehicleSnapshot: {
         make: v.make,
         model: v.model,

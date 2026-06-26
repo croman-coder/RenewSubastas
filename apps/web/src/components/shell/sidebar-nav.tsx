@@ -12,6 +12,7 @@ import {
   Heart,
   Trophy,
   KeyRound,
+  Activity,
   Loader2,
   type LucideIcon,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ const ICON_MAP: Record<IconKey, LucideIcon> = {
   heart: Heart,
   trophy: Trophy,
   key: KeyRound,
+  activity: Activity,
 };
 
 interface Props {

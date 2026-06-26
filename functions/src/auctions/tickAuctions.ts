@@ -57,74 +57,89 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
   const depositPercent = cfg?.payment.depositPercent ?? 0.1;
 
   for (const doc of liveSnap.docs) {
-    const result = await db.runTransaction(async (tx) => {
-      const fresh = await tx.get(doc.ref);
-      if (!fresh.exists) return null;
-      const a = fresh.data()!;
+    // Each close is isolated: a single auction that fails to close (e.g. its
+    // vehicle was hard-deleted, or transient contention) must NOT abort the
+    // rest of the batch — otherwise one "poison" auction could wedge every
+    // later auction past its endsAt, leaving them open with bidders still
+    // bidding. Log and move on; the next tick retries the failed one.
+    try {
+      const result = await db.runTransaction(async (tx) => {
+        const fresh = await tx.get(doc.ref);
+        if (!fresh.exists) return null;
+        const a = fresh.data()!;
 
-      // Recheck — another tick may have closed it.
-      if (a['status'] !== 'live') return null;
-      const endsAt = a['endsAt'] as Timestamp;
-      if (endsAt.toMillis() > now) return null;
+        // Recheck — another tick may have closed it.
+        if (a['status'] !== 'live') return null;
+        const endsAt = a['endsAt'] as Timestamp;
+        if (endsAt.toMillis() > now) return null;
 
-      const currentBid = (a['currentBid'] as number) ?? 0;
-      const reservePrice = a['reservePrice'] as number | undefined;
-      const winnerUid = a['currentBidderUid'] as string | undefined;
+        // Read the vehicle (if any) BEFORE any write — Firestore requires
+        // all reads before writes, and we must tolerate a vehicle that was
+        // hard-deleted while the auction was live (updating a missing doc
+        // throws NOT_FOUND and would otherwise abort this close).
+        const vehicleId = a['vehicleId'] as string | undefined;
+        const vehicleRef = vehicleId ? db.doc(`vehicles/${vehicleId}`) : null;
+        const vehicleSnap = vehicleRef ? await tx.get(vehicleRef) : null;
 
-      let outcome: 'sold' | 'reserve_not_met' | 'no_bids';
-      if (currentBid <= 0 || !winnerUid) {
-        outcome = 'no_bids';
-      } else if (reservePrice !== undefined && currentBid < reservePrice) {
-        outcome = 'reserve_not_met';
-      } else {
-        outcome = 'sold';
-      }
+        const currentBid = (a['currentBid'] as number) ?? 0;
+        const reservePrice = a['reservePrice'] as number | undefined;
+        const winnerUid = a['currentBidderUid'] as string | undefined;
 
-      const auctionUpdate: Record<string, unknown> = {
-        status: 'ended',
-        outcome,
-        updatedAt: FieldValue.serverTimestamp(),
-      };
-      if (outcome === 'sold' && winnerUid) {
-        auctionUpdate['winnerUid'] = winnerUid;
-        auctionUpdate['finalPrice'] = currentBid;
-        // Payment window opens when the auction closes. The buyer has
-        // `deadlineHours` (default 24) to wire the deposit. Stored as a
-        // Firestore Timestamp so a separate cron pass can sweep
-        // overdue auctions into `forfeited` deterministically.
-        auctionUpdate['paymentStatus'] = 'pending_payment';
-        auctionUpdate['paymentDepositPercent'] = depositPercent;
-        auctionUpdate['paymentDepositUsd'] = Math.round(currentBid * depositPercent * 100) / 100;
-        auctionUpdate['paymentDeadline'] = Timestamp.fromMillis(now + deadlineHours * 3600_000);
-      }
-      tx.update(doc.ref, auctionUpdate);
+        let outcome: 'sold' | 'reserve_not_met' | 'no_bids';
+        if (currentBid <= 0 || !winnerUid) {
+          outcome = 'no_bids';
+        } else if (reservePrice !== undefined && currentBid < reservePrice) {
+          outcome = 'reserve_not_met';
+        } else {
+          outcome = 'sold';
+        }
 
-      // Vehicle status transition.
-      const vehicleId = a['vehicleId'] as string;
-      if (vehicleId) {
-        const vehicleRef = db.doc(`vehicles/${vehicleId}`);
-        tx.update(vehicleRef, {
-          status: outcome === 'sold' ? 'sold' : 'ready',
+        const auctionUpdate: Record<string, unknown> = {
+          status: 'ended',
+          outcome,
           updatedAt: FieldValue.serverTimestamp(),
+        };
+        if (outcome === 'sold' && winnerUid) {
+          auctionUpdate['winnerUid'] = winnerUid;
+          auctionUpdate['finalPrice'] = currentBid;
+          // Payment window opens when the auction closes. The buyer has
+          // `deadlineHours` (default 24) to wire the deposit. Stored as a
+          // Firestore Timestamp so a separate cron pass can sweep
+          // overdue auctions into `forfeited` deterministically.
+          auctionUpdate['paymentStatus'] = 'pending_payment';
+          auctionUpdate['paymentDepositPercent'] = depositPercent;
+          auctionUpdate['paymentDepositUsd'] = Math.round(currentBid * depositPercent * 100) / 100;
+          auctionUpdate['paymentDeadline'] = Timestamp.fromMillis(now + deadlineHours * 3600_000);
+        }
+        tx.update(doc.ref, auctionUpdate);
+
+        // Vehicle status transition (only if it still exists).
+        if (vehicleRef && vehicleSnap?.exists) {
+          tx.update(vehicleRef, {
+            status: outcome === 'sold' ? 'sold' : 'ready',
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+
+        return {
+          auctionId: doc.id,
+          outcome,
+          ...(outcome === 'sold' && winnerUid && { finalPrice: currentBid, winnerUid }),
+        };
+      });
+
+      if (result) {
+        details.push(result);
+        await writeAuditLog({
+          actorUid: 'system',
+          action: 'auction.close',
+          resourceType: 'auction',
+          resourceId: result.auctionId,
+          after: result as Record<string, unknown>,
         });
       }
-
-      return {
-        auctionId: doc.id,
-        outcome,
-        ...(outcome === 'sold' && winnerUid && { finalPrice: currentBid, winnerUid }),
-      };
-    });
-
-    if (result) {
-      details.push(result);
-      await writeAuditLog({
-        actorUid: 'system',
-        action: 'auction.close',
-        resourceType: 'auction',
-        resourceId: result.auctionId,
-        after: result as Record<string, unknown>,
-      });
+    } catch (err) {
+      console.error('[tickAuctions] failed to close auction (non-fatal)', doc.id, err);
     }
   }
 
@@ -151,27 +166,48 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
       .get();
 
     for (const eDoc of expiredSnap.docs) {
-      const a = eDoc.data();
-      await eDoc.ref.update({
-        paymentStatus: 'forfeited',
-        paymentStatusUpdatedAt: FieldValue.serverTimestamp(),
-        paymentStatusUpdatedBy: 'system',
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      const vehicleId = a['vehicleId'] as string | undefined;
-      if (vehicleId) {
-        await db.doc(`vehicles/${vehicleId}`).update({
-          status: 'ready',
-          updatedAt: FieldValue.serverTimestamp(),
+      try {
+        const forfeited = await db.runTransaction(async (tx) => {
+          const fresh = await tx.get(eDoc.ref);
+          if (!fresh.exists) return null;
+          const a = fresh.data()!;
+          // Re-check inside the transaction: an admin may have confirmed the
+          // deposit (paymentStatus → 'paid') between the batch query above and
+          // now. Without this guard the sweep would clobber a paid sale back
+          // to 'forfeited' and re-list a car that was sold and paid for.
+          if (a['paymentStatus'] !== 'pending_payment') return null;
+
+          const vehicleId = a['vehicleId'] as string | undefined;
+          const vehicleRef = vehicleId ? db.doc(`vehicles/${vehicleId}`) : null;
+          const vehicleSnap = vehicleRef ? await tx.get(vehicleRef) : null;
+
+          tx.update(eDoc.ref, {
+            paymentStatus: 'forfeited',
+            paymentStatusUpdatedAt: FieldValue.serverTimestamp(),
+            paymentStatusUpdatedBy: 'system',
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          if (vehicleRef && vehicleSnap?.exists) {
+            tx.update(vehicleRef, {
+              status: 'ready',
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          }
+          return true;
         });
+
+        if (forfeited) {
+          await writeAuditLog({
+            actorUid: 'system',
+            action: 'auction.forfeited',
+            resourceType: 'auction',
+            resourceId: eDoc.id,
+            after: { reason: 'payment_deadline_expired' },
+          });
+        }
+      } catch (err) {
+        console.error('[tickAuctions] forfeit of one auction failed (non-fatal)', eDoc.id, err);
       }
-      await writeAuditLog({
-        actorUid: 'system',
-        action: 'auction.forfeited',
-        resourceType: 'auction',
-        resourceId: eDoc.id,
-        after: { reason: 'payment_deadline_expired' },
-      });
     }
   } catch (err) {
     console.error('[tickAuctions] forfeit sweep failed (non-fatal)', err);

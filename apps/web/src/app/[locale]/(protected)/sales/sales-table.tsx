@@ -1,18 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  collection,
-  doc,
-  getDoc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore';
+import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { Trophy, BadgeCheck, CircleAlert, Hourglass } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
+
+interface WinnerContact {
+  displayName: string;
+  email: string;
+  phone: string;
+}
 
 interface SaleRow {
   auctionId: string;
@@ -77,21 +75,31 @@ export function SalesTable({ locale }: { locale: string }) {
         setRows(next);
         setLoading(false);
 
-        // Resolve any winner names we don't have yet.
-        const missing = Array.from(
-          new Set(next.map((r) => r.winnerUid).filter((u) => u && !winners[u])),
-        );
-        missing.forEach(async (uid) => {
-          try {
-            const us = await getDoc(doc(fb.db, 'users', uid));
-            const p = (us.data()?.['profile'] ?? {}) as Record<string, string>;
-            const email = (us.data()?.['email'] as string) ?? '';
-            const name = `${p['firstName'] ?? ''} ${p['lastName'] ?? ''}`.trim() || email || uid;
-            setWinners((prev) => ({ ...prev, [uid]: name }));
-          } catch {
-            setWinners((prev) => ({ ...prev, [uid]: uid }));
-          }
-        });
+        // Resolve any winner names we don't have yet. Winner contact comes
+        // from the getWinnerContact callable (validates the uid is the actual
+        // winner of that auction and returns only name/email/phone) instead of
+        // a direct users read — finanzas no longer has blanket PII access.
+        const resolveWinner = httpsCallable<
+          { auctionId: string; winnerUid: string },
+          WinnerContact
+        >(fb.functions, 'getWinnerContact');
+        const seen = new Set<string>();
+        next
+          .filter((r) => r.winnerUid && !winners[r.winnerUid])
+          .forEach(async (r) => {
+            if (seen.has(r.winnerUid)) return;
+            seen.add(r.winnerUid);
+            try {
+              const { data } = await resolveWinner({
+                auctionId: r.auctionId,
+                winnerUid: r.winnerUid,
+              });
+              const name = data.displayName || data.email || r.winnerUid;
+              setWinners((prev) => ({ ...prev, [r.winnerUid]: name }));
+            } catch {
+              setWinners((prev) => ({ ...prev, [r.winnerUid]: r.winnerUid }));
+            }
+          });
       },
       () => setLoading(false),
     );

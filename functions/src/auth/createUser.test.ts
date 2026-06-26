@@ -36,8 +36,9 @@ describe('createUser', () => {
     await clearEmulators();
   });
 
-  it('rejects calls from non-admin (staff)', async () => {
-    const req = asStaff({
+  it('lets staff create a buyer but not an admin', async () => {
+    // Staff handle day-to-day buyer onboarding, so creating a buyer succeeds…
+    const okReq = asStaff({
       role: 'buyer',
       email: 'buyer@example.com',
       firstName: 'Juan',
@@ -45,6 +46,34 @@ describe('createUser', () => {
       documentType: 'CI',
       documentNumber: '1234567',
     });
+    const res = await createUserHandler(okReq);
+    expect(res.uid).toBeTruthy();
+
+    // …but staff can never mint an admin — the top tier stays admin-only.
+    const adminReq = asStaff({
+      role: 'admin',
+      email: 'admin2@santarosa.com.py',
+      firstName: 'Eva',
+      lastName: 'Gomez',
+      documentType: 'CI',
+      documentNumber: '7654321',
+    });
+    await expect(createUserHandler(adminReq)).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+
+  it('rejects calls from a buyer (no create privilege)', async () => {
+    const req = {
+      auth: { uid: 'buyer-uid', token: { role: 'buyer', status: 'active' } as never },
+      rawRequest: {} as never,
+      data: {
+        role: 'buyer',
+        email: 'buyer2@example.com',
+        firstName: 'Ana',
+        lastName: 'Diaz',
+        documentType: 'CI',
+        documentNumber: '2233445',
+      },
+    } as CallableRequest;
     await expect(createUserHandler(req)).rejects.toMatchObject({ code: 'permission-denied' });
   });
 
