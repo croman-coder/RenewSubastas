@@ -67,8 +67,15 @@ export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser>
     if (!firstName) firstName = friendlyFromEmail(email);
     if (role === 'buyer' && !audience) audience = 'retail';
     return { uid: decoded.uid, role, email, firstName, audience };
-  } catch {
-    redirect(`/${locale}/login`);
+  } catch (err) {
+    // `redirect()` throws a NEXT_REDIRECT control-flow error — re-throw it so
+    // the disabled/no_role redirects above aren't swallowed and re-routed as
+    // a generic expiry.
+    if (err && typeof err === 'object' && 'digest' in err) throw err;
+    // verifySessionCookie failed: the cookie is expired or revoked. Signal the
+    // login page (which clears the stale __session cookie on mount) so the user
+    // isn't caught in a redirect loop.
+    redirect(`/${locale}/login?error=expired`);
   }
 });
 

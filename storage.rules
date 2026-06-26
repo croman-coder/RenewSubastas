@@ -28,13 +28,19 @@ service firebase.storage {
     // submitPaymentProof callable then validates that the uid is the
     // auction's actual winnerUid before emailing the admin. Reads are
     // admin/staff only (the receipt holds the buyer's bank info).
-    match /payment-proofs/{auctionId}/{file=**} {
+    match /payment-proofs/{auctionId}/{fileName} {
       allow read: if request.auth != null
                   && request.auth.token.status == 'active'
                   && request.auth.token.role in ['staff', 'admin', 'finanzas'];
+      // A buyer may only write a file whose name starts with their own uid
+      // (the `{uid}-{ts}.{ext}` convention). Without this, any buyer could
+      // plant a forged receipt under another buyer's uid prefix or into an
+      // auction they didn't win. The submitPaymentProof callable still
+      // re-validates winnerUid before acting on the proof.
       allow write: if request.auth != null
                    && request.auth.token.status == 'active'
                    && request.auth.token.role == 'buyer'
+                   && fileName.matches(request.auth.uid + '-.*')
                    && request.resource.size < 10 * 1024 * 1024
                    && (
                      request.resource.contentType.matches('image/.*')

@@ -1,3 +1,8 @@
+'use client';
+// Client component: it renders the animated <BlurNumber> (a client component)
+// and passes it a `format` FUNCTION. A function prop cannot cross the
+// Server→Client boundary, so this whole presentational subtree must be a
+// Client Component. `useTranslations` works client-side via NextIntlClientProvider.
 import { useTranslations } from 'next-intl';
 import { Users, Gavel, DollarSign, TrendingUp, type LucideIcon } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';

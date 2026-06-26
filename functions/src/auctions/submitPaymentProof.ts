@@ -71,6 +71,17 @@ export async function submitPaymentProofHandler(
   if (a['status'] !== 'ended' || a['outcome'] !== 'sold') {
     throw new HttpsError('failed-precondition', 'Auction is not in a sold state');
   }
+  // Reject proofs once the payment window is closed: a 'forfeited' (deadline
+  // passed, swept by tickAuctions) or already 'paid' auction must not accept a
+  // late comprobante — otherwise a buyer could "pay" for a car that was
+  // already returned to the catalog and possibly re-sold.
+  if (a['paymentStatus'] && a['paymentStatus'] !== 'pending_payment') {
+    const reason =
+      a['paymentStatus'] === 'paid'
+        ? 'El pago de esta subasta ya fue confirmado.'
+        : 'El plazo para enviar el comprobante venció.';
+    throw new HttpsError('failed-precondition', reason);
+  }
 
   // Buyer dossier.
   const uSnap = await adminDb().doc(`users/${uid}`).get();
@@ -133,7 +144,6 @@ export async function submitPaymentProofHandler(
   }
 
   const cfg = await loadAppConfig();
-  const p = cfg.payment;
 
   const vehName = `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} ${(v['year'] as number) ?? ''}`;
   const vehicleRows: Array<[string, string]> = [
@@ -181,7 +191,9 @@ export async function submitPaymentProofHandler(
   );
 
   await sendEmail({
-    to: ADMIN_TO,
+    // Prefer the admin-configured contact email (app_config.payment.contactEmail)
+    // and fall back to the built-in operations address.
+    to: cfg.payment.contactEmail || ADMIN_TO,
     subject: `Comprobante ${vanity} · ${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · ${buyerName}`,
     html,
     ...(attachment ? { attachments: [attachment] } : {}),
