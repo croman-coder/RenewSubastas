@@ -23,6 +23,8 @@
       "password": "Password",
       "submit": "Sign in",
       "submitting": "Signing in…",
+      "googleButton": "Continue with Google",
+      "orDivider": "or",
       "errors": {
         "invalidCredentials": "Invalid email or password.",
         "accountDisabled": "Account disabled. Contact the administrator.",
@@ -30,7 +32,9 @@
         "emailInvalid": "Invalid email.",
         "passwordTooShort": "Password must be at least 6 characters.",
         "sessionExpired": "Your session has expired. Please sign in again.",
-        "noRole": "Your account has no role assigned. Contact the administrator."
+        "noRole": "Your account has no role assigned. Contact the administrator.",
+        "googleFailed": "Couldn't continue with Google. Please try again.",
+        "popupBlocked": "The browser blocked the Google popup. Allow pop-ups and retry."
       }
     }
   },
@@ -313,7 +317,9 @@
             "tooLow": "The amount is below the minimum required.",
             "selfOutbid": "You already have the winning bid.",
             "rateLimit": "Too many bids. Please wait a moment.",
-            "generic": "Could not place the bid."
+            "generic": "Could not place the bid.",
+            "profileIncomplete": "Complete your profile (document) to place a bid.",
+            "profileIncompleteCta": "Complete profile"
           }
         },
         "financing": {

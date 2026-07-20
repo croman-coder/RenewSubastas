@@ -23,6 +23,8 @@
       "password": "Contraseña",
       "submit": "Entrar",
       "submitting": "Entrando…",
+      "googleButton": "Continuar con Google",
+      "orDivider": "o",
       "errors": {
         "invalidCredentials": "Correo o contraseña inválidos.",
         "accountDisabled": "Cuenta desactivada. Contacta al administrador.",
@@ -30,7 +32,9 @@
         "emailInvalid": "Email inválido.",
         "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
         "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
-        "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador."
+        "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador.",
+        "googleFailed": "No se pudo continuar con Google. Probá de nuevo.",
+        "popupBlocked": "El navegador bloqueó la ventana de Google. Habilitá los pop-ups y reintentá."
       }
     }
   },
@@ -313,7 +317,9 @@
             "tooLow": "El monto es menor al mínimo requerido.",
             "selfOutbid": "Ya tienes la puja ganadora.",
             "rateLimit": "Demasiadas pujas. Espera un momento.",
-            "generic": "No se pudo registrar la puja."
+            "generic": "No se pudo registrar la puja.",
+            "profileIncomplete": "Completá tu perfil (documento) para poder pujar.",
+            "profileIncompleteCta": "Completar perfil"
           }
         },
         "financing": {
