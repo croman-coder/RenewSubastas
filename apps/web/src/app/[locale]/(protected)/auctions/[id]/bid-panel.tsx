@@ -1,5 +1,6 @@
 'use client';
 import { useState, type ReactNode } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
@@ -48,6 +49,8 @@ export function BidPanel({
   allowManualIncrement,
 }: Props) {
   const t = useTranslations('buyer.auctions.detail.bidPanel');
+  const router = useRouter();
+  const locale = (useParams().locale as string) ?? 'es';
   const minRequired = toCents(currentBid > 0 ? currentBid + bidIncrement : startingPrice);
   const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
@@ -93,6 +96,13 @@ export function BidPanel({
         toast.error(t('errors.tooLow'));
       } else if (msg.includes('ended') || msg.includes('not live')) {
         toast.error(t('errors.notLive'));
+      } else if (msg.includes('profile_incomplete')) {
+        toast.error(t('errors.profileIncomplete'), {
+          action: {
+            label: t('errors.profileIncompleteCta'),
+            onClick: () => router.push(`/${locale}/settings/profile`),
+          },
+        });
       } else {
         toast.error(t('errors.generic'));
       }
