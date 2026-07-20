@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
-import { homeFor, type Audience, type Role } from '@/lib/auth/constants';
+import { homeFor } from '@/lib/auth/constants';
 import { postSession, safeRedirect } from '@/lib/auth/post-session';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { ForgotPasswordDialog } from './forgot-password-dialog';
+import { GoogleSignInButton } from './google-signin-button';
 
 const Schema = z.object({
   email: z.string().email(),
@@ -203,6 +204,17 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
           </span>
         </Button>
       </form>
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <span className="w-full border-t border-text-subtle/20" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-bg-base px-3 text-xs uppercase tracking-[0.08em] text-text-muted">
+            {t('orDivider')}
+          </span>
+        </div>
+      </div>
+      <GoogleSignInButton {...(from !== undefined ? { from } : {})} locale={locale} />
     </>
   );
 }
