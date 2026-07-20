@@ -126,6 +126,7 @@ export function PushPermissionPrompt({ locale }: Props) {
             type="button"
             onClick={dismiss}
             disabled={busy}
+            aria-label="No por ahora"
             className={
               'h-8 px-2.5 inline-flex items-center gap-1 rounded-md text-xs font-medium ' +
               'text-text-muted hover:text-text-strong hover:bg-bg-deep/60 transition-colors'

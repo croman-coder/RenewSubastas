@@ -42,7 +42,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
               <TodayLabel locale={locale} />
             </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong text-pretty">
               ¡Hola, {user.firstName || 'Buyer'}!
             </h1>
             <p className="mt-1 text-sm text-text-muted max-w-prose">
@@ -311,6 +311,8 @@ function AuctionRow({
           <img
             src={thumbnail}
             alt=""
+            width={48}
+            height={48}
             className="w-12 h-12 rounded-md object-cover shrink-0"
             loading="lazy"
           />

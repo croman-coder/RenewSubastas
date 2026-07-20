@@ -96,8 +96,10 @@ export function PreferencesForm({ initial }: { initial: Initial }) {
           control={control}
           render={({ field }) => (
             <div className="flex items-center justify-between">
-              <span className="text-sm">{t('notifOutbid')}</span>
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Label htmlFor="notif-outbid" className="text-sm font-normal">
+                {t('notifOutbid')}
+              </Label>
+              <Switch id="notif-outbid" checked={field.value} onCheckedChange={field.onChange} />
             </div>
           )}
         />
@@ -106,8 +108,10 @@ export function PreferencesForm({ initial }: { initial: Initial }) {
           control={control}
           render={({ field }) => (
             <div className="flex items-center justify-between">
-              <span className="text-sm">{t('notifWon')}</span>
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Label htmlFor="notif-won" className="text-sm font-normal">
+                {t('notifWon')}
+              </Label>
+              <Switch id="notif-won" checked={field.value} onCheckedChange={field.onChange} />
             </div>
           )}
         />
@@ -116,8 +120,10 @@ export function PreferencesForm({ initial }: { initial: Initial }) {
           control={control}
           render={({ field }) => (
             <div className="flex items-center justify-between">
-              <span className="text-sm">{t('notifNew')}</span>
-              <Switch checked={field.value} onCheckedChange={field.onChange} />
+              <Label htmlFor="notif-new" className="text-sm font-normal">
+                {t('notifNew')}
+              </Label>
+              <Switch id="notif-new" checked={field.value} onCheckedChange={field.onChange} />
             </div>
           )}
         />

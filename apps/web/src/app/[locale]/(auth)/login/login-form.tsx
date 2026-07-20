@@ -131,6 +131,8 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
               id="email"
               type="email"
               autoComplete="email"
+              inputMode="email"
+              spellCheck={false}
               placeholder="vos@ejemplo.com"
               className="h-11 pl-10 rounded-xl bg-bg-deep/40 border-text-subtle/20 focus:border-copper/50 focus:ring-copper/30 transition-colors"
               {...register('email')}
