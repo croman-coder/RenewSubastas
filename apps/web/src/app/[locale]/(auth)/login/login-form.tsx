@@ -8,13 +8,15 @@ import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
-import { homeFor, type Audience, type Role } from '@/lib/auth/constants';
+import { homeFor } from '@/lib/auth/constants';
+import { postSession, safeRedirect } from '@/lib/auth/post-session';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { ForgotPasswordDialog } from './forgot-password-dialog';
+import { GoogleSignInButton } from './google-signin-button';
 
 const Schema = z.object({
   email: z.string().email(),
@@ -62,22 +64,18 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     try {
       const cred = await signInWithEmailAndPassword(fb.auth, data.email, data.password);
       const idToken = await cred.user.getIdToken(true);
-      const res = await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
-        if (j.error === 'account_disabled') {
+      const result = await postSession(idToken);
+      if (!result.ok) {
+        if (result.error === 'account_disabled') {
           setError(t('errors.accountDisabled'));
-        } else if (j.error === 'server_misconfigured' || j.error === 'session_creation_failed') {
-          // Distinct copy so it's obvious the failure is not "wrong
-          // password" — usually an env-var problem on the server.
+        } else if (
+          result.error === 'server_misconfigured' ||
+          result.error === 'session_creation_failed'
+        ) {
           setError(
             'Servicio no disponible. El equipo fue notificado. Probá de nuevo en unos minutos.',
           );
-        } else if (j.error === 'forbidden_origin') {
+        } else if (result.error === 'forbidden_origin') {
           setError('Origen no permitido. Cerrá la pestaña y volvé a abrir el sitio.');
         } else {
           setError(t('errors.generic'));
@@ -85,21 +83,11 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         await fb.auth.signOut();
         return;
       }
-      const { role, audience } = (await res.json()) as { role: Role; audience: Audience | null };
-      // Only accept a `from` that is a single-slash absolute path. Reject
-      // protocol-relative ("//evil.com") and backslash ("/\evil.com") forms
-      // that a browser can normalize into an off-site redirect — otherwise a
-      // crafted ?from= turns the login into an open-redirect.
-      const safeFrom = from && /^\/(?![/\\])/.test(from) ? from : null;
-      const target = safeFrom ?? homeFor(role, audience ?? undefined);
-      // Flip to "entering" before the navigation kicks off so the user sees
-      // the handoff screen for the entire RSC fetch, not just for the part
-      // before router.replace returns.
+      const { role, audience } = result;
+      const target = safeRedirect(from) ?? homeFor(role, audience ?? undefined);
       setEntering(true);
       router.replace(`/${locale}${target}`);
       router.refresh();
-      // Deliberately don't reset `submitting` or `entering` here — the
-      // component is about to unmount when the dashboard mounts.
       return;
     } catch (e) {
       const code = (e as { code?: string }).code;
@@ -216,6 +204,17 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
           </span>
         </Button>
       </form>
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <span className="w-full border-t border-text-subtle/20" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-bg-base px-3 text-xs uppercase tracking-[0.08em] text-text-muted">
+            {t('orDivider')}
+          </span>
+        </div>
+      </div>
+      <GoogleSignInButton {...(from !== undefined ? { from } : {})} locale={locale} />
     </>
   );
 }

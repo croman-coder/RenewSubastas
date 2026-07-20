@@ -10,7 +10,7 @@ export const onUserSync = onDocumentWritten(
       await clearUserClaims(uid);
       return;
     }
-    const role = after['role'] as 'admin' | 'staff' | 'buyer' | undefined;
+    const role = after['role'] as 'admin' | 'staff' | 'finanzas' | 'buyer' | undefined;
     const status = after['status'] as 'active' | 'disabled' | undefined;
     if (!role || !status) return;
     // For buyers, mirror profile.audience into the JWT so the client and

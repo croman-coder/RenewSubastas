@@ -89,6 +89,14 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     lastInitial: ((profile['lastName'] as string) ?? '').charAt(0).toUpperCase() || '?',
   };
 
+  // Buyers self-registered via Google enter without a document. Money can't
+  // move without one, so the bid is blocked until the profile is completed
+  // at /settings/profile. Enforced here (server-authoritative), surfaced in
+  // the client as a friendly toast with a link.
+  if (!profile['documentType'] || !profile['documentNumber']) {
+    throw new HttpsError('failed-precondition', 'profile_incomplete');
+  }
+
   const result = await db.runTransaction(async (tx) => {
     // Capture the clock inside the transaction so each optimistic retry
     // re-reads it — keeps the "ended" check and the anti-sniping extension
