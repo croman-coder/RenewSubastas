@@ -55,7 +55,7 @@ export function GoogleSignInButton({ from, locale }: { from?: string; locale: st
             ? t('errors.accountDisabled')
             : t('errors.googleFailed'),
         );
-        await signOut(fb.auth);
+        await signOut(fb.auth).catch(() => {});
         return;
       }
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);

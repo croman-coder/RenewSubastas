@@ -25,7 +25,12 @@ export async function registerGoogleBuyerHandler(
     throw new HttpsError('unauthenticated', 'Sign-in required');
   }
   const { uid, token } = req.auth;
-  if (token.firebase?.sign_in_provider !== 'google.com') {
+  // Require a verified Google identity. Google's own accounts are always
+  // verified, so this is defense-in-depth: it stops the code from silently
+  // depending on the Firebase console's "one account per email" (account
+  // linking) setting to prevent an unverified email from being associated
+  // with — or shadowing — an existing staff/admin account. See spec §4.5/§9.
+  if (token.firebase?.sign_in_provider !== 'google.com' || token.email_verified !== true) {
     throw new HttpsError('failed-precondition', 'not_google');
   }
 
@@ -45,14 +50,21 @@ export async function registerGoogleBuyerHandler(
   }
 
   // New self-registration: force buyer + retail + active, no document yet.
+  // `token.name` is the user's own Google display name — not adversarial, but
+  // untrusted shape. Clamp both parts to 40 chars (matching createUser's cap)
+  // and guarantee a non-empty firstName (UserProfileSchema requires min(1),
+  // and placeBid/emails read these fields) by falling back to the email
+  // local-part, then a generic label.
+  const email = token.email ?? '';
   const displayName = ((token.name as string | undefined) ?? '').trim();
-  const [firstName = '', ...rest] = displayName.split(/\s+/);
-  const lastName = rest.join(' ');
+  const [rawFirst = '', ...rest] = displayName.split(/\s+/);
+  const firstName = (rawFirst || email.split('@')[0] || 'Usuario').slice(0, 40);
+  const lastName = rest.join(' ').slice(0, 40);
 
   await userRef.set({
     uid,
     role: 'buyer',
-    email: token.email ?? '',
+    email,
     status: 'active',
     provider: 'google',
     profile: {
@@ -75,15 +87,23 @@ export async function registerGoogleBuyerHandler(
   });
 
   // Set claims directly so the client's forced token refresh right after this
-  // call already carries them. onUserSync fires too and is idempotent.
+  // call already carries them. onUserSync fires too (from the doc write above)
+  // and is idempotent: it derives {role,status,audience} from the same doc, so
+  // both writers are value-identical by construction. If these payloads ever
+  // diverge, last-writer-wins would become a bug — keep them in sync.
   await setUserClaims(uid, { role: 'buyer', status: 'active', audience: 'retail' });
 
+  // Audit logging is non-critical to the user-facing outcome: the account is
+  // already fully provisioned above. A logging hiccup must not fail the
+  // registration (same best-effort pattern as createUser's welcome email).
   await writeAuditLog({
     actorUid: uid,
     action: 'user.self_register',
     resourceType: 'user',
     resourceId: uid,
     after: { role: 'buyer', audience: 'retail', provider: 'google' },
+  }).catch((err) => {
+    console.error('[registerGoogleBuyer] audit log failed', err);
   });
 
   return { uid, role: 'buyer', audience: 'retail' };

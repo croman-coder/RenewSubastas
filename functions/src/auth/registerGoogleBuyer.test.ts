@@ -7,7 +7,12 @@ function asGoogleUser(uid: string, name = 'Ana Gomez', email = 'ana@gmail.com'):
   return {
     auth: {
       uid,
-      token: { email, name, firebase: { sign_in_provider: 'google.com', identities: {} } } as never,
+      token: {
+        email,
+        email_verified: true,
+        name,
+        firebase: { sign_in_provider: 'google.com', identities: {} },
+      } as never,
     },
     rawRequest: {} as never,
     data: {},
@@ -61,6 +66,39 @@ describe('registerGoogleBuyer', () => {
     expect(res.role).toBe('staff');
     const d = (await adminDb().doc('users/s1').get()).data()!;
     expect(d['role']).toBe('staff');
+  });
+
+  it('ignores client-supplied role/audience (no privilege injection)', async () => {
+    await adminAuth().createUser({ uid: 'inj1', email: 'inj@gmail.com' });
+    const req = asGoogleUser('inj1', 'Mala Intencion', 'inj@gmail.com');
+    // Attacker tries to smuggle elevated role/audience through the callable data.
+    (req as { data: unknown }).data = { role: 'admin', audience: 'wholesale' };
+    const res = await registerGoogleBuyerHandler(req);
+    expect(res).toMatchObject({ role: 'buyer', audience: 'retail' });
+    const d = (await adminDb().doc('users/inj1').get()).data()!;
+    expect(d['role']).toBe('buyer');
+    expect(d['profile'].audience).toBe('retail');
+    const claims = (await adminAuth().getUser('inj1')).customClaims;
+    expect(claims).toMatchObject({ role: 'buyer', audience: 'retail' });
+  });
+
+  it('rejects a Google token with an unverified email', async () => {
+    const req = {
+      auth: {
+        uid: 'unv1',
+        token: {
+          email: 'unv@gmail.com',
+          email_verified: false,
+          name: 'Un Verified',
+          firebase: { sign_in_provider: 'google.com', identities: {} },
+        } as never,
+      },
+      rawRequest: {} as never,
+      data: {},
+    } as CallableRequest;
+    await expect(registerGoogleBuyerHandler(req)).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
   });
 
   it('rejects non-google providers', async () => {
