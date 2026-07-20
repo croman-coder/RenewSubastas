@@ -27,6 +27,22 @@ async function clearAll() {
   }
 }
 
+async function seedBuyerNoDoc(uid: string) {
+  await adminDb()
+    .doc(`users/${uid}`)
+    .set({
+      uid,
+      role: 'buyer',
+      email: `${uid}@example.com`,
+      status: 'active',
+      profile: { firstName: 'Ana', lastName: 'Gomez', audience: 'retail' },
+      preferences: { locale: 'es', theme: 'system', notifications: {} },
+      createdBy: 'self:google',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+}
+
 async function seedBuyer(uid: string, firstName = 'Juan', lastName = 'Perez') {
   await adminDb()
     .doc(`users/${uid}`)
@@ -78,6 +94,14 @@ async function seedAuction(opts: SeedAuctionOpts = {}): Promise<string> {
 describe('placeBid', () => {
   beforeEach(async () => {
     await clearAll();
+  });
+
+  it('rejects a bid when the buyer has no document (profile incomplete)', async () => {
+    await seedBuyerNoDoc('nb1');
+    const auctionId = await seedAuction({ status: 'live' });
+    await expect(
+      placeBidHandler(asBuyer('nb1', { auctionId, amount: 5000 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
   });
 
   it('rejects unauthenticated', async () => {
