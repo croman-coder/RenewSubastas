@@ -27,8 +27,8 @@ export const AddressSchema = z.object({
 export const UserProfileSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  documentType: DocumentTypeSchema,
-  documentNumber: z.string().min(1),
+  documentType: DocumentTypeSchema.optional(),
+  documentNumber: z.string().min(1).optional(),
   phone: z.string().optional(),
   address: AddressSchema.optional(),
   avatarUrl: z.string().url().optional(),
