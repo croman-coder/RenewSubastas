@@ -27,6 +27,19 @@ const withSentry = (cfg) =>
     widenClientFileUpload: true,
     tunnelRoute: '/monitoring',
     disableLogger: true,
+    webpack: {
+      // Do NOT instrument the Next.js middleware. Sentry's middleware
+      // wrapper drags the full SDK + @opentelemetry/api (which pulls
+      // `node:async_hooks`, `process`, and dynamic `require`s) into the
+      // middleware bundle. On Vercel that runs on the Edge Runtime fine,
+      // but Renew is deployed on Netlify, whose edge functions run on
+      // Deno — that heavy, Node-oriented bundle intermittently fails to
+      // boot there and surfaces as "edge function invocation failed",
+      // taking down every page route (the middleware matches all of them).
+      // Client- and server-side Sentry stay on; we only lose middleware-
+      // level tracing, which we don't rely on.
+      autoInstrumentMiddleware: false,
+    },
   });
 
 export default withSentry(withNextIntl(nextConfig));
