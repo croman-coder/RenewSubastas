@@ -11,6 +11,7 @@ export { generatePasswordReset } from './auth/changePassword.js';
 export { redeemPasswordReset } from './auth/redeemPasswordReset.js';
 export { requestPasswordReset } from './auth/requestPasswordReset.js';
 export { revokeMySessions } from './auth/revokeMySessions.js';
+export { registerGoogleBuyer } from './auth/registerGoogleBuyer.js';
 export { updateGlobalConfig } from './config/updateGlobalConfig.js';
 export { createAuction } from './auctions/createAuction.js';
 export { cancelAuction } from './auctions/cancelAuction.js';
