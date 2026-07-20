@@ -23,3 +23,13 @@ export async function postSession(idToken: string): Promise<PostSessionResult> {
   const { role, audience } = (await res.json()) as { role: Role; audience: Audience | null };
   return { ok: true, role, audience };
 }
+
+/**
+ * Guards the `?from=` redirect target against open-redirect / protocol-relative
+ * URLs. Only a same-origin absolute path ("/x") is allowed — never "//host"
+ * or "/\\host" (which browsers treat as protocol-relative external URLs).
+ * Returns the safe path, or null to fall back to the role's default home.
+ */
+export function safeRedirect(from: string | undefined): string | null {
+  return from && /^\/(?![/\\])/.test(from) ? from : null;
+}

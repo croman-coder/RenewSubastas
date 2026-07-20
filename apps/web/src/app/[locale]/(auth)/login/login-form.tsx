@@ -9,7 +9,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { homeFor, type Audience, type Role } from '@/lib/auth/constants';
-import { postSession } from '@/lib/auth/post-session';
+import { postSession, safeRedirect } from '@/lib/auth/post-session';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,7 +83,7 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         return;
       }
       const { role, audience } = result;
-      const target = from && from.startsWith('/') ? from : homeFor(role, audience ?? undefined);
+      const target = safeRedirect(from) ?? homeFor(role, audience ?? undefined);
       setEntering(true);
       router.replace(`/${locale}${target}`);
       router.refresh();
