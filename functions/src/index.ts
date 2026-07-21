@@ -28,3 +28,4 @@ export { sendBidOutbid } from './notifications/sendBidOutbid.js';
 export { sendAuctionWon } from './notifications/sendAuctionWon.js';
 export { sendAuctionLive } from './notifications/sendAuctionLive.js';
 export { savePushToken } from './notifications/savePushToken.js';
+export { logAuctionView } from './insights/logAuctionView.js';
