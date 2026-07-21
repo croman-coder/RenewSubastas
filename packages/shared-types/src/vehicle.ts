@@ -29,6 +29,10 @@ export const VehicleSchema = z.object({
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  /** Stamped when the vehicle's FIRST auction is created — anchor for the 7-day unsold alert. */
+  firstListedAt: z.date().optional(),
+  /** Set once the 7-day unsold digest email included this vehicle (idempotency mark). */
+  unsoldAlertAt: z.date().optional(),
   status: VehicleStatusSchema,
 });
 export type Vehicle = z.infer<typeof VehicleSchema>;

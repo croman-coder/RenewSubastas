@@ -24,6 +24,10 @@ export const AuctionSchema = z.object({
   currentBid: z.number().nonnegative(),
   currentBidderUid: z.string().optional(),
   bidCount: z.number().int().nonnegative(),
+  /** Aggregated viewer counters, maintained by the logAuctionView callable. */
+  viewStats: z
+    .object({ total: z.number().int().nonnegative(), unique: z.number().int().nonnegative() })
+    .optional(),
   status: AuctionStatusSchema,
   outcome: AuctionOutcomeSchema.optional(),
   winnerUid: z.string().optional(),
