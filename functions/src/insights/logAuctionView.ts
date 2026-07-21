@@ -5,7 +5,9 @@ import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { requireSignedIn } from '../lib/errors.js';
 
-const InputSchema = z.object({ auctionId: z.string().min(1).max(64) });
+// Firestore auto-ids are [A-Za-z0-9_-]; the regex also blocks path-injection
+// (e.g. "id/bids/x") that would otherwise let a caller target sub-documents.
+const InputSchema = z.object({ auctionId: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/) });
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;

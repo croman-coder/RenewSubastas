@@ -2,7 +2,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from '../lib/admin.js';
 import { sendEmail, RESEND_API_KEY, type SendEmailArgs } from '../lib/email.js';
-import { emailShell, body, badge, heading } from '../lib/email-templates.js';
+import { emailShell, body, badge, heading, SITE_URL } from '../lib/email-templates.js';
 
 const UNSOLD_THRESHOLD_DAYS = 7;
 const DAY_MS = 24 * 3600_000;
@@ -25,6 +25,10 @@ interface Deps {
  * the emails succeed — a Resend outage means an automatic retry tomorrow.
  * The red badge in /staff/insights is computed live and does NOT depend on
  * this mark.
+ *
+ * Paginates through ALL matches (50 pages × 500 docs max) so the backlog
+ * doesn't starve new alerts once the first 500 slots fill with sold/archived
+ * entries.
  */
 export async function runDailyUnsoldDigest(
   now: number = Date.now(),
@@ -33,20 +37,32 @@ export async function runDailyUnsoldDigest(
   const db = adminDb();
   const cutoff = Timestamp.fromMillis(now - UNSOLD_THRESHOLD_DAYS * DAY_MS);
 
-  // Single range filter; status/alert filtering happens in memory — vehicle
-  // counts are small (hundreds at most) and this avoids composite-index and
-  // not-in constraints.
-  const snap = await db
-    .collection('vehicles')
-    .where('firstListedAt', '<=', cutoff)
-    .limit(500)
-    .get();
+  // Paginate through ALL vehicles that crossed the 7-day threshold.
+  // In-memory filter for status/alert so we avoid composite-index and not-in
+  // constraints. Safety cap: 50 pages × 500 = 25 000 docs max.
+  const pending: (Record<string, unknown> & { id: string })[] = [];
+  let scanned = 0;
+  let cursor: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  for (let page = 0; page < 50; page++) {
+    let q = db
+      .collection('vehicles')
+      .where('firstListedAt', '<=', cutoff)
+      .orderBy('firstListedAt', 'asc')
+      .limit(500);
+    if (cursor) q = q.startAfter(cursor);
+    const snap = await q.get();
+    if (snap.empty) break;
+    scanned += snap.size;
+    for (const d of snap.docs) {
+      const v = { id: d.id, ...d.data() } as Record<string, unknown> & { id: string };
+      if (v['status'] !== 'sold' && v['status'] !== 'archived' && !v['unsoldAlertAt'])
+        pending.push(v);
+    }
+    if (snap.size < 500) break;
+    cursor = snap.docs[snap.docs.length - 1];
+  }
 
-  const pending = snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Record<string, unknown> & { id: string })
-    .filter((v) => v['status'] !== 'sold' && v['status'] !== 'archived' && !v['unsoldAlertAt']);
-
-  if (pending.length === 0) return { scanned: snap.size, alerted: [] };
+  if (pending.length === 0) return { scanned, alerted: [] };
 
   // Recipients: every active admin/staff.
   const staffSnap = await db
@@ -58,10 +74,69 @@ export async function runDailyUnsoldDigest(
     .map((d) => d.data()['email'] as string | undefined)
     .filter((e): e is string => !!e);
 
-  const rows = pending
+  // Fix 5: guard against marking vehicles when nobody will receive the email.
+  if (recipients.length === 0) {
+    console.error('[dailyUnsoldDigest] no admin/staff recipients; skipping marks');
+    return { scanned, alerted: [] };
+  }
+
+  // Fix 4: enrich each pending vehicle with auction data (views, price, reductions).
+  // pending is small (vehicles that just crossed 7 days unsold and not yet alerted).
+  const enriched = await Promise.all(
+    pending.map(async (v) => {
+      const aSnap = await db.collection('auctions').where('vehicleId', '==', v.id).get();
+
+      let viewsUnique = 0;
+      let currentPrice: number | null = null;
+      let latestEndsAt: number = 0;
+      let reductions = 0;
+
+      for (const aDoc of aSnap.docs) {
+        const a = aDoc.data();
+
+        // Aggregate unique views across all auctions for this vehicle.
+        const u = (a['viewStats'] as Record<string, number> | undefined)?.['unique'] ?? 0;
+        viewsUnique += u;
+
+        // Track the latest auction for current price.
+        const endsAt: number =
+          a['endsAt'] instanceof Timestamp
+            ? a['endsAt'].toMillis()
+            : ((a['endsAt'] as number) ?? 0);
+        if (endsAt > latestEndsAt) {
+          latestEndsAt = endsAt;
+          const finalPrice = a['finalPrice'] as number | undefined;
+          const currentBid = a['currentBid'] as number | undefined;
+          const startingPrice = a['startingPrice'] as number | undefined;
+          currentPrice =
+            finalPrice ??
+            (currentBid && currentBid > 0 ? currentBid : null) ??
+            startingPrice ??
+            null;
+        }
+
+        // Count isReduction price changes for this auction.
+        const pcSnap = await aDoc.ref
+          .collection('priceChanges')
+          .where('isReduction', '==', true)
+          .get();
+        reductions += pcSnap.size;
+      }
+
+      return { ...v, viewsUnique, currentPrice, reductions } as Record<string, unknown> & {
+        id: string;
+        viewsUnique: number;
+        currentPrice: number | null;
+        reductions: number;
+      };
+    }),
+  );
+
+  const rows = enriched
     .map((v) => {
       const listedAt = (v['firstListedAt'] as Timestamp).toMillis();
       const days = Math.floor((now - listedAt) / DAY_MS);
+      const priceDisplay = v.currentPrice != null ? `USD ${v.currentPrice.toLocaleString()}` : '—';
       return `<tr>
         <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;color:#0a0a0a;font-size:14px;">
           ${v['make']} ${v['model']} <span style="color:#71717a;">${v['year']}</span>
@@ -69,8 +144,17 @@ export async function runDailyUnsoldDigest(
         <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;color:#dc2626;font-weight:600;font-size:14px;">
           ${days} días
         </td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;font-size:14px;">
+          ${v.viewsUnique} vistas únicas
+        </td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;font-size:14px;">
+          ${priceDisplay}
+        </td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;font-size:14px;">
+          ${v.reductions} bajada(s)
+        </td>
         <td style="padding:8px 12px;border-bottom:1px solid #e4e4e7;font-size:13px;">
-          <a href="https://renewsubastas.com.py/es/staff/insights/${v.id}" style="color:#0a0a0a;">Ver reporte</a>
+          <a href="${SITE_URL}/es/staff/insights/${v.id}" style="color:#0a0a0a;">Ver reporte</a>
         </td>
       </tr>`;
     })
@@ -103,7 +187,7 @@ export async function runDailyUnsoldDigest(
   }
   await batch.commit();
 
-  return { scanned: snap.size, alerted: pending.map((v) => v.id) };
+  return { scanned, alerted: pending.map((v) => v.id) };
 }
 
 export const dailyUnsoldDigest = onSchedule(

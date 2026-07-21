@@ -198,6 +198,11 @@
       ]
     },
     {
+      "collectionGroup": "priceChanges",
+      "fieldPath": "isReduction",
+      "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }]
+    },
+    {
       "collectionGroup": "notifications",
       "fieldPath": "createdAt",
       "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }]

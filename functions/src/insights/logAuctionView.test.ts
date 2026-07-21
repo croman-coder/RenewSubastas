@@ -106,6 +106,13 @@ describe('logAuctionView', () => {
     await expect(logAuctionViewHandler(req)).rejects.toMatchObject({ code: 'unauthenticated' });
   });
 
+  it('rejects an auctionId with path separators (injection guard)', async () => {
+    await seedBuyer('b1');
+    await expect(logAuctionViewHandler(asBuyer('b1', 'a1/bids/x'))).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
   it('rate limits a hostile client (max 20/min)', async () => {
     await seedAuction();
     await seedBuyer('b1');
