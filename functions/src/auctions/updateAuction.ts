@@ -146,6 +146,40 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
 
   await ref.update(update);
 
+  // ---- Price-change history (insights report) ----
+  // Every startingPrice/reservePrice edit is recorded in a dedicated
+  // subcollection so staff can see "how many times was this lowered" without
+  // digging through audit_logs. Actor name is snapshotted for display.
+  const priceFields: Array<'startingPrice' | 'reservePrice'> = [];
+  if (v.startingPrice !== undefined && v.startingPrice !== a['startingPrice']) {
+    priceFields.push('startingPrice');
+  }
+  if (v.reservePrice !== undefined && v.reservePrice !== (a['reservePrice'] ?? null)) {
+    priceFields.push('reservePrice');
+  }
+  if (priceFields.length > 0) {
+    const actorSnap = await adminDb().doc(`users/${actorUid}`).get();
+    const ap = (actorSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;
+    const actorName =
+      [ap['firstName'], ap['lastName']].filter(Boolean).join(' ') ||
+      ((actorSnap.data()?.['email'] as string) ?? actorUid);
+    const batch = adminDb().batch();
+    for (const field of priceFields) {
+      const from = (a[field] as number | undefined) ?? null;
+      const to = field === 'reservePrice' && v.reservePrice === null ? null : (v[field] as number);
+      batch.set(ref.collection('priceChanges').doc(), {
+        field,
+        from,
+        to,
+        isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+        actorUid,
+        actorName,
+        at: FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
   await writeAuditLog({
     actorUid,
     action: 'auction.update',
