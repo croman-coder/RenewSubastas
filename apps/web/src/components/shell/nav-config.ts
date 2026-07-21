@@ -12,7 +12,8 @@ export type IconKey =
   | 'heart'
   | 'trophy'
   | 'key'
-  | 'activity';
+  | 'activity'
+  | 'chart';
 
 export interface NavItem {
   href: string;
@@ -54,6 +55,7 @@ export function getNavItems(
       { href: `/${locale}/staff/auctions`, label: t.admin.auctions, icon: 'gavel' },
       { href: `/${locale}/sales`, label: t.admin.sales, icon: 'trophy' },
       { href: `/${locale}/staff/bids`, label: 'Pujas', icon: 'activity' },
+      { href: `/${locale}/staff/insights`, label: 'Reporte', icon: 'chart' },
       { href: `/${locale}/admin/password-resets`, label: 'Contraseñas', icon: 'key' },
       { href: `/${locale}/admin/audit`, label: t.admin.audit, icon: 'audit' },
       { href: `/${locale}/admin/config`, label: t.admin.config, icon: 'settings' },
@@ -65,6 +67,7 @@ export function getNavItems(
       { href: `/${locale}/staff/vehicles`, label: t.staff.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.staff.auctions, icon: 'gavel' },
       { href: `/${locale}/staff/bids`, label: 'Pujas', icon: 'activity' },
+      { href: `/${locale}/staff/insights`, label: 'Reporte', icon: 'chart' },
       // Staff can onboard buyers (retail / wholesale). Route reuses the
       // admin create-user form in restricted mode; staff cannot reach
       // /admin/users (admin layout blocks them).

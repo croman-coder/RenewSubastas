@@ -13,6 +13,7 @@ import {
   Trophy,
   KeyRound,
   Activity,
+  BarChart3,
   Loader2,
   type LucideIcon,
 } from 'lucide-react';
@@ -29,6 +30,7 @@ const ICON_MAP: Record<IconKey, LucideIcon> = {
   trophy: Trophy,
   key: KeyRound,
   activity: Activity,
+  chart: BarChart3,
 };
 
 interface Props {
