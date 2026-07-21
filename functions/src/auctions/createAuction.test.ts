@@ -157,4 +157,34 @@ describe('createAuction', () => {
       .get();
     expect(logs.size).toBe(1);
   });
+
+  it('stamps vehicle.firstListedAt on the FIRST auction only', async () => {
+    const vehicleId = await seedVehicle('staff-1', 'ready');
+    await createAuctionHandler(
+      asStaff('staff-1', {
+        vehicleId,
+        startingPrice: 5000,
+        bidIncrement: 500,
+        startsAt: new Date(Date.now() + 60_000).toISOString(),
+        endsAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+      }),
+    );
+    const v1 = (await adminDb().doc(`vehicles/${vehicleId}`).get()).data()!;
+    expect(v1['firstListedAt']).toBeTruthy();
+    const stamped = v1['firstListedAt'];
+
+    // Re-list: put it back to ready, create a second auction — stamp must NOT move.
+    await adminDb().doc(`vehicles/${vehicleId}`).update({ status: 'ready' });
+    await createAuctionHandler(
+      asStaff('staff-1', {
+        vehicleId,
+        startingPrice: 5000,
+        bidIncrement: 500,
+        startsAt: new Date(Date.now() + 60_000).toISOString(),
+        endsAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+      }),
+    );
+    const v2 = (await adminDb().doc(`vehicles/${vehicleId}`).get()).data()!;
+    expect(v2['firstListedAt']).toEqual(stamped);
+  });
 });

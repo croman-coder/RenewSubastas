@@ -93,6 +93,9 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
     tx.update(vehicleRef, {
       status: 'in_auction',
       updatedAt: FieldValue.serverTimestamp(),
+      // First time this vehicle goes to market — anchor for the 7-day
+      // unsold alert. Re-listings keep the original date.
+      ...(vData['firstListedAt'] ? {} : { firstListedAt: FieldValue.serverTimestamp() }),
     });
 
     return auctionRef.id;
