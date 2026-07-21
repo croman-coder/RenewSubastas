@@ -67,6 +67,18 @@ service cloud.firestore {
                              get(/databases/$(db)/documents/auctions/$(id)).data.audience));
         allow create, update, delete: if false;
       }
+
+      // Insights subcollections: who viewed the auction and how prices moved.
+      // Internal eyes only — buyers must never see who else is watching a car
+      // or the pricing history. Writes are Admin SDK only (Cloud Functions).
+      match /viewers/{viewerUid} {
+        allow read: if isAdmin() || isStaff();
+        allow create, update, delete: if false;
+      }
+      match /priceChanges/{changeId} {
+        allow read: if isAdmin() || isStaff();
+        allow create, update, delete: if false;
+      }
     }
 
     // Collection group rule: enables collectionGroup('bids') queries (used by
