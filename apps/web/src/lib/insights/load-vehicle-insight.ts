@@ -74,7 +74,10 @@ export async function loadVehicleInsight(vehicleId: string): Promise<VehicleInsi
     };
   });
 
-  const viewers: ViewerEntry[] = [];
+  // Merge viewers across the vehicle's auctions by uid: a buyer who viewed two
+  // listings of the same car is one person — sum their views, keep the latest
+  // visit. (Also avoids duplicate React keys on the page.)
+  const viewersByUid = new Map<string, ViewerEntry>();
   const priceChanges: PriceChangeEntry[] = [];
   await Promise.all(
     auctionsSnap.docs.map(async (aDoc) => {
@@ -84,12 +87,24 @@ export async function loadVehicleInsight(vehicleId: string): Promise<VehicleInsi
       ]);
       for (const d of vwSnap.docs) {
         const w = d.data();
-        viewers.push({
-          uid: (w['uid'] as string) ?? d.id,
-          name: `${w['firstName'] ?? ''} ${w['lastInitial'] ?? ''}.`.trim(),
-          viewCount: (w['viewCount'] as number) ?? 0,
-          lastViewAtMs: (w['lastViewAt'] as Timestamp).toMillis(),
-        });
+        const uid = (w['uid'] as string) ?? d.id;
+        const lastViewAtMs = (w['lastViewAt'] as Timestamp).toMillis();
+        const viewCount = (w['viewCount'] as number) ?? 0;
+        const existing = viewersByUid.get(uid);
+        if (existing) {
+          existing.viewCount += viewCount;
+          if (lastViewAtMs > existing.lastViewAtMs) {
+            existing.lastViewAtMs = lastViewAtMs;
+            existing.name = `${w['firstName'] ?? ''} ${w['lastInitial'] ?? ''}.`.trim();
+          }
+        } else {
+          viewersByUid.set(uid, {
+            uid,
+            name: `${w['firstName'] ?? ''} ${w['lastInitial'] ?? ''}.`.trim(),
+            viewCount,
+            lastViewAtMs,
+          });
+        }
       }
       for (const d of pcSnap.docs) {
         const c = d.data();
@@ -104,7 +119,7 @@ export async function loadVehicleInsight(vehicleId: string): Promise<VehicleInsi
       }
     }),
   );
-  viewers.sort((a, b) => b.lastViewAtMs - a.lastViewAtMs);
+  const viewers = [...viewersByUid.values()].sort((a, b) => b.lastViewAtMs - a.lastViewAtMs);
   priceChanges.sort((a, b) => b.atMs - a.atMs);
 
   const listedAt = v['firstListedAt'] as Timestamp | undefined;

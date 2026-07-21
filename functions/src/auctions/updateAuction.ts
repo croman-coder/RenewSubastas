@@ -158,26 +158,34 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
     priceFields.push('reservePrice');
   }
   if (priceFields.length > 0) {
-    const actorSnap = await adminDb().doc(`users/${actorUid}`).get();
-    const ap = (actorSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;
-    const actorName =
-      [ap['firstName'], ap['lastName']].filter(Boolean).join(' ') ||
-      ((actorSnap.data()?.['email'] as string) ?? actorUid);
-    const batch = adminDb().batch();
-    for (const field of priceFields) {
-      const from = (a[field] as number | undefined) ?? null;
-      const to = field === 'reservePrice' && v.reservePrice === null ? null : (v[field] as number);
-      batch.set(ref.collection('priceChanges').doc(), {
-        field,
-        from,
-        to,
-        isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
-        actorUid,
-        actorName,
-        at: FieldValue.serverTimestamp(),
-      });
+    // Insights price history is non-critical: a failure here must never block
+    // the audit-log write below (a compliance artifact) nor turn the user's
+    // already-committed edit into an error. Log and continue.
+    try {
+      const actorSnap = await adminDb().doc(`users/${actorUid}`).get();
+      const ap = (actorSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;
+      const actorName =
+        [ap['firstName'], ap['lastName']].filter(Boolean).join(' ') ||
+        ((actorSnap.data()?.['email'] as string) ?? actorUid);
+      const batch = adminDb().batch();
+      for (const field of priceFields) {
+        const from = (a[field] as number | undefined) ?? null;
+        const to =
+          field === 'reservePrice' && v.reservePrice === null ? null : (v[field] as number);
+        batch.set(ref.collection('priceChanges').doc(), {
+          field,
+          from,
+          to,
+          isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+          actorUid,
+          actorName,
+          at: FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    } catch (err) {
+      console.error('[updateAuction] priceChanges write failed', err);
     }
-    await batch.commit();
   }
 
   await writeAuditLog({
