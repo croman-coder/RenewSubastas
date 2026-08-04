@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, type RefObject } from 'react';
 import Link from 'next/link';
 import { Menu, X, LogOut, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { signOut } from 'firebase/auth';
@@ -66,6 +66,11 @@ export function Topbar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const initial = (firstName || email).slice(0, 1).toUpperCase();
+  // Handed to the drawer so it can return focus here when it closes.
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  // Stable identity so the drawer's open/close effect doesn't re-run (and
+  // re-steal focus into the drawer) on unrelated Topbar re-renders.
+  const closeMobileMenu = useCallback(() => setMobileOpen(false), []);
 
   async function handleSignOut() {
     await fetch('/api/session', { method: 'DELETE' });
@@ -85,6 +90,7 @@ export function Topbar({
       >
         <div className="flex items-center gap-3 min-w-0">
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menú"
@@ -172,7 +178,8 @@ export function Topbar({
       {/* Mobile drawer */}
       <MobileDrawer
         open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        onClose={closeMobileMenu}
+        triggerRef={menuButtonRef}
         navItems={navItems}
         firstName={firstName}
         email={email}
@@ -186,6 +193,7 @@ export function Topbar({
 function MobileDrawer({
   open,
   onClose,
+  triggerRef,
   navItems,
   firstName,
   email,
@@ -194,12 +202,65 @@ function MobileDrawer({
 }: {
   open: boolean;
   onClose: () => void;
+  triggerRef: RefObject<HTMLButtonElement>;
   navItems: NavItem[];
   firstName: string;
   email: string;
   role: Role;
   audience?: 'retail' | 'wholesale';
 }) {
+  const asideRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // While open: focus the close button, lock background scroll, trap Tab
+  // inside the drawer, and let Escape close it. Everything unwinds on
+  // cleanup (drawer closing or unmount), including returning focus to the
+  // hamburger button that opened it.
+  useEffect(() => {
+    if (!open) return;
+
+    closeButtonRef.current?.focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function getFocusable(): HTMLElement[] {
+      const root = asideRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      triggerRef.current?.focus();
+    };
+  }, [open, onClose, triggerRef]);
+
   return (
     <>
       {/* Backdrop */}
@@ -211,10 +272,15 @@ function MobileDrawer({
           (open ? 'opacity-100' : 'opacity-0 pointer-events-none')
         }
       />
-      {/* Drawer */}
+      {/* Drawer. Fully inert while closed (no focus, no AT exposure, no
+          click) so a keyboard user tabbing through the page never lands on
+          an invisible nav link; role/aria-modal only assert dialog
+          semantics while it's actually open. */}
       <aside
-        role="dialog"
-        aria-modal="true"
+        ref={asideRef}
+        {...(open ? { role: 'dialog' as const, 'aria-modal': 'true' as const } : {})}
+        {...(!open ? { inert: '' as unknown as boolean } : {})}
+        aria-hidden={!open ? true : undefined}
         aria-label="Menú de navegación"
         className={
           'lg:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[80%] ' +
@@ -226,6 +292,7 @@ function MobileDrawer({
         <div className="h-14 flex items-center justify-between px-4 border-b border-text-subtle/15">
           <RenewWordmark size="sm" />
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Cerrar menú"
@@ -258,7 +325,7 @@ function MobileDrawer({
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-3">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
           <SidebarNav items={navItems} onNavigate={onClose} />
         </div>
       </aside>

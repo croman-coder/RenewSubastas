@@ -270,7 +270,7 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="w-[22rem] p-0 overflow-hidden rounded-2xl border-text-subtle/15"
+        className="w-[calc(100vw-2rem)] max-w-[22rem] p-0 overflow-hidden rounded-2xl border-text-subtle/15"
       >
         <header className="flex items-center justify-between px-4 py-3 border-b border-text-subtle/15 bg-bg-elev/60">
           <div className="flex items-center gap-2.5">
@@ -300,7 +300,7 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
         {empty ? (
           <EmptyState role={role} />
         ) : (
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto overscroll-contain">
             {groups.map((group, gi) => (
               <div key={group.label}>
                 <div className="sticky top-0 z-10 px-4 py-1.5 text-[10px] uppercase tracking-[0.1em] font-semibold text-text-muted/80 bg-bg-elev/95 backdrop-blur border-b border-text-subtle/10">

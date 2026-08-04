@@ -8,6 +8,14 @@ import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Trophy, Gavel } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
 
@@ -54,6 +62,11 @@ export function BidPanel({
   const minRequired = toCents(currentBid > 0 ? currentBid + bidIncrement : startingPrice);
   const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
+  // Amount staged for confirmation; null when the confirm dialog is closed.
+  // Placing a bid is irreversible and money-critical, so neither the
+  // quick-bid chips nor the manual submit call the network directly — they
+  // stage the amount here and the dialog gates the actual call.
+  const [pendingBid, setPendingBid] = useState<number | null>(null);
   // Time-based end: the status field flips to 'ended' only on the next
   // scheduled tick (up to ~1 min late). The clock is the source of truth for
   // whether bidding is still open, so we close the panel as soon as endsAt
@@ -64,18 +77,10 @@ export function BidPanel({
   const isWinning = currentBidderUid === myUid && currentBid > 0;
   const iWon = ended && status !== 'cancelled' && isWinning;
 
-  async function placeBid(rawAmount: number) {
-    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
-      toast.error('Ingresá un monto válido.');
-      return;
-    }
-    // Snap to cents before sending so the server's 2-decimal validator never
-    // rejects a perfectly-intentional bid because of float arithmetic.
-    const amount = toCents(rawAmount);
-    if (amount > MAX_BID_USD) {
-      toast.error(`El monto máximo permitido es USD ${fmtUsd(MAX_BID_USD)}.`);
-      return;
-    }
+  // The actual network call, extracted out of the old placeBid so the
+  // confirmation dialog's confirm button can invoke it directly. Error
+  // handling, the busy state and the toasts are unchanged from before.
+  async function submitBid(amount: number) {
     setBusy(true);
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
@@ -109,6 +114,31 @@ export function BidPanel({
     } finally {
       setBusy(false);
     }
+  }
+
+  // Validates the amount and stages it for confirmation instead of
+  // submitting straight away — bidding is irreversible and money-critical,
+  // so a single mis-tap (quick-bid chips are a tight grid on mobile) should
+  // never be enough to fire it. submitBid runs only once the user confirms.
+  function placeBid(rawAmount: number) {
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+      toast.error('Ingresá un monto válido.');
+      return;
+    }
+    // Snap to cents before sending so the server's 2-decimal validator never
+    // rejects a perfectly-intentional bid because of float arithmetic.
+    const amount = toCents(rawAmount);
+    if (amount > MAX_BID_USD) {
+      toast.error(`El monto máximo permitido es USD ${fmtUsd(MAX_BID_USD)}.`);
+      return;
+    }
+    setPendingBid(amount);
+  }
+
+  async function confirmPendingBid() {
+    if (pendingBid === null) return;
+    await submitBid(pendingBid);
+    setPendingBid(null);
   }
 
   if (!isLive) {
@@ -172,6 +202,10 @@ export function BidPanel({
     { amt: quickIncrements[1]!, tag: `+${fmtUsd(bidIncrement)}` },
     { amt: quickIncrements[2]!, tag: `+${fmtUsd(bidIncrement * 2)}` },
   ];
+
+  // Reuses the same fmtUsd formatting the rest of the panel uses so the
+  // confirmation dialog shows the exact amount that will be submitted.
+  const pendingAmountLabel = pendingBid !== null ? fmtUsd(pendingBid) : '';
 
   return (
     <div className="ink-mesh rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
@@ -238,7 +272,7 @@ export function BidPanel({
             disabled={busy}
             onClick={() => placeBid(q.amt)}
             className={
-              'group rounded-xl px-2 py-2.5 text-center transition-all duration-200 ' +
+              'group rounded-xl px-2 py-2.5 text-center transition-[background-color,border-color,opacity,transform] duration-200 ' +
               'disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] ' +
               (i === 0
                 ? 'bg-text-strong text-bg-base hover:opacity-90'
@@ -267,11 +301,8 @@ export function BidPanel({
             </span>
             <Input
               id="manual"
-              type="number"
-              step="0.01"
+              type="text"
               inputMode="decimal"
-              min={minRequired}
-              max={MAX_BID_USD}
               value={manual}
               onChange={(e) => {
                 const v = e.target.value;
@@ -303,6 +334,31 @@ export function BidPanel({
           </Button>
         </div>
       )}
+
+      <Dialog
+        open={pendingBid !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPendingBid(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar puja</DialogTitle>
+            <DialogDescription>
+              Vas a pujar USD {pendingAmountLabel} por este vehículo. Las pujas son en firme y no se
+              pueden retirar.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPendingBid(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={busy} onClick={confirmPendingBid}>
+              {busy ? t('submitting') : 'Confirmar puja'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

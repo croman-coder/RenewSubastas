@@ -297,7 +297,7 @@
         "vin": "VIN",
         "description": "Descripción",
         "bidsTitle": "Pujas (en vivo)",
-        "noBidsYet": "Aún no hay pujas. Sé el primero (Plan 6).",
+        "noBidsYet": "Aún no hay pujas. Sé el primero.",
         "bidPlaceholderTitle": "Pujar (próximamente)",
         "bidPlaceholderBody": "El sistema de pujas se habilita en el Plan 6.",
         "timeLeft": "Tiempo restante",

@@ -57,20 +57,37 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
   const isUrgent = remainingMs > 0 && remainingMs < 60 * 60 * 1000;
   const isLive = auction.status === 'live';
 
+  const cardLabel = `${auction.make} ${auction.model} ${auction.year}`;
+
   return (
-    <Link
-      href={`/${locale}/auctions/${auction.id}` as `/${string}`}
+    // Plain (non-interactive) wrapper — the actual navigation affordance is
+    // the full-card overlay `<Link>` below. This card also contains a
+    // favorite `<button>`; nesting a button inside an `<a>` is invalid HTML
+    // and leaves both controls inconsistently keyboard/AT-reachable across
+    // browsers. The overlay-link pattern keeps "click anywhere on the card
+    // navigates" while the button stays a real sibling, reachable by Tab as
+    // its own stop and clickable above the overlay via z-index.
+    <div
       className={
-        'sheen group block rounded-xl overflow-hidden border border-text-subtle/15 bg-bg-elev/40 ' +
-        'transition-all duration-300 hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
+        'sheen group relative block rounded-xl overflow-hidden border border-text-subtle/15 ' +
+        'bg-bg-elev/40 transition-[border-color,background-color,transform,box-shadow] duration-300 ' +
+        'hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
         'hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.55)] ' +
-        'active:scale-[0.99] active:translate-y-0 ' +
-        'focus:outline-none focus:ring-2 focus:ring-text-strong/40 focus:ring-offset-2 focus:ring-offset-bg-base ' +
         'animate-in fade-in slide-in-from-bottom-2 duration-300'
       }
       style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
     >
-      <div className="relative aspect-[4/3] bg-bg-deep overflow-hidden">
+      <Link
+        href={`/${locale}/auctions/${auction.id}` as `/${string}`}
+        aria-label={cardLabel}
+        className={
+          'absolute inset-0 z-0 rounded-xl ' +
+          'active:scale-[0.99] ' +
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
+        }
+      />
+      <div className="relative z-[1] aspect-[4/3] bg-bg-deep overflow-hidden pointer-events-none">
         {auction.thumbnailUrl ? (
           <img
             src={auction.thumbnailUrl}
@@ -94,7 +111,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           aria-label={fav ? t('removeFavorite') : t('addFavorite')}
           aria-pressed={fav}
           className={
-            'absolute top-2.5 right-2.5 w-9 h-9 rounded-full grid place-items-center ' +
+            'absolute top-2.5 right-2.5 w-9 h-9 rounded-full grid place-items-center pointer-events-auto ' +
             'bg-black/40 backdrop-blur-md ring-1 ring-white/10 ' +
             'transition-all duration-200 hover:bg-black/60 hover:scale-105 active:scale-95 ' +
             (fav ? 'text-rose-400' : 'text-white/80 hover:text-rose-300')
@@ -118,7 +135,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           {formatRemaining(remainingMs)}
         </div>
       </div>
-      <div className="p-3.5 space-y-2">
+      <div className="relative z-[1] p-3.5 space-y-2 pointer-events-none">
         <h3 className="font-medium text-text-strong tracking-tight truncate">
           {auction.make} {auction.model}{' '}
           <span className="num-tab text-text-muted font-normal">{auction.year}</span>
@@ -142,7 +159,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

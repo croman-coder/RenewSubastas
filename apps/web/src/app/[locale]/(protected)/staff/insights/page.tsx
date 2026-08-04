@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { AlertTriangle, Eye, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Eye, Gavel, TrendingDown } from 'lucide-react';
 import { requireRole } from '@/lib/auth/server';
 import { loadInsights } from '@/lib/insights/load-insights';
+import { VEHICLE_STATUS_LABEL, fmtUsd } from '@/lib/insights/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,20 @@ export default async function InsightsPage({ params: { locale } }: { params: { l
                 href={`/${locale}/staff/insights/${r.vehicleId}` as `/${string}`}
                 className="flex items-center gap-3 rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-3 transition-colors hover:border-text-subtle/30 hover:bg-bg-elev/60"
               >
+                {r.thumbnailUrl ? (
+                  <img
+                    src={r.thumbnailUrl}
+                    alt=""
+                    width={48}
+                    height={48}
+                    loading="lazy"
+                    className="w-12 h-12 rounded-md object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-md bg-bg-deep/60 shrink-0 grid place-items-center">
+                    <Gavel className="w-4 h-4 text-text-muted/40" aria-hidden />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-text-strong truncate">
                     {r.make} {r.model} <span className="text-text-muted num-tab">{r.year}</span>
@@ -51,7 +66,7 @@ export default async function InsightsPage({ params: { locale } }: { params: { l
                       </span>
                     )}
                     {r.currentPrice !== null && (
-                      <span className="num-tab">USD {r.currentPrice.toLocaleString()}</span>
+                      <span className="num-tab">{fmtUsd(r.currentPrice)}</span>
                     )}
                   </p>
                 </div>
@@ -69,7 +84,9 @@ export default async function InsightsPage({ params: { locale } }: { params: { l
                       {r.daysListed} día{r.daysListed === 1 ? '' : 's'}
                     </p>
                   )}
-                  <p className="text-[11px] text-text-muted mt-0.5">{r.status}</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">
+                    {VEHICLE_STATUS_LABEL[r.status] ?? r.status}
+                  </p>
                 </div>
               </Link>
             </li>

@@ -105,7 +105,7 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
 
       <label
         htmlFor="proof-input"
-        className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-text-subtle/30 bg-bg-deep/40 px-4 py-3.5 cursor-pointer hover:border-text-subtle/50 transition-colors"
+        className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-text-subtle/30 bg-bg-deep/40 px-4 py-3.5 cursor-pointer hover:border-text-subtle/50 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-text-strong/40 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-bg-base"
       >
         <span className="flex items-center gap-2.5 min-w-0">
           <Paperclip className="w-4 h-4 shrink-0 text-text-muted" />
@@ -114,11 +114,14 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
           </span>
         </span>
         <span className="text-xs font-medium text-text-muted shrink-0">Examinar</span>
+        {/* `sr-only` (not `hidden`/display:none) keeps the input focusable and
+            in the tab order — it's the ONLY way to open the file picker via
+            keyboard, since the wrapping <label> itself isn't a tab stop. */}
         <input
           id="proof-input"
           type="file"
           accept={ACCEPT}
-          className="hidden"
+          className="sr-only"
           onChange={pick}
           disabled={busy}
         />

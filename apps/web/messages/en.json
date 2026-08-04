@@ -297,7 +297,7 @@
         "vin": "VIN",
         "description": "Description",
         "bidsTitle": "Bids (live)",
-        "noBidsYet": "No bids yet. Be the first (Plan 6).",
+        "noBidsYet": "No bids yet. Be the first.",
         "bidPlaceholderTitle": "Place a bid (coming soon)",
         "bidPlaceholderBody": "The bidding system will be enabled in Plan 6.",
         "timeLeft": "Time remaining",
