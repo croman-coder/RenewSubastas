@@ -57,4 +57,7 @@ export async function getWinnerContactHandler(req: CallableRequest): Promise<Win
   return { displayName, email, phone };
 }
 
-export const getWinnerContact = onCall({ region: 'us-central1' }, getWinnerContactHandler);
+export const getWinnerContact = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
+  getWinnerContactHandler,
+);

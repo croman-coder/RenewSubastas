@@ -86,6 +86,16 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
   const nextAudience: 'retail' | 'wholesale' | undefined =
     nextRole === 'buyer' ? (input.audience ?? beforeAudience ?? 'retail') : undefined;
 
+  // Any actual change to role/status/audience invalidates outstanding
+  // session cookies below — a demoted admin or a buyer moved between
+  // retail/wholesale must not keep acting under the old claims for the rest
+  // of their 5-day cookie just because `setCustomUserClaims` alone doesn't
+  // touch already-minted sessions.
+  const claimsChanged =
+    nextRole !== before['role'] ||
+    nextStatus !== before['status'] ||
+    nextAudience !== beforeAudience;
+
   await setUserClaims(input.uid, {
     role: nextRole,
     status: nextStatus,
@@ -94,14 +104,24 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
 
   // Mirror the status to Firebase Auth so a reactivated user can actually
   // sign in (deleteUser flips `disabled: true`; without this, Firestore says
-  // active but Auth keeps blocking the login). Also revoke refresh tokens on
-  // disable so any active session is terminated immediately.
+  // active but Auth keeps blocking the login).
   if (input.status !== undefined && input.status !== before['status']) {
     try {
       await adminAuth().updateUser(input.uid, { disabled: nextStatus === 'disabled' });
-      if (nextStatus === 'disabled') {
-        await adminAuth().revokeRefreshTokens(input.uid);
-      }
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code !== 'auth/user-not-found') throw err;
+    }
+  }
+
+  // Revoke on ANY claims change, not just disable — verifySessionCookie's
+  // tokensValidAfterTime check (called with checkRevoked=true in
+  // api/session's getCurrentUser) forces a fresh sign-in, which re-mints the
+  // cookie with the new claims instead of trusting the old one for up to 5
+  // more days.
+  if (claimsChanged) {
+    try {
+      await adminAuth().revokeRefreshTokens(input.uid);
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code !== 'auth/user-not-found') throw err;
@@ -136,6 +156,6 @@ export async function updateUserRoleHandler(req: CallableRequest): Promise<Updat
 }
 
 export const updateUserRole = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   updateUserRoleHandler,
 );

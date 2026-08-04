@@ -65,7 +65,7 @@ export async function redeemPasswordResetHandler(
 export const redeemPasswordReset = onCall(
   {
     region: 'us-central1',
-    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true',
+    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false',
   },
   redeemPasswordResetHandler,
 );

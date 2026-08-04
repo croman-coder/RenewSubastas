@@ -201,6 +201,6 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
 }
 
 export const updateAuction = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   updateAuctionHandler,
 );

@@ -25,6 +25,8 @@ export interface AuctionDetail {
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
   startsAtMs: number;
   endsAtMs: number;
+  /** Missing/legacy auctions default to retail — mirrors audienceMatches() in firestore.rules. */
+  audience: 'retail' | 'wholesale';
 }
 
 export async function loadAuction(id: string): Promise<AuctionDetail | null> {
@@ -62,5 +64,6 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
     status: (a['status'] as AuctionDetail['status']) ?? 'scheduled',
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),
+    audience: (a['audience'] as AuctionDetail['audience'] | undefined) ?? 'retail',
   };
 }

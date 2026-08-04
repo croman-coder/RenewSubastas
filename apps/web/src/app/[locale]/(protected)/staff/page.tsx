@@ -9,7 +9,7 @@ import {
   Trophy,
   ArrowRight,
 } from 'lucide-react';
-import { getCurrentUser } from '@/lib/auth/server';
+import { requireRole } from '@/lib/auth/server';
 import { loadStaffStats } from '@/lib/staff/load-staff-stats';
 import { TodayLabel } from '@/components/shell/today-label';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,10 @@ interface PageProps {
 }
 
 export default async function StaffHome({ params: { locale } }: PageProps) {
-  const user = await getCurrentUser(locale);
+  // staff/layout.tsx admits finanzas too (it needs /sales-adjacent nav), but
+  // this dashboard and the rest of /staff/* below are inventory/auction
+  // management — finanzas has no business reading vehicle/auction detail.
+  const user = await requireRole(locale, ['admin', 'staff']);
   const s = await loadStaffStats(user.uid);
 
   const totalVehicles =

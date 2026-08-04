@@ -51,4 +51,7 @@ export async function resolveBiddersHandler(
   return out;
 }
 
-export const resolveBidders = onCall({ region: 'us-central1' }, resolveBiddersHandler);
+export const resolveBidders = onCall(
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
+  resolveBiddersHandler,
+);

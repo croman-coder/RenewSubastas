@@ -65,6 +65,6 @@ export async function savePushTokenHandler(req: CallableRequest): Promise<SavePu
 }
 
 export const savePushToken = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   savePushTokenHandler,
 );

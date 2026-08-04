@@ -94,6 +94,6 @@ export async function logAuctionViewHandler(req: CallableRequest): Promise<LogAu
 }
 
 export const logAuctionView = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   logAuctionViewHandler,
 );

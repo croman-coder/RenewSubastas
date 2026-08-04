@@ -19,6 +19,14 @@ export default async function BuyerAuctionDetail({ params: { locale, id } }: Pro
     loadAppConfigSnapshot(),
   ]);
   if (!auction) notFound();
+  // loadAuction reads via the Admin SDK, which bypasses firestore.rules —
+  // mirror the same audience gate the rules enforce (rules:51-54) so a
+  // retail buyer can't reach a wholesale auction's detail (pricing, VIN,
+  // license plate) just by knowing/guessing its id. Staff/admin/finanzas
+  // see everything, same as the rules.
+  if (user.role === 'buyer' && auction.audience !== (user.audience ?? 'retail')) {
+    notFound();
+  }
   return (
     <>
       <ViewTracker auctionId={id} />

@@ -104,6 +104,6 @@ export async function deleteVehicleHandler(req: CallableRequest): Promise<Delete
 }
 
 export const deleteVehicle = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   deleteVehicleHandler,
 );

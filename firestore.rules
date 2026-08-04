@@ -11,10 +11,12 @@ service cloud.firestore {
     // Buyer-only catalog segment ('retail' | 'wholesale'). Defaults to 'retail'
     // for legacy buyers whose claim hasn't been refreshed yet.
     function audience()   { return request.auth.token.audience != null ? request.auth.token.audience : 'retail'; }
-    // True when the document's audience matches the calling buyer's audience,
-    // OR when the doc has no audience field (legacy data, treated as retail).
+    // True when the document's audience matches the calling buyer's audience.
+    // A missing audience field (legacy data) is treated as 'retail' — NOT as
+    // "visible to everyone"; `docAudience == null` must resolve to a value
+    // that's compared, never short-circuit to an open true.
     function audienceMatches(docAudience) {
-      return docAudience == null || docAudience == audience();
+      return (docAudience == null ? 'retail' : docAudience) == audience();
     }
 
     match /users/{uid} {

@@ -214,6 +214,6 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
 }
 
 export const placeBid = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   placeBidHandler,
 );

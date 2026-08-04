@@ -58,6 +58,6 @@ export async function deleteUserHandler(req: CallableRequest): Promise<DeleteUse
 }
 
 export const deleteUser = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   deleteUserHandler,
 );

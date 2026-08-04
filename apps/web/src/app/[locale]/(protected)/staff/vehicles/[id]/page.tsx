@@ -1,6 +1,7 @@
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { notFound } from 'next/navigation';
+import { requireRole } from '@/lib/auth/server';
 import { EditVehicleForm } from './edit-vehicle-form';
 
 interface Props {
@@ -19,6 +20,9 @@ function extractStoragePath(url: string): string {
 }
 
 export default async function VehicleDetailPage({ params: { locale, id } }: Props) {
+  // This page had NO auth check at all — it read straight through the Admin
+  // SDK (which bypasses firestore.rules) with no session or role gate.
+  await requireRole(locale, ['admin', 'staff']);
   const snap = await getFirestore(getAdminApp()).doc(`vehicles/${id}`).get();
   if (!snap.exists) notFound();
   const data = snap.data()!;

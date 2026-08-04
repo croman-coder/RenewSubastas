@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/auth/server';
+import { requireRole } from '@/lib/auth/server';
 import { listVehicles } from '@/lib/staff/list-vehicles';
 import { VehiclesTable } from './vehicles-table';
 
@@ -8,7 +8,10 @@ interface PageProps {
 }
 
 export default async function VehiclesListPage({ params: { locale }, searchParams }: PageProps) {
-  const user = await getCurrentUser(locale);
+  // Inventory (VIN, plate, acquisition pipeline) is staff/admin territory —
+  // finanzas can reach /staff via the layout for other reasons but must not
+  // see this.
+  const user = await requireRole(locale, ['admin', 'staff']);
   const status =
     searchParams?.status === 'draft' ||
     searchParams?.status === 'ready' ||

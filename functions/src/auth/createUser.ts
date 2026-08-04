@@ -187,7 +187,7 @@ export const createUser = onCall(
   {
     region: 'us-central1',
     secrets: [RESEND_API_KEY],
-    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true',
+    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false',
   },
   createUserHandler,
 );

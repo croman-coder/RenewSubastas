@@ -112,7 +112,7 @@ export async function registerGoogleBuyerHandler(
 export const registerGoogleBuyer = onCall(
   {
     region: 'us-central1',
-    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true',
+    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false',
   },
   registerGoogleBuyerHandler,
 );

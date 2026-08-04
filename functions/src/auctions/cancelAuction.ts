@@ -75,6 +75,6 @@ export async function cancelAuctionHandler(req: CallableRequest): Promise<Cancel
 }
 
 export const cancelAuction = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] === 'true' },
+  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
   cancelAuctionHandler,
 );
