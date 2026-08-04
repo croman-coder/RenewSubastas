@@ -9,6 +9,10 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 const MAX_PRICE_USD = 200_000;
 const MAX_INCREMENT_USD = 50_000;
 
+// Keep in sync with the same constant in createAuction.ts. See the
+// hardEndsAt comment in packages/shared-types/src/auction.ts.
+const MAX_TOTAL_EXTENSION_MS = 30 * 60_000;
+
 const InputSchema = z.object({
   auctionId: z.string().min(1),
   startingPrice: z.number().positive().finite().max(MAX_PRICE_USD).optional(),
@@ -20,6 +24,19 @@ const InputSchema = z.object({
 
 export interface UpdateAuctionResult {
   ok: true;
+}
+
+interface PriceChangeRecord {
+  field: 'startingPrice' | 'reservePrice';
+  from: number | null;
+  to: number | null;
+  isReduction: boolean;
+}
+
+interface TxResult {
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  priceChanges: PriceChangeRecord[];
 }
 
 /**
@@ -35,6 +52,18 @@ export interface UpdateAuctionResult {
  *   - ended /
  *     cancelled  → immutable. No edits.
  *
+ * The read of "current status", every validation against current values,
+ * and the write all happen inside ONE transaction. This used to be a plain
+ * `ref.get()` followed by a separate `ref.update()` — a full round-trip
+ * apart from the write — so `tickAuctions` (which promotes scheduled→live
+ * every minute) could flip the status in between, landing a "scheduled"
+ * edit (e.g. a price change) onto an auction that by the time of the write
+ * already has bidders on it.
+ *
+ * reservePrice never lives on this doc — see AuctionPrivateSchema. It's
+ * read from and written to auctions/{id}/private/internal, which buyers
+ * cannot read.
+ *
  * Every edit is audit-logged with before/after so changes to a live
  * auction's clock are traceable.
  */
@@ -49,134 +78,170 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
   }
   const v = parsed.data;
 
-  const ref = adminDb().doc(`auctions/${v.auctionId}`);
-  const snap = await ref.get();
-  if (!snap.exists) throw new HttpsError('not-found', 'Auction not found');
-  const a = snap.data()!;
-  const status = a['status'] as string;
+  const db = adminDb();
+  const ref = db.doc(`auctions/${v.auctionId}`);
+  const privateRef = ref.collection('private').doc('internal');
 
-  if (status === 'ended' || status === 'cancelled') {
-    throw new HttpsError('failed-precondition', `Cannot edit an auction in status "${status}"`);
-  }
+  const { before, after, priceChanges } = await db.runTransaction<TxResult>(async (tx) => {
+    // ---- All reads first (Firestore requires this before any write) ----
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError('not-found', 'Auction not found');
+    const a = snap.data()!;
+    const status = a['status'] as string;
 
-  const update: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
-  const before: Record<string, unknown> = {};
-  const after: Record<string, unknown> = {};
-
-  if (status === 'scheduled') {
-    // Full edit allowed.
-    if (v.startingPrice !== undefined) {
-      update['startingPrice'] = v.startingPrice;
-      before['startingPrice'] = a['startingPrice'];
-      after['startingPrice'] = v.startingPrice;
+    if (status === 'ended' || status === 'cancelled') {
+      throw new HttpsError('failed-precondition', `Cannot edit an auction in status "${status}"`);
     }
-    if (v.reservePrice !== undefined) {
-      if (v.reservePrice === null) {
-        update['reservePrice'] = FieldValue.delete();
-      } else {
-        update['reservePrice'] = v.reservePrice;
+
+    // Only fetch the private doc when we might actually need the current
+    // reserve: either the caller is touching it, or we're in the
+    // `scheduled` branch where the reserve>=startingPrice check needs it.
+    const needsReserveRead = v.reservePrice !== undefined || status === 'scheduled';
+    const privateSnap = needsReserveRead ? await tx.get(privateRef) : null;
+    const currentReserve = privateSnap?.data()?.['reservePrice'] as number | undefined;
+
+    // ---- Branch + validate (still no writes) ----
+    const update: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+    const priceChanges: PriceChangeRecord[] = [];
+    let reserveWrite: number | null | undefined; // undefined = no change requested
+
+    if (status === 'scheduled') {
+      // Full edit allowed.
+      if (v.startingPrice !== undefined) {
+        update['startingPrice'] = v.startingPrice;
+        before['startingPrice'] = a['startingPrice'];
+        after['startingPrice'] = v.startingPrice;
+        if (v.startingPrice !== a['startingPrice']) {
+          const from = (a['startingPrice'] as number | undefined) ?? null;
+          priceChanges.push({
+            field: 'startingPrice',
+            from,
+            to: v.startingPrice,
+            isReduction: typeof from === 'number' && v.startingPrice < from,
+          });
+        }
       }
-      after['reservePrice'] = v.reservePrice;
-    }
-    if (v.bidIncrement !== undefined) {
-      update['bidIncrement'] = v.bidIncrement;
-      before['bidIncrement'] = a['bidIncrement'];
-      after['bidIncrement'] = v.bidIncrement;
-    }
-    if (v.startsAt !== undefined) {
-      update['startsAt'] = Timestamp.fromDate(new Date(v.startsAt));
-      after['startsAt'] = v.startsAt;
-    }
-    if (v.endsAt !== undefined) {
+      if (v.reservePrice !== undefined) {
+        after['reservePrice'] = v.reservePrice;
+        reserveWrite = v.reservePrice; // number, or null to clear
+        if (v.reservePrice !== (currentReserve ?? null)) {
+          const from = currentReserve ?? null;
+          const to = v.reservePrice; // number | null
+          priceChanges.push({
+            field: 'reservePrice',
+            from,
+            to,
+            isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+          });
+        }
+      }
+      if (v.bidIncrement !== undefined) {
+        update['bidIncrement'] = v.bidIncrement;
+        before['bidIncrement'] = a['bidIncrement'];
+        after['bidIncrement'] = v.bidIncrement;
+      }
+      if (v.startsAt !== undefined) {
+        update['startsAt'] = Timestamp.fromDate(new Date(v.startsAt));
+        after['startsAt'] = v.startsAt;
+      }
+      if (v.endsAt !== undefined) {
+        update['endsAt'] = Timestamp.fromDate(new Date(v.endsAt));
+        after['endsAt'] = v.endsAt;
+      }
+
+      // Validate the resulting window + reserve relationship.
+      const finalStart = v.startsAt
+        ? new Date(v.startsAt).getTime()
+        : (a['startsAt'] as Timestamp).toMillis();
+      const finalEnd = v.endsAt
+        ? new Date(v.endsAt).getTime()
+        : (a['endsAt'] as Timestamp).toMillis();
+      if (finalEnd <= finalStart + 60_000) {
+        throw new HttpsError('invalid-argument', 'endsAt must be at least 1 minute after startsAt');
+      }
+      const finalStartPrice = v.startingPrice ?? (a['startingPrice'] as number);
+      const finalReserve = v.reservePrice === null ? undefined : (v.reservePrice ?? currentReserve);
+      if (finalReserve !== undefined && finalReserve < finalStartPrice) {
+        throw new HttpsError('invalid-argument', 'reservePrice must be >= startingPrice');
+      }
+
+      // Nothing has bid yet in `scheduled` — a full reschedule earns a
+      // fresh anti-sniping runway measured from wherever the new end
+      // time lands (no bidder time is being taken away; there's no
+      // bidder yet).
+      if (v.startsAt !== undefined || v.endsAt !== undefined) {
+        update['hardEndsAt'] = Timestamp.fromMillis(finalEnd + MAX_TOTAL_EXTENSION_MS);
+      }
+    } else if (status === 'live') {
+      // Live: only extend endsAt. Reject any price/increment/start edit.
+      if (
+        v.startingPrice !== undefined ||
+        v.bidIncrement !== undefined ||
+        v.reservePrice !== undefined ||
+        v.startsAt !== undefined
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'A live auction can only have its end time extended; prices are frozen once bidding is open',
+        );
+      }
+      if (v.endsAt === undefined) {
+        throw new HttpsError('invalid-argument', 'Provide a new endsAt to extend the auction');
+      }
+      const currentEnd = (a['endsAt'] as Timestamp).toMillis();
+      const newEnd = new Date(v.endsAt).getTime();
+      if (newEnd <= currentEnd) {
+        throw new HttpsError(
+          'failed-precondition',
+          'New end time must be later than the current one (extend only)',
+        );
+      }
       update['endsAt'] = Timestamp.fromDate(new Date(v.endsAt));
+      before['endsAt'] = new Date(currentEnd).toISOString();
       after['endsAt'] = v.endsAt;
+      // A manual staff extension always earns a fresh buyer-anti-sniping
+      // runway from the new end time — otherwise the very next snipe bid
+      // could find the auction already "at the cap" right after staff
+      // just deliberately bought more time.
+      update['hardEndsAt'] = Timestamp.fromMillis(newEnd + MAX_TOTAL_EXTENSION_MS);
     }
 
-    // Validate the resulting window + reserve relationship.
-    const finalStart = v.startsAt
-      ? new Date(v.startsAt).getTime()
-      : (a['startsAt'] as Timestamp).toMillis();
-    const finalEnd = v.endsAt
-      ? new Date(v.endsAt).getTime()
-      : (a['endsAt'] as Timestamp).toMillis();
-    if (finalEnd <= finalStart + 60_000) {
-      throw new HttpsError('invalid-argument', 'endsAt must be at least 1 minute after startsAt');
+    if (Object.keys(update).length === 1 && reserveWrite === undefined) {
+      // Only updatedAt on the parent doc, and no reservePrice change either
+      // (that one lands on the private doc, not `update`) — nothing
+      // actually changed.
+      throw new HttpsError('invalid-argument', 'No editable fields provided');
     }
-    const finalStartPrice = v.startingPrice ?? (a['startingPrice'] as number);
-    const finalReserve =
-      v.reservePrice === null
-        ? undefined
-        : (v.reservePrice ?? (a['reservePrice'] as number | undefined));
-    if (finalReserve !== undefined && finalReserve < finalStartPrice) {
-      throw new HttpsError('invalid-argument', 'reservePrice must be >= startingPrice');
-    }
-  } else if (status === 'live') {
-    // Live: only extend endsAt. Reject any price/increment/start edit.
-    if (
-      v.startingPrice !== undefined ||
-      v.bidIncrement !== undefined ||
-      v.reservePrice !== undefined ||
-      v.startsAt !== undefined
-    ) {
-      throw new HttpsError(
-        'failed-precondition',
-        'A live auction can only have its end time extended; prices are frozen once bidding is open',
-      );
-    }
-    if (v.endsAt === undefined) {
-      throw new HttpsError('invalid-argument', 'Provide a new endsAt to extend the auction');
-    }
-    const currentEnd = (a['endsAt'] as Timestamp).toMillis();
-    const newEnd = new Date(v.endsAt).getTime();
-    if (newEnd <= currentEnd) {
-      throw new HttpsError(
-        'failed-precondition',
-        'New end time must be later than the current one (extend only)',
-      );
-    }
-    update['endsAt'] = Timestamp.fromDate(new Date(v.endsAt));
-    before['endsAt'] = new Date(currentEnd).toISOString();
-    after['endsAt'] = v.endsAt;
-  }
 
-  if (Object.keys(update).length === 1) {
-    // Only updatedAt — nothing actually changed.
-    throw new HttpsError('invalid-argument', 'No editable fields provided');
-  }
+    // ---- Writes ----
+    tx.update(ref, update);
+    if (reserveWrite !== undefined) {
+      if (reserveWrite === null) {
+        tx.set(privateRef, { reservePrice: FieldValue.delete() }, { merge: true });
+      } else {
+        tx.set(privateRef, { reservePrice: reserveWrite }, { merge: true });
+      }
+    }
 
-  await ref.update(update);
+    return { before, after, priceChanges };
+  });
 
   // ---- Price-change history (insights report) ----
-  // Every startingPrice/reservePrice edit is recorded in a dedicated
-  // subcollection so staff can see "how many times was this lowered" without
-  // digging through audit_logs. Actor name is snapshotted for display.
-  const priceFields: Array<'startingPrice' | 'reservePrice'> = [];
-  if (v.startingPrice !== undefined && v.startingPrice !== a['startingPrice']) {
-    priceFields.push('startingPrice');
-  }
-  if (v.reservePrice !== undefined && v.reservePrice !== (a['reservePrice'] ?? null)) {
-    priceFields.push('reservePrice');
-  }
-  if (priceFields.length > 0) {
-    // Insights price history is non-critical: a failure here must never block
-    // the audit-log write below (a compliance artifact) nor turn the user's
-    // already-committed edit into an error. Log and continue.
+  // Non-critical: a failure here must never turn the user's already-
+  // committed edit into an error. Log and continue.
+  if (priceChanges.length > 0) {
     try {
-      const actorSnap = await adminDb().doc(`users/${actorUid}`).get();
+      const actorSnap = await db.doc(`users/${actorUid}`).get();
       const ap = (actorSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;
       const actorName =
         [ap['firstName'], ap['lastName']].filter(Boolean).join(' ') ||
         ((actorSnap.data()?.['email'] as string) ?? actorUid);
-      const batch = adminDb().batch();
-      for (const field of priceFields) {
-        const from = (a[field] as number | undefined) ?? null;
-        const to =
-          field === 'reservePrice' && v.reservePrice === null ? null : (v[field] as number);
+      const batch = db.batch();
+      for (const change of priceChanges) {
         batch.set(ref.collection('priceChanges').doc(), {
-          field,
-          from,
-          to,
-          isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+          ...change,
           actorUid,
           actorName,
           at: FieldValue.serverTimestamp(),

@@ -50,13 +50,17 @@ async function seedAuctionAndVehicle(
     endsAt: Timestamp.fromMillis(Date.now() + opts.endsInMs),
     currentBid: opts.currentBid ?? 0,
     ...(opts.currentBidderUid && { currentBidderUid: opts.currentBidderUid }),
-    ...(opts.reservePrice !== undefined && { reservePrice: opts.reservePrice }),
     bidCount: opts.currentBid ? 1 : 0,
     status: opts.status,
     createdBy: 'staff-1',
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  // reservePrice lives in the buyer-unreadable private/internal doc, not on
+  // the parent auction doc — see AuctionPrivateSchema.
+  if (opts.reservePrice !== undefined) {
+    await aRef.collection('private').doc('internal').set({ reservePrice: opts.reservePrice });
+  }
   return { auctionId: aRef.id, vehicleId: vRef.id };
 }
 

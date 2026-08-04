@@ -81,6 +81,16 @@ service cloud.firestore {
         allow read: if isAdmin() || isStaff();
         allow create, update, delete: if false;
       }
+
+      // Money fields with no legitimate buyer-facing use (reservePrice today).
+      // Firestore has no field-level read control — putting reservePrice on
+      // the parent auction doc meant every buyer's onSnapshot on that doc
+      // received it, letting a bidder stop exactly at the reserve and never
+      // a cent above. Split onto a doc only admin/staff/finanzas can read.
+      match /private/{docId} {
+        allow read: if isAdmin() || isStaff() || isFinanzas();
+        allow create, update, delete: if false;
+      }
     }
 
     // Collection group rule: enables collectionGroup('bids') queries (used by

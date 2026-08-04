@@ -66,6 +66,8 @@ interface SeedAuctionOpts {
   bidIncrement?: number;
   currentBid?: number;
   currentBidderUid?: string;
+  /** Omit to test the lazy-backfill-on-first-bid path. */
+  hardEndsAtMs?: number;
 }
 
 async function seedAuction(opts: SeedAuctionOpts = {}): Promise<string> {
@@ -80,6 +82,9 @@ async function seedAuction(opts: SeedAuctionOpts = {}): Promise<string> {
     bidIncrement: opts.bidIncrement ?? 500,
     startsAt: Timestamp.fromMillis(Date.now() - 60_000),
     endsAt: Timestamp.fromMillis(Date.now() + endsInMs),
+    ...(opts.hardEndsAtMs !== undefined && {
+      hardEndsAt: Timestamp.fromMillis(opts.hardEndsAtMs),
+    }),
     currentBid: opts.currentBid ?? 0,
     ...(opts.currentBidderUid && { currentBidderUid: opts.currentBidderUid }),
     bidCount: opts.currentBid ? 1 : 0,
@@ -204,6 +209,36 @@ describe('placeBid', () => {
     // Cross-check: Firestore doc endsAt must match result.endsAtMs
     const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
     expect(aDoc.data()!['endsAt'].toMillis()).toBe(result.endsAtMs);
+  });
+
+  it('lazily backfills hardEndsAt (endsAt + 30min) on a pre-migration auction with no such field', async () => {
+    await seedBuyer('buyer-1');
+    const endsInMs = 30_000;
+    const auctionId = await seedAuction({ endsInMs }); // no hardEndsAtMs -> field absent
+    const beforeEndsMs = Date.now() + endsInMs;
+    await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
+
+    const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
+    const hardEndsAtMs = (aDoc.data()!['hardEndsAt'] as Timestamp).toMillis();
+    // Backfilled from the ORIGINAL endsAt (before this bid's own extension),
+    // not from the just-extended one.
+    expect(hardEndsAtMs).toBeGreaterThanOrEqual(beforeEndsMs + 30 * 60_000 - 2000);
+    expect(hardEndsAtMs).toBeLessThanOrEqual(beforeEndsMs + 30 * 60_000 + 2000);
+  });
+
+  it('anti-sniping never extends endsAt past hardEndsAt', async () => {
+    await seedBuyer('buyer-1');
+    // endsAt is inside the anti-snipe window, but hardEndsAt is only 10s
+    // further out — far less than a full 60s anti-snipe extension would give.
+    const hardEndsAtMs = Date.now() + 10_000;
+    const auctionId = await seedAuction({ endsInMs: 5_000, hardEndsAtMs });
+    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
+
+    expect(result.endsAtMs).toBe(hardEndsAtMs);
+    const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
+    expect(aDoc.data()!['endsAt'].toMillis()).toBe(hardEndsAtMs);
+    // hardEndsAt itself is untouched by a buyer-triggered extension.
+    expect(aDoc.data()!['hardEndsAt'].toMillis()).toBe(hardEndsAtMs);
   });
 
   it('rate-limits at 10 bids/minute', async () => {

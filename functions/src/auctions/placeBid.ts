@@ -30,6 +30,13 @@ const RATE_LIMIT_MAX = 10; // bids per minute per buyer
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_ANTI_SNIPING_SECONDS = 60;
 
+// Ceiling anti-sniping extensions may never push endsAt past. Without this,
+// two colluding buyer accounts sniping every ~59s can keep an auction open
+// indefinitely — free to set up since self-registration is public. Keep in
+// sync with the same constant in createAuction.ts / updateAuction.ts, which
+// stamp/refresh the per-auction `hardEndsAt` this clamps against.
+const MAX_TOTAL_EXTENSION_MS = 30 * 60_000;
+
 export interface PlaceBidResult {
   bidId: string;
   newCurrentBid: number;
@@ -160,11 +167,20 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
       throw new HttpsError('failed-precondition', `Bid must be at least ${minRequired}`);
     }
 
-    // Anti-sniping: extend endsAt if within window
+    // Anti-sniping: extend endsAt if within window, but never past
+    // hardEndsAt. Pre-existing auctions created before this ceiling
+    // shipped won't have the field yet — backfill it once, from the
+    // auction's current endsAt, so it becomes a stable, persisted value
+    // from here on rather than being silently absent forever.
+    const hardEndsAtRaw = a['hardEndsAt'] as Timestamp | undefined;
+    const hardEndsAtMs = hardEndsAtRaw
+      ? hardEndsAtRaw.toMillis()
+      : endsAt.toMillis() + MAX_TOTAL_EXTENSION_MS;
+
     const remainingMs = endsAt.toMillis() - now;
     let nextEndsAt = endsAt;
     if (remainingMs < antiSnipingSeconds * 1000) {
-      nextEndsAt = Timestamp.fromMillis(now + antiSnipingSeconds * 1000);
+      nextEndsAt = Timestamp.fromMillis(Math.min(now + antiSnipingSeconds * 1000, hardEndsAtMs));
     }
 
     // The bidder we're displacing (the prior top bidder). Recorded on the
@@ -201,6 +217,7 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
       bidCount: FieldValue.increment(1),
       endsAt: nextEndsAt,
       updatedAt: FieldValue.serverTimestamp(),
+      ...(hardEndsAtRaw === undefined ? { hardEndsAt: Timestamp.fromMillis(hardEndsAtMs) } : {}),
     });
 
     // Record this bid's timestamp in the rate-limit window (atomic with the

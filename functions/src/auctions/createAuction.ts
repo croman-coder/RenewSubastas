@@ -12,6 +12,11 @@ import { FieldValue } from 'firebase-admin/firestore';
 const MAX_PRICE_USD = 200_000;
 const MAX_INCREMENT_USD = 50_000;
 
+// The furthest placeBid's anti-sniping extensions are ever allowed to push
+// endsAt, measured from the auction's (current) scheduled end. See the
+// hardEndsAt comment in packages/shared-types/src/auction.ts.
+const MAX_TOTAL_EXTENSION_MS = 30 * 60_000;
+
 const InputSchema = z
   .object({
     vehicleId: z.string().min(1),
@@ -78,10 +83,10 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
         ...(firstImg?.thumbnailUrl ? { thumbnailUrl: firstImg.thumbnailUrl } : {}),
       },
       startingPrice: v.startingPrice,
-      ...(v.reservePrice !== undefined && { reservePrice: v.reservePrice }),
       bidIncrement: v.bidIncrement,
       startsAt: new Date(v.startsAt),
       endsAt: new Date(v.endsAt),
+      hardEndsAt: new Date(new Date(v.endsAt).getTime() + MAX_TOTAL_EXTENSION_MS),
       currentBid: 0,
       bidCount: 0,
       status: new Date(v.startsAt).getTime() <= Date.now() ? 'live' : 'scheduled',
@@ -89,6 +94,14 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // reservePrice never touches the buyer-readable parent doc — see
+    // AuctionPrivateSchema. Only written when a reserve was actually set.
+    if (v.reservePrice !== undefined) {
+      tx.set(auctionRef.collection('private').doc('internal'), {
+        reservePrice: v.reservePrice,
+      });
+    }
 
     tx.update(vehicleRef, {
       status: 'in_auction',

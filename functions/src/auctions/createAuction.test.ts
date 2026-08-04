@@ -146,7 +146,11 @@ describe('createAuction', () => {
     const auctionDoc = await adminDb().doc(`auctions/${result.auctionId}`).get();
     expect(auctionDoc.data()?.['status']).toBe('live');
     expect(auctionDoc.data()?.['startingPrice']).toBe(5000);
-    expect(auctionDoc.data()?.['reservePrice']).toBe(6000);
+    // reservePrice never lands on the buyer-readable parent doc — it's in
+    // the private/internal subcollection (see AuctionPrivateSchema).
+    expect(auctionDoc.data()?.['reservePrice']).toBeUndefined();
+    const privateDoc = await adminDb().doc(`auctions/${result.auctionId}/private/internal`).get();
+    expect(privateDoc.data()?.['reservePrice']).toBe(6000);
 
     const vehicleDoc = await adminDb().doc(`vehicles/${vehicleId}`).get();
     expect(vehicleDoc.data()?.['status']).toBe('in_auction');

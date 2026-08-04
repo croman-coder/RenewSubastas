@@ -73,16 +73,20 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
         const endsAt = a['endsAt'] as Timestamp;
         if (endsAt.toMillis() > now) return null;
 
-        // Read the vehicle (if any) BEFORE any write — Firestore requires
-        // all reads before writes, and we must tolerate a vehicle that was
-        // hard-deleted while the auction was live (updating a missing doc
-        // throws NOT_FOUND and would otherwise abort this close).
+        // Read the vehicle (if any) and the private reserve BEFORE any write
+        // — Firestore requires all reads before writes, and we must tolerate
+        // a vehicle that was hard-deleted while the auction was live
+        // (updating a missing doc throws NOT_FOUND and would otherwise
+        // abort this close).
         const vehicleId = a['vehicleId'] as string | undefined;
         const vehicleRef = vehicleId ? db.doc(`vehicles/${vehicleId}`) : null;
         const vehicleSnap = vehicleRef ? await tx.get(vehicleRef) : null;
+        // reservePrice lives in the buyer-unreadable private/internal doc,
+        // not on this doc — see AuctionPrivateSchema.
+        const privateSnap = await tx.get(doc.ref.collection('private').doc('internal'));
+        const reservePrice = privateSnap.data()?.['reservePrice'] as number | undefined;
 
         const currentBid = (a['currentBid'] as number) ?? 0;
-        const reservePrice = a['reservePrice'] as number | undefined;
         const winnerUid = a['currentBidderUid'] as string | undefined;
 
         let outcome: 'sold' | 'reserve_not_met' | 'no_bids';

@@ -9,12 +9,18 @@ interface Props {
 }
 
 export default async function AuctionDetailPage({ params: { locale, id } }: Props) {
-  const [snap, user] = await Promise.all([
-    getFirestore(getAdminApp()).doc(`auctions/${id}`).get(),
+  const db = getFirestore(getAdminApp());
+  const [snap, privateSnap, user] = await Promise.all([
+    db.doc(`auctions/${id}`).get(),
+    // reservePrice lives here, not on the parent doc — see
+    // AuctionPrivateSchema. Staff/admin/finanzas read it via the Admin SDK,
+    // same as this whole page already does.
+    db.doc(`auctions/${id}/private/internal`).get(),
     getCurrentUser(locale),
   ]);
   if (!snap.exists) notFound();
   const data = snap.data()!;
+  const reservePrice = (privateSnap.data()?.['reservePrice'] as number | undefined) ?? null;
   const ms = (k: string) => (data[k] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
   const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
   const winnerUid = (data['winnerUid'] as string | undefined) ?? null;
@@ -47,7 +53,7 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
         vehicleYear: (v['year'] as number) ?? 0,
         thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
         startingPrice: (data['startingPrice'] as number) ?? 0,
-        reservePrice: (data['reservePrice'] as number | undefined) ?? null,
+        reservePrice,
         currentBid: (data['currentBid'] as number) ?? 0,
         bidCount: (data['bidCount'] as number) ?? 0,
         status: (data['status'] as 'scheduled' | 'live' | 'ended' | 'cancelled') ?? 'scheduled',
