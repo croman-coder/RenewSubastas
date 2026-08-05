@@ -4,6 +4,7 @@ import { getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
+import { CookieBanner } from '@/components/legal/cookie-banner';
 import '../globals.css';
 
 // Body: Inter (modern neutral grotesque, excellent at small sizes).
@@ -56,6 +57,9 @@ export default async function LocaleLayout({
           <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               {children}
+              {/* Global: the choice has to be reachable from every surface,
+                  and Sentry Replay must stay off until it's made. */}
+              <CookieBanner locale={locale} />
               <Toaster position="top-right" richColors closeButton />
             </ThemeProvider>
           </AuthProvider>

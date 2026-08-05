@@ -69,6 +69,49 @@ describe('updateGlobalConfig', () => {
     expect(data?.['bid'].fixedIncrementUsd).toBe(500);
   });
 
+  it('stores the company legal identity used by the public legal pages', async () => {
+    await updateGlobalConfigHandler(
+      asAdmin('admin-9', {
+        company: {
+          legalName: 'Santa Rosa Paraguay S.A.',
+          ruc: '80012345-6',
+          address: 'Avda. Mcal. López 1234, Asunción, Paraguay',
+          email: 'legales@example.com',
+          phone: '+595 21 000 000',
+        },
+      }),
+    );
+    const data = (await adminDb().doc('app_config/global').get()).data();
+    expect(data?.['company']).toMatchObject({
+      legalName: 'Santa Rosa Paraguay S.A.',
+      ruc: '80012345-6',
+      address: 'Avda. Mcal. López 1234, Asunción, Paraguay',
+    });
+  });
+
+  it('rejects a malformed company contact email', async () => {
+    await expect(
+      updateGlobalConfigHandler(asAdmin('admin-9', { company: { email: 'no-es-un-email' } })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('leaves other company fields untouched on a partial update', async () => {
+    await updateGlobalConfigHandler(
+      asAdmin('admin-9', { company: { legalName: 'Original S.A.', ruc: '111' } }),
+    );
+    await updateGlobalConfigHandler(
+      asAdmin('admin-9', { company: { address: 'Nueva dirección' } }),
+    );
+    const data = (await adminDb().doc('app_config/global').get()).data();
+    // Dotted field paths, not a nested object write — a whole-object set here
+    // would silently wipe legalName/ruc when only the address is edited.
+    expect(data?.['company']).toMatchObject({
+      legalName: 'Original S.A.',
+      ruc: '111',
+      address: 'Nueva dirección',
+    });
+  });
+
   it('writes audit log', async () => {
     await updateGlobalConfigHandler(asAdmin('admin-7', { financing: { enabled: true } }));
     const logs = await adminDb()

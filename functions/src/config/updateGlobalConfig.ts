@@ -38,6 +38,19 @@ const InputSchema = z.object({
       fromName: z.string().min(1).optional(),
     })
     .optional(),
+  // Legal identity of the operating company, shown on the public privacy /
+  // terms / cookies pages and in the site footer. Editable here rather than
+  // hardcoded so a change of address or RUC doesn't need a deploy — and so
+  // the legal pages can never display an identity nobody reviewed.
+  company: z
+    .object({
+      legalName: z.string().max(160).optional(),
+      ruc: z.string().max(20).optional(),
+      address: z.string().max(240).optional(),
+      email: z.string().email().max(160).optional(),
+      phone: z.string().max(40).optional(),
+    })
+    .optional(),
   // Payment instructions surfaced to a buyer who just won an auction.
   // Stored as plain text so admin can drop the full Santa Rosa banking
   // block (account holder, bank, account number, CBU/CCI, etc.) without
@@ -118,6 +131,11 @@ export async function updateGlobalConfigHandler(
       update['emails.adminStaffDomain'] = v.emails.adminStaffDomain;
     if (v.emails.fromAddress !== undefined) update['emails.fromAddress'] = v.emails.fromAddress;
     if (v.emails.fromName !== undefined) update['emails.fromName'] = v.emails.fromName;
+  }
+  if (v.company) {
+    for (const [k, val] of Object.entries(v.company)) {
+      if (val !== undefined) update[`company.${k}`] = val;
+    }
   }
   if (v.payment) {
     for (const [k, val] of Object.entries(v.payment)) {

@@ -3,12 +3,15 @@ import { Gavel, LogIn, ShieldCheck, Timer } from 'lucide-react';
 import { PublicTopbar } from './public-topbar';
 import { PublicAuctionsBrowser } from './public-auctions-browser';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
+import { LegalFooter } from '@/components/legal/legal-footer';
 import { batchClock } from '@/lib/auctions/batch';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import type { Company } from '@/lib/legal/load-company';
 
 interface Props {
   locale: string;
   items: PublicAuction[];
+  company: Company;
 }
 
 /**
@@ -16,7 +19,7 @@ interface Props {
  * login wall. Only `retail` auctions ever reach here (see the loader call in
  * the route) — wholesale inventory stays invisible to anonymous visitors.
  */
-export function PublicLanding({ locale, items }: Props) {
+export function PublicLanding({ locale, items, company }: Props) {
   const liveCount = items.filter((a) => a.status === 'live').length;
   const clock = batchClock(items);
 
@@ -129,19 +132,7 @@ export function PublicLanding({ locale, items }: Props) {
         </div>
       </main>
 
-      <footer className="mt-10 border-t border-text-subtle/15">
-        <div className="mx-auto max-w-7xl px-4 md:px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-text-muted">
-          <p>
-            <span translate="no">Renew Subastas</span> · Santa Rosa Paraguay S.A.
-          </p>
-          <Link
-            href={`/${locale}/login` as `/${string}`}
-            className="hover:text-text-strong transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 rounded"
-          >
-            Iniciar sesión
-          </Link>
-        </div>
-      </footer>
+      <LegalFooter locale={locale} company={company} />
     </div>
   );
 }

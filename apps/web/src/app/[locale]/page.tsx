@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getOptionalUser } from '@/lib/auth/server';
 import { homeFor } from '@/lib/auth/constants';
 import { listPublicAuctions } from '@/lib/buyer/list-public-auctions';
+import { loadCompany } from '@/lib/legal/load-company';
 import { PublicLanding } from '@/components/public/public-landing';
 
 /**
@@ -21,6 +22,9 @@ export default async function HomePage({ params: { locale } }: { params: { local
   const user = await getOptionalUser();
   if (user) redirect(`/${locale}${homeFor(user.role, user.audience)}`);
 
-  const items = await listPublicAuctions({ tab: 'all', audience: 'retail' });
-  return <PublicLanding locale={locale} items={items} />;
+  const [items, company] = await Promise.all([
+    listPublicAuctions({ tab: 'all', audience: 'retail' }),
+    loadCompany(),
+  ]);
+  return <PublicLanding locale={locale} items={items} company={company} />;
 }
