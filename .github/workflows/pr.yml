@@ -25,9 +25,12 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
+      # @carbid/functions tests are NOT here: they run against the Firebase
+      # emulator suite (see `pnpm emulators`). Everything below is emulator-free.
       - name: Test (no emulators)
         run: |
           pnpm --filter @carbid/shared-types test
+          pnpm --filter @carbid/web test
       - name: Web build
         run: pnpm --filter @carbid/web build
         env:
