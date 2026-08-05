@@ -145,6 +145,14 @@ function Unit({
   return (
     <span className="inline-flex items-baseline">
       <span
+        // MUST be on this element, not an ancestor: suppressHydrationWarning
+        // applies to the node's own text/attributes and does NOT cascade to
+        // descendants. With it only on the wrapper, the seconds digit still
+        // mismatched (server 39 / client 38), React treated it as a failed
+        // hydration and replaced the whole document with a client render —
+        // it logged "the server HTML was replaced with client content in
+        // #document" on every page carrying the clock.
+        suppressHydrationWarning
         className={
           'num-tab font-semibold tracking-tight tabular-nums leading-none ' +
           (small ? 'text-xl sm:text-2xl lg:text-3xl ' : 'text-4xl sm:text-5xl lg:text-6xl ') +

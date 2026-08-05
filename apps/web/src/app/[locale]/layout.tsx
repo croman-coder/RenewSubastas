@@ -1,6 +1,8 @@
 import { Inter, Space_Grotesk } from 'next/font/google';
+import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { isLocale } from '@/lib/seo/site';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
@@ -45,6 +47,14 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
+  // `[locale]` matched literally anything, so every path the middleware
+  // excludes from the locale redirect — /favicon.ico, /icon, /manifest,
+  // /robots.txt — fell through to here and answered 200 with the full HTML
+  // app (lang="favicon.ico"). Browsers request /favicon.ico unprompted, and
+  // a 200 HTML body is worse than a 404: crawlers accept it as real. It also
+  // opened an unbounded URL space where every junk path rendered the site.
+  if (!isLocale(locale)) notFound();
+
   const messages = await getMessages();
   return (
     <html
