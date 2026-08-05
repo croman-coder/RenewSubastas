@@ -16,6 +16,7 @@ import {
   sectionLabel,
   dataRows,
   callout,
+  esc,
 } from '../lib/email-templates.js';
 
 // Sales-team recipients for the "seña confirmada, avanzar facturación" notice.
@@ -145,7 +146,7 @@ async function sendPaidNotifications(auctionId: string, a: Record<string, unknow
       body(
         badge('Pago confirmado', 'success') +
           heading(
-            `¡Confirmamos tu pago, ${(profile['firstName'] as string) ?? ''}!`.trim(),
+            `¡Confirmamos tu pago, ${esc((profile['firstName'] as string) ?? '')}!`.trim(),
             `<strong style="color:#0a0a0a;">Santa Rosa Paraguay SA</strong> confirmó la seña de tu <strong style="color:#0a0a0a;">${vehName}</strong>. La unidad queda reservada a tu nombre.`,
           ) +
           statPair(
@@ -174,11 +175,13 @@ async function sendPaidNotifications(auctionId: string, a: Record<string, unknow
   if (vf['color']) vehicleRows.push(['Color', vf['color'] as string]);
   vehicleRows.push(['Subasta', vanity]);
 
+  // Escaped here, not on the source variables — buyerName/buyerEmail are
+  // also used in the plain-text subject line elsewhere in this module.
   const clientRows: Array<[string, string]> = [
-    ['Nombre', buyerName],
-    ['Email', buyerEmail],
-    ['Teléfono', buyerPhone],
-    ['Documento', docType && docNumber ? `${docType} ${docNumber}` : ''],
+    ['Nombre', esc(buyerName)],
+    ['Email', esc(buyerEmail)],
+    ['Teléfono', esc(buyerPhone)],
+    ['Documento', docType && docNumber ? esc(`${docType} ${docNumber}`) : ''],
   ];
 
   const salesHtml = emailShell(

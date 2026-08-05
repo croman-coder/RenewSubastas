@@ -13,6 +13,7 @@ import {
   dataRows,
   callout,
   ctaButton,
+  esc,
   SITE_URL,
 } from '../lib/email-templates.js';
 
@@ -117,7 +118,7 @@ export const sendAuctionWon = onDocumentUpdated(
       body(
         badge('Ganaste', 'success') +
           heading(
-            `¡Felicitaciones, ${profile['firstName'] ?? ''}!`,
+            `¡Felicitaciones, ${esc((profile['firstName'] as string | undefined) ?? '')}!`,
             `Ganaste la subasta del <strong style="color:#0a0a0a;">${v['make']} ${v['model']} ${v['year']}</strong>. Estás a un paso de cerrar la compra.`,
           ) +
           statPair(

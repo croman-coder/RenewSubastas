@@ -6,7 +6,15 @@ import { writeAuditLog } from '../lib/audit.js';
 import { requireAdmin } from '../lib/errors.js';
 import { DocId } from '../lib/ids.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
-import { emailShell, body, badge, heading, callout, ctaButton } from '../lib/email-templates.js';
+import {
+  emailShell,
+  body,
+  badge,
+  heading,
+  callout,
+  ctaButton,
+  esc,
+} from '../lib/email-templates.js';
 import { issuePasswordSetLink } from './reset-tokens.js';
 
 const InputSchema = z.object({ uid: DocId });
@@ -53,7 +61,7 @@ export async function generatePasswordResetHandler(
       body(
         badge('Restablecer contraseña', 'info') +
           heading(
-            `Hola, ${firstName}`,
+            `Hola, ${esc(firstName)}`,
             'Recibimos un pedido para restablecer la contraseña de tu cuenta en <strong style="color:#0a0a0a;">Renew Subastas</strong>.',
           ) +
           callout(

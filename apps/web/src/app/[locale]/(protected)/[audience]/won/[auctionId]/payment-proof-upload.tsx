@@ -20,9 +20,11 @@ const ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf';
 /**
  * Lets the winning buyer attach their transfer receipt (image or PDF)
  * on the won-detail page. Uploads to Storage under
- * payment-proofs/{auctionId}/{uid}-{ts}.{ext}, then calls
- * submitPaymentProof which emails the admin the full dossier with the
- * file attached. Shows a confirmed state once submitted.
+ * payment-proofs/{auctionId}/{uid}/{ts}.{ext} — uid is a real path segment
+ * (storage.rules binds it with a wildcard and checks it against the
+ * auction's winnerUid at write time), not just a filename prefix — then
+ * calls submitPaymentProof which emails the admin the full dossier with
+ * the file attached. Shows a confirmed state once submitted.
  */
 export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
   const router = useRouter();
@@ -55,7 +57,7 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
     setBusy(true);
     try {
       const ext = file.name.split('.').pop() ?? (file.type === 'application/pdf' ? 'pdf' : 'jpg');
-      const path = `payment-proofs/${auctionId}/${uid}-${Date.now()}.${ext}`;
+      const path = `payment-proofs/${auctionId}/${uid}/${Date.now()}.${ext}`;
       await uploadBytes(storageRef(fb.storage, path), file, { contentType: file.type });
       await httpsCallable(fb.functions, 'submitPaymentProof')({ auctionId, storagePath: path });
       setDone(true);

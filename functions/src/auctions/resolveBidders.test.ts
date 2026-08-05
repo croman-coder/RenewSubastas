@@ -16,9 +16,21 @@ async function clearUsers() {
   await Promise.all(docs.map((d) => d.delete()));
 }
 
+async function clearBids() {
+  const snap = await adminDb().collectionGroup('bids').get();
+  await Promise.all(snap.docs.map((d) => d.ref.delete()));
+}
+
+async function seedBid(buyerUid: string) {
+  await adminDb()
+    .doc(`auctions/test-auction/bids/bid-${buyerUid}`)
+    .set({ auctionId: 'test-auction', buyerUid, amount: 100 });
+}
+
 describe('resolveBidders', () => {
   beforeEach(async () => {
     await clearUsers();
+    await clearBids();
     await adminDb()
       .doc('users/b1')
       .set({
@@ -31,6 +43,7 @@ describe('resolveBidders', () => {
           documentNumber: '1234567',
         },
       });
+    await seedBid('b1');
   });
 
   it('returns only name/email/phone for admin', async () => {
@@ -68,5 +81,28 @@ describe('resolveBidders', () => {
     await expect(resolveBiddersHandler(asRole('admin', { uids }))).rejects.toMatchObject({
       code: 'invalid-argument',
     });
+  });
+
+  it('omits a uid that has a user doc but never placed a real bid', async () => {
+    // Regression test: the role check alone must not turn this callable into
+    // a generic "look up any user by uid" oracle. b2 exists as a user but has
+    // no bid doc anywhere, so it must come back empty even though the user
+    // record is real.
+    await adminDb()
+      .doc('users/b2')
+      .set({
+        uid: 'b2',
+        email: 'b2@example.com',
+        profile: { firstName: 'No', lastName: 'Bidder' },
+      });
+    const res = await resolveBiddersHandler(asRole('admin', { uids: ['b1', 'b2'] }));
+    expect(res['b1']).toBeDefined();
+    expect(res['b2']).toBeUndefined();
+  });
+
+  it('rejects a path-injection attempt in a uid', async () => {
+    await expect(
+      resolveBiddersHandler(asRole('admin', { uids: ['b1/../other'] })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });

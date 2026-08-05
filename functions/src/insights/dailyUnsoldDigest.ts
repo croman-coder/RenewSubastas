@@ -181,11 +181,18 @@ export async function runDailyUnsoldDigest(
     });
   }
 
-  const batch = db.batch();
-  for (const v of pending) {
-    batch.update(db.doc(`vehicles/${v.id}`), { unsoldAlertAt: FieldValue.serverTimestamp() });
+  // Firestore batches cap at 500 ops. `pending` can exceed that (up to
+  // 25 000 by the pagination cap above) — a single batch would throw here,
+  // AFTER the emails already sent, so no vehicle would ever get marked and
+  // tomorrow's run would re-send the exact same (or larger) digest forever.
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    for (const v of pending.slice(i, i + BATCH_SIZE)) {
+      batch.update(db.doc(`vehicles/${v.id}`), { unsoldAlertAt: FieldValue.serverTimestamp() });
+    }
+    await batch.commit();
   }
-  await batch.commit();
 
   return { scanned, alerted: pending.map((v) => v.id) };
 }

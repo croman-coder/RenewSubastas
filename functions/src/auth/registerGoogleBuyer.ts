@@ -50,16 +50,24 @@ export async function registerGoogleBuyerHandler(
   }
 
   // New self-registration: force buyer + retail + active, no document yet.
-  // `token.name` is the user's own Google display name — not adversarial, but
-  // untrusted shape. Clamp both parts to 40 chars (matching createUser's cap)
-  // and guarantee a non-empty firstName (UserProfileSchema requires min(1),
-  // and placeBid/emails read these fields) by falling back to the email
-  // local-part, then a generic label.
+  // `token.name` is the user's own Google display name — Google lets it be
+  // ANY Unicode string (unlike createUser's admin form / the buyer self-edit
+  // form, both of which restrict firstName/lastName to NAME_CHAR_RX), so a
+  // crafted display name like `Ana<img src=x onerror=...>` would otherwise
+  // land straight in profile.firstName and from there into every email that
+  // greets the buyer by name and every staff-facing panel that lists them.
+  // Strip disallowed characters rather than reject sign-in over an emoji or
+  // stray punctuation in an otherwise-fine name. Clamp both parts to 40
+  // chars (matching createUser's cap) and guarantee a non-empty firstName
+  // (UserProfileSchema requires min(1), and placeBid/emails read these
+  // fields) by falling back to the email local-part, then a generic label.
+  const NAME_CHAR_RX = /[^\p{L}\p{M}'’\- .]/gu;
+  const sanitizeNamePart = (s: string) => s.replace(NAME_CHAR_RX, '').trim();
   const email = token.email ?? '';
   const displayName = ((token.name as string | undefined) ?? '').trim();
   const [rawFirst = '', ...rest] = displayName.split(/\s+/);
-  const firstName = (rawFirst || email.split('@')[0] || 'Usuario').slice(0, 40);
-  const lastName = rest.join(' ').slice(0, 40);
+  const firstName = (sanitizeNamePart(rawFirst) || email.split('@')[0] || 'Usuario').slice(0, 40);
+  const lastName = sanitizeNamePart(rest.join(' ')).slice(0, 40);
 
   await userRef.set({
     uid,

@@ -7,6 +7,28 @@
 const LOGO_WHITE = 'https://renewsubastas.com.py/brand/renew-wordmark-white.png';
 const SITE = 'https://renewsubastas.com.py';
 
+/**
+ * Escapes a plain-text value for safe interpolation into an HTML email.
+ * None of the builders below escape their own inputs — several (`callout`,
+ * `heading`'s `sub`, the bank-instructions paragraph in sendAuctionWon)
+ * intentionally receive pre-built HTML mixed with trusted static markup, so
+ * escaping inside the builder would double-escape that markup. Every
+ * caller MUST wrap a value that ultimately traces back to buyer input
+ * (profile firstName/lastName — settable via Google sign-in with an
+ * arbitrary display name —, email, phone, address, documentNumber) with
+ * this before interpolating it, so a crafted name like
+ * `<a href="evil">click</a>` can't render as a live link inside an
+ * internal staff/admin operational email.
+ */
+export function esc(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export type BadgeTone = 'neutral' | 'success' | 'danger' | 'warning' | 'info';
 
 const BADGE: Record<BadgeTone, { bg: string; fg: string }> = {

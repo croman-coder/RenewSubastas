@@ -4,9 +4,12 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from '../lib/admin.js';
 import { logAuctionViewHandler } from './logAuctionView.js';
 
-function asBuyer(uid: string, auctionId: string): CallableRequest {
+function asBuyer(uid: string, auctionId: string, audience?: string): CallableRequest {
   return {
-    auth: { uid, token: { role: 'buyer', status: 'active' } as never },
+    auth: {
+      uid,
+      token: { role: 'buyer', status: 'active', ...(audience ? { audience } : {}) } as never,
+    },
     rawRequest: {} as never,
     data: { auctionId },
   } as CallableRequest;
@@ -111,6 +114,31 @@ describe('logAuctionView', () => {
     await expect(logAuctionViewHandler(asBuyer('b1', 'a1/bids/x'))).rejects.toMatchObject({
       code: 'invalid-argument',
     });
+  });
+
+  it('cross-audience view is a no-op (retail buyer, wholesale auction)', async () => {
+    // Regression test: this callable uses the Admin SDK and bypasses
+    // Firestore rules, so nothing stopped a buyer from logging a view
+    // (and polluting viewStats/viewers) for an auction outside their own
+    // audience before this check existed.
+    await seedAuction('a1');
+    await adminDb().doc('auctions/a1').set({ audience: 'wholesale' }, { merge: true });
+    await seedBuyer('b1');
+    const res = await logAuctionViewHandler(asBuyer('b1', 'a1'));
+    expect(res).toEqual({ ok: true, logged: false });
+
+    const viewers = await adminDb().collection('auctions/a1/viewers').listDocuments();
+    expect(viewers.length).toBe(0);
+    const a = (await adminDb().doc('auctions/a1').get()).data()!;
+    expect(a['viewStats']).toBeUndefined();
+  });
+
+  it('logs normally when the buyer audience matches the auction audience', async () => {
+    await seedAuction('a1');
+    await adminDb().doc('auctions/a1').set({ audience: 'wholesale' }, { merge: true });
+    await seedBuyer('b1');
+    const res = await logAuctionViewHandler(asBuyer('b1', 'a1', 'wholesale'));
+    expect(res).toEqual({ ok: true, logged: true });
   });
 
   it('rate limits a hostile client (max 20/min)', async () => {

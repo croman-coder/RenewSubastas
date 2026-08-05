@@ -27,12 +27,18 @@ export interface LogAuctionViewResult {
  *   report never has to fan out over subcollections.
  * - Server-side rate limit (20/min per user) so a hostile client can't inflate
  *   counters; the well-behaved client additionally throttles via sessionStorage.
+ * - Audience-scoped: a buyer can only log a view for an auction in their own
+ *   audience. Without this, this callable (Admin SDK, bypasses Firestore
+ *   rules) would let a retail buyer pollute a wholesale auction's viewStats
+ *   and viewers list — the insights report's "who's genuinely interested"
+ *   signal — with cross-audience noise.
  */
 export async function logAuctionViewHandler(req: CallableRequest): Promise<LogAuctionViewResult> {
   const { uid, role } = requireSignedIn(req);
   if (role !== 'buyer') {
     return { ok: true, logged: false };
   }
+  const callerAudience = (req.auth!.token['audience'] as string | undefined) ?? 'retail';
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) {
     throw new HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
@@ -48,6 +54,7 @@ export async function logAuctionViewHandler(req: CallableRequest): Promise<LogAu
   const firstName = (profile['firstName'] as string) ?? '';
   const lastInitial = ((profile['lastName'] as string) ?? '').charAt(0).toUpperCase() || '?';
 
+  let audienceMismatch = false;
   await db.runTransaction(async (tx) => {
     const now = Date.now();
 
@@ -62,6 +69,12 @@ export async function logAuctionViewHandler(req: CallableRequest): Promise<LogAu
 
     const aSnap = await tx.get(auctionRef);
     if (!aSnap.exists) throw new HttpsError('not-found', 'Auction not found');
+
+    const auctionAudience = (aSnap.data()?.['audience'] as string | undefined) ?? 'retail';
+    if (auctionAudience !== callerAudience) {
+      audienceMismatch = true;
+      return;
+    }
 
     const vSnap = await tx.get(viewerRef);
     const isNewViewer = !vSnap.exists;
@@ -90,6 +103,7 @@ export async function logAuctionViewHandler(req: CallableRequest): Promise<LogAu
     });
   });
 
+  if (audienceMismatch) return { ok: true, logged: false };
   return { ok: true, logged: true };
 }
 
