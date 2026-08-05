@@ -3,7 +3,7 @@ import { Gavel, LogIn, ShieldCheck, Timer } from 'lucide-react';
 import { PublicTopbar } from './public-topbar';
 import { PublicAuctionsBrowser } from './public-auctions-browser';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
-import { batchEndsAt } from '@/lib/auctions/batch';
+import { batchClock } from '@/lib/auctions/batch';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
  */
 export function PublicLanding({ locale, items }: Props) {
   const liveCount = items.filter((a) => a.status === 'live').length;
-  const batchEnd = batchEndsAt(items);
+  const clock = batchClock(items);
 
   return (
     <div className="min-h-dvh flex flex-col bg-bg-base">
@@ -101,8 +101,12 @@ export function PublicLanding({ locale, items }: Props) {
 
               {/* Batch clock. Every lote closes at the same time, so this is
                   the single most important number on the page. */}
-              {batchEnd !== null && (
-                <BatchCountdown endsAtMs={batchEnd} className="w-full lg:w-[24rem]" />
+              {clock !== null && (
+                <BatchCountdown
+                  endsAtMs={clock.at}
+                  mode={clock.mode}
+                  className="w-full lg:w-[24rem]"
+                />
               )}
 
               <ul className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 shrink-0 lg:w-64">

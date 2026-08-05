@@ -1,19 +1,26 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Hourglass } from 'lucide-react';
+import type { BatchMode } from '@/lib/auctions/batch';
 
 interface Props {
-  /** Epoch ms when the current batch closes. */
+  /** Epoch ms the clock counts down to. */
   endsAtMs: number;
+  /** `closing` (default) counts to the end of the running lote; `opening` to the start of the next. */
+  mode?: BatchMode;
   className?: string;
 }
 
 /**
  * Large, centred countdown for the whole batch.
  *
- * Vehicles are listed in lotes that all share one closing time, so a single
+ * Vehicles are listed in lotes that all share one time, so a single
  * prominent clock is more useful than reading it off each card. Per-card
  * countdowns stay as-is: they're still correct, and a lote can be split.
+ *
+ * Two modes. `closing` is the running lote's deadline. `opening` counts to
+ * the next lote's start, so a queued batch still shows a clock instead of
+ * the surface reading as empty.
  *
  * Seeded with the real clock so the SERVER renders the true remaining time.
  * Seeding with `endsAtMs` instead (to force identical server/client markup)
@@ -23,7 +30,7 @@ interface Props {
  * `suppressHydrationWarning` on the digits, which is what it exists for.
  * Same approach as the per-card timer in AuctionCard.
  */
-export function BatchCountdown({ endsAtMs, className = '' }: Props) {
+export function BatchCountdown({ endsAtMs, mode = 'closing', className = '' }: Props) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -32,6 +39,7 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
     return () => clearInterval(id);
   }, []);
 
+  const opening = mode === 'opening';
   const remaining = Math.max(0, endsAtMs - now);
   const done = remaining <= 0;
 
@@ -42,12 +50,23 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
   const s = totalSec % 60;
 
   // Under an hour the batch is about to close — pull the eye without
-  // animating (a pulsing 40px clock is genuinely distracting).
-  const urgent = !done && remaining < 60 * 60 * 1000;
+  // animating (a pulsing 40px clock is genuinely distracting). Only for
+  // `closing`: an imminent opening is good news, and red reads as danger.
+  const urgent = !opening && !done && remaining < 60 * 60 * 1000;
+
+  const heading = done
+    ? opening
+      ? 'Abriendo…'
+      : 'Lote cerrado'
+    : opening
+      ? 'Comienza en'
+      : 'Tiempo restante';
 
   const label = done
-    ? 'Subastas cerradas'
-    : `Tiempo restante: ${d} días, ${h} horas, ${m} minutos, ${s} segundos`;
+    ? opening
+      ? 'El lote está por abrir'
+      : 'Subastas cerradas'
+    : `${opening ? 'Comienza en' : 'Tiempo restante'}: ${d} días, ${h} horas, ${m} minutos, ${s} segundos`;
 
   return (
     <div
@@ -71,8 +90,12 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
           (urgent ? 'text-rose-300' : 'text-text-muted')
         }
       >
-        <Clock className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" />
-        {done ? 'Lote cerrado' : 'Tiempo restante'}
+        {opening ? (
+          <Hourglass className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" />
+        ) : (
+          <Clock className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden="true" />
+        )}
+        {heading}
       </p>
 
       {/* One accessible string; the digits themselves are decorative so a

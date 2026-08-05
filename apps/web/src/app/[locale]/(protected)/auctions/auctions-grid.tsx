@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Gavel, Heart, Search } from 'lucide-react';
 import { AuctionCard } from './auction-card';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
-import { batchEndsAt } from '@/lib/auctions/batch';
+import { batchClock } from '@/lib/auctions/batch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { PublicAuction, CatalogTab } from '@/lib/buyer/list-public-auctions';
 
@@ -27,7 +27,7 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
   }
 
   const empty = items.length === 0;
-  const batchEnd = batchEndsAt(items);
+  const clock = batchClock(items);
 
   return (
     <div className="space-y-6">
@@ -52,8 +52,12 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
 
           {/* Batch clock. Lotes share one closing time, so it belongs here
               once rather than being read off each card. */}
-          {batchEnd !== null && (
-            <BatchCountdown endsAtMs={batchEnd} className="w-full lg:w-auto lg:min-w-[22rem]" />
+          {clock !== null && (
+            <BatchCountdown
+              endsAtMs={clock.at}
+              mode={clock.mode}
+              className="w-full lg:w-auto lg:min-w-[22rem]"
+            />
           )}
 
           <div className="text-xs text-text-muted lg:text-right">

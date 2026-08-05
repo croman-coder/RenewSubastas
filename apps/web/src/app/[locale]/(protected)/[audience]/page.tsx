@@ -5,7 +5,7 @@ import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
 import { loadFavorites } from '@/lib/buyer/load-favorites';
 import { listPublicAuctions } from '@/lib/buyer/list-public-auctions';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
-import { batchEndsAt } from '@/lib/auctions/batch';
+import { batchClock } from '@/lib/auctions/batch';
 import { AuctionCard } from '../auctions/auction-card';
 
 interface PageProps {
@@ -38,7 +38,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
   const favSet = new Set(favorites);
   const shown = items.slice(0, HOME_GRID_LIMIT);
   const hasMore = items.length > shown.length;
-  const batchEnd = batchEndsAt(items);
+  const clock = batchClock(items);
 
   return (
     <div className="space-y-6">
@@ -66,7 +66,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
       </header>
 
       {/* Batch clock. Every lote closes at the same time, so it leads. */}
-      {batchEnd !== null && <BatchCountdown endsAtMs={batchEnd} />}
+      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} />}
 
       {/* Compact personal strip. Every tile is a link into the detail view it
           summarises — a number the buyer can't act on is just decoration. */}

@@ -1,16 +1,42 @@
+export type BatchMode = 'closing' | 'opening';
+
+export interface BatchClock {
+  /** Epoch ms the clock counts down to. */
+  at: number;
+  /** `closing` = the running lote ends; `opening` = the next lote starts. */
+  mode: BatchMode;
+}
+
+interface ClockItem {
+  status: string;
+  startsAtMs: number;
+  endsAtMs: number;
+}
+
 /**
- * Closing time for the current batch: the soonest `endsAt` among auctions
- * that are actually running. Returns null when nothing is live, so callers
- * can omit the clock rather than render a frozen zero.
+ * What the batch clock should show.
  *
- * Lives here rather than next to <BatchCountdown> on purpose: that file is
- * `'use client'`, and a plain function exported from a client module becomes
- * a client reference when a server component imports it — calling it on the
- * server throws "is not a function". Pure helpers shared across the boundary
- * have to sit in a module with no directive.
+ * A running lote wins: while anything is live, the deadline people care
+ * about is when bidding stops. With nothing live but a lote queued, the
+ * clock flips to counting toward the opening instead of disappearing —
+ * "no hay subastas" reads as "nothing is coming", which is wrong when a
+ * lote is scheduled for tomorrow.
+ *
+ * Lives here rather than next to <BatchCountdown> because that file is
+ * `'use client'`: a plain function exported from a client module becomes a
+ * client reference when a server component imports it, and calling it on
+ * the server throws "is not a function".
  */
-export function batchEndsAt(items: Array<{ status: string; endsAtMs: number }>): number | null {
+export function batchClock(items: ClockItem[]): BatchClock | null {
   const live = items.filter((a) => a.status === 'live' && a.endsAtMs > 0);
-  if (live.length === 0) return null;
-  return Math.min(...live.map((a) => a.endsAtMs));
+  if (live.length > 0) {
+    return { at: Math.min(...live.map((a) => a.endsAtMs)), mode: 'closing' };
+  }
+
+  const scheduled = items.filter((a) => a.status === 'scheduled' && a.startsAtMs > 0);
+  if (scheduled.length > 0) {
+    return { at: Math.min(...scheduled.map((a) => a.startsAtMs)), mode: 'opening' };
+  }
+
+  return null;
 }

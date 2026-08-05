@@ -7,11 +7,11 @@ import { BidsPerDayChart } from './_components/bids-per-day-chart';
 import { ClosingSoonList } from './_components/closing-soon-list';
 import { RecentAuditList } from './_components/recent-audit-list';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
-import { loadBatchEnd } from '@/lib/auctions/load-batch-end';
+import { loadBatchClock } from '@/lib/auctions/load-batch-clock';
 
 export default async function AdminHome({ params: { locale } }: { params: { locale: string } }) {
   const t = await getTranslations('admin.home');
-  const [s, batchEnd] = await Promise.all([loadDashboardStats(), loadBatchEnd()]);
+  const [s, clock] = await Promise.all([loadDashboardStats(), loadBatchClock()]);
 
   const usersTotal = s.usersByRole.admin + s.usersByRole.staff + s.usersByRole.buyer;
 
@@ -39,7 +39,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
       </header>
 
       {/* Batch clock. Lotes close together, so the deadline leads the panel. */}
-      {batchEnd !== null && <BatchCountdown endsAtMs={batchEnd} />}
+      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} />}
 
       <KpiCards
         usersTotal={usersTotal}
