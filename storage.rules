@@ -23,41 +23,32 @@ service firebase.storage {
 
     // Payment proofs (comprobantes de seña). A winning buyer uploads a
     // transfer receipt (image or PDF). Path is
-    // payment-proofs/{auctionId}/{uid}-{ts}.{ext}. Write is allowed for
-    // any active buyer writing under their OWN uid prefix; the
-    // submitPaymentProof callable then validates that the uid is the
-    // auction's actual winnerUid before emailing the admin. Reads are
-    // admin/staff only (the receipt holds the buyer's bank info).
-    match /payment-proofs/{auctionId}/{fileName} {
+    // payment-proofs/{auctionId}/{uid}/{fileName} — uid is a real path
+    // segment (bound by the `{uid}` wildcard below), not a string-matched
+    // filename prefix, so there's no regex-escaping concern and no way to
+    // land a file under another buyer's segment of the same auction folder.
+    // The write ALSO checks the auction's actual winnerUid via
+    // firestore.get() — previously only submitPaymentProof enforced that,
+    // so any active buyer could write into any auction's folder (the
+    // callable would just never expose it, but the object still sat in the
+    // bucket, unmetered). Reads are admin/staff/finanzas only (the receipt
+    // holds the buyer's bank info). create-only: a submitted receipt is
+    // evidence and must not be overwritten/deleted after staff has seen it.
+    match /payment-proofs/{auctionId}/{uid}/{fileName} {
       allow read: if request.auth != null
                   && request.auth.token.status == 'active'
                   && request.auth.token.role in ['staff', 'admin', 'finanzas'];
-      // Buyer may only write a file whose name starts with their own uid
-      // (the client uploads `{uid}-{ts}.{ext}`). This stops one buyer from
-      // overwriting another's proof or dumping files into someone else's
-      // auction folder. submitPaymentProof still verifies winnerUid.
-      allow write: if request.auth != null
-                   && request.auth.token.status == 'active'
-                   && request.auth.token.role == 'buyer'
-                   && fileName.matches(request.auth.uid + '-.*')
-                   && request.resource.size < 10 * 1024 * 1024
-                   && (
-                     request.resource.contentType.matches('image/.*')
-                     || request.resource.contentType == 'application/pdf'
-                   );
-    }
-
-    // Avatars are intentionally world-readable so they can appear in
-    // notification cards and audit-log rows without a signed-URL
-    // dance. The upload side is locked to the avatar's owner, capped
-    // at 2 MB so the bucket can't be used as anonymous file hosting.
-    match /avatars/{uid}/{file=**} {
-      allow read:  if true;
-      allow write: if request.auth != null
-                   && request.auth.token.status == 'active'
-                   && request.auth.uid == uid
-                   && request.resource.size < 2 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow create: if request.auth != null
+                    && request.auth.token.status == 'active'
+                    && request.auth.token.role == 'buyer'
+                    && request.auth.uid == uid
+                    && firestore.get(/databases/(default)/documents/auctions/$(auctionId)).data.winnerUid == request.auth.uid
+                    && request.resource.size < 10 * 1024 * 1024
+                    && (
+                      request.resource.contentType.matches('image/.*')
+                      || request.resource.contentType == 'application/pdf'
+                    );
+      allow update, delete: if false;
     }
   }
 }

@@ -40,11 +40,20 @@ service cloud.firestore {
     }
 
     match /vehicles/{id} {
-      // Admin/staff/finanzas see every vehicle; buyers only their audience.
+      // Admin/staff/finanzas see every vehicle; buyers only their audience,
+      // and only once it's actually publishable — 'draft'/'ready' are staff
+      // still preparing the listing (photos, pricing) before it goes live,
+      // and 'archived' was pulled from the catalog. No buyer client code
+      // reads vehicles/{id} directly before the auction is live anyway (the
+      // buyer-facing pages load through server-side Admin SDK loaders keyed
+      // off the auction, not the vehicle), so this only closes a gap for a
+      // client hitting this doc directly.
       allow read: if isAdmin()
                   || isStaff()
                   || isFinanzas()
-                  || (isBuyer() && audienceMatches(resource.data.audience));
+                  || (isBuyer()
+                      && audienceMatches(resource.data.audience)
+                      && resource.data.status in ['in_auction', 'sold']);
       allow create, update: if isStaff() || isAdmin();
       allow delete:         if isStaff() || isAdmin();
     }
@@ -104,8 +113,15 @@ service cloud.firestore {
       allow read: if isAdmin() || isStaff() || isFinanzas();
     }
 
+    // Holds operational config INCLUDING the company's real bank account
+    // details (payment.bankAccountNumber/bankRuc/bankAccountHolder, used by
+    // sendAuctionWon to tell a winner where to wire the deposit). The old
+    // "any signed-in active user" rule let every buyer read this doc
+    // directly via the client SDK — no auction win required. No client code
+    // reads app_config directly at all (every consumer goes through a
+    // server-side Admin SDK loader), so this only closes that gap.
     match /app_config/{doc} {
-      allow read:  if isSignedIn() && isActive();
+      allow read:  if isAdmin() || isStaff() || isFinanzas();
       allow write: if false;
     }
 
@@ -134,6 +150,16 @@ service cloud.firestore {
     // ever touches these; clients have no access at all, so a leaked token
     // hash can't be read or forged from the browser.
     match /password_set_tokens/{id} {
+      allow read, write: if false;
+    }
+
+    // Rate-limit counters (pwreset_*, views_*, paymentproof_*, ...), Admin
+    // SDK only. Already denied by the implicit default-deny (nothing above
+    // matches this path), but made explicit since several Cloud Functions
+    // now write here — a reader shouldn't have to reason about "nothing
+    // mentions it" to know a client can't read or tamper with its own
+    // rate-limit window.
+    match /rate_limits/{id} {
       allow read, write: if false;
     }
   }
