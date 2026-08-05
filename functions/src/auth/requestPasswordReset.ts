@@ -15,6 +15,18 @@ export interface RequestPasswordResetResult {
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
+// Minimum wall-clock time the handler takes on every code path. Without
+// this, a known email (extra Firestore reads/writes) takes measurably
+// longer than an unknown one (single failed lookup), turning response
+// latency into an account-enumeration side-channel despite the uniform
+// {ok:true} body. Keep it just above the slowest legitimate path.
+const REQUEST_FLOOR_MS = 400;
+
+async function padToFloor(startedAt: number): Promise<void> {
+  const remaining = REQUEST_FLOOR_MS - (Date.now() - startedAt);
+  if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+}
+
 /**
  * Public (unauthenticated) callable that lets a buyer request a password reset
  * when they forgot their password. The flow is intentionally human-mediated:
@@ -33,15 +45,24 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
  *
  * Security:
  *   - No auth required (the buyer is locked out by definition).
- *   - Rate-limited per email (3 requests/hour) so a bot can't spam admin.
+ *   - Account existence (`getUserByEmail`) is checked BEFORE any rate-limit
+ *     bookkeeping is written. An unknown email short-circuits straight to
+ *     the generic response with no Firestore write at all — otherwise an
+ *     attacker could POST unlimited fake emails and leave one permanent
+ *     `rate_limits/pwreset_*` doc per address with no cap.
+ *   - Rate-limited per email (3 requests/hour) so a bot can't spam admin —
+ *     only spent for emails that correspond to a real account.
  *   - We always return {ok: true} regardless of whether the email exists,
- *     to prevent attackers from probing which emails are registered.
+ *     to prevent attackers from probing which emails are registered, and
+ *     every exit path is padded to a constant time floor (padToFloor) so
+ *     response latency can't be used as a side-channel for the same thing.
  *   - Anonymous Firestore writes are blocked at the rules level — only this
  *     callable (using admin SDK) can create the document.
  */
 export async function requestPasswordResetHandler(
   req: CallableRequest,
 ): Promise<RequestPasswordResetResult> {
+  const startedAt = Date.now();
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) {
     // Even invalid input gets a generic ok response, but we throw here so the
@@ -52,6 +73,21 @@ export async function requestPasswordResetHandler(
   const email = parsed.data.email.toLowerCase().trim();
 
   const db = adminDb();
+
+  // Existence check FIRST, before spending any Firestore write on this
+  // email. Only real accounts get rate-limit bookkeeping.
+  let userRecord;
+  try {
+    userRecord = await adminAuth().getUserByEmail(email);
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === 'auth/user-not-found') {
+      // Don't leak existence, and don't write anything either.
+      await padToFloor(startedAt);
+      return { ok: true };
+    }
+    throw err;
+  }
 
   // Rate limit by email hash so we don't write the raw address as a doc id.
   // (Firestore allows email chars but using the email directly leaks it as a
@@ -66,23 +102,12 @@ export async function requestPasswordResetHandler(
   if (recent.length >= RATE_LIMIT_MAX) {
     // Fail closed but with a generic message — no signal about whether the
     // email exists.
+    await padToFloor(startedAt);
     return { ok: true };
   }
 
   // Bookkeeping first so a later short-circuit still counts the attempt.
   await rlRef.set({ timestamps: [...recent, now] }, { merge: true });
-
-  let userRecord;
-  try {
-    userRecord = await adminAuth().getUserByEmail(email);
-  } catch (err) {
-    const code = (err as { code?: string }).code;
-    if (code === 'auth/user-not-found') {
-      // Don't leak existence — return success without writing anything.
-      return { ok: true };
-    }
-    throw err;
-  }
 
   // Mirror minimal user identity into the request doc so admin can recognise
   // the requester at a glance without an extra lookup.
@@ -102,6 +127,7 @@ export async function requestPasswordResetHandler(
       requestedAt: FieldValue.serverTimestamp(),
       requestCount: FieldValue.increment(1),
     });
+    await padToFloor(startedAt);
     return { ok: true };
   }
 
@@ -115,6 +141,7 @@ export async function requestPasswordResetHandler(
     requestCount: 1,
   });
 
+  await padToFloor(startedAt);
   return { ok: true };
 }
 

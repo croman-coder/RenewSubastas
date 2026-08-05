@@ -56,21 +56,30 @@ export interface ConsumedToken {
  * Validates and consumes a token. Throws a string error code on failure:
  * 'invalid' (unknown), 'used' (already redeemed), 'expired'. On success the
  * token is marked used (single-use) and the target uid is returned.
+ *
+ * The read (check usedAt/expiry) and the write (mark usedAt) happen inside a
+ * single Firestore transaction so two concurrent redemptions of the same
+ * token can't both observe `usedAt: null` before either write lands. If two
+ * callers race, Firestore's optimistic concurrency control aborts and
+ * retries the loser's transaction; on retry it re-reads the now-updated doc
+ * and correctly throws 'used'.
  */
 export async function consumePasswordSetToken(token: string): Promise<ConsumedToken> {
   if (!token || typeof token !== 'string') throw 'invalid';
   const id = sha256(token);
   const ref = adminDb().collection(COLLECTION).doc(id);
-  const snap = await ref.get();
-  if (!snap.exists) throw 'invalid';
-  const d = snap.data()!;
-  if (d['usedAt']) throw 'used';
-  const expiresAt = d['expiresAt'] as Timestamp | undefined;
-  if (!expiresAt || expiresAt.toMillis() <= Date.now()) throw 'expired';
-  await ref.update({ usedAt: Timestamp.now() });
-  return {
-    uid: d['uid'] as string,
-    email: (d['email'] as string) ?? '',
-    purpose: (d['purpose'] as ResetPurpose) ?? 'reset',
-  };
+  return adminDb().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw 'invalid';
+    const d = snap.data()!;
+    if (d['usedAt']) throw 'used';
+    const expiresAt = d['expiresAt'] as Timestamp | undefined;
+    if (!expiresAt || expiresAt.toMillis() <= Date.now()) throw 'expired';
+    tx.update(ref, { usedAt: Timestamp.now() });
+    return {
+      uid: d['uid'] as string,
+      email: (d['email'] as string) ?? '',
+      purpose: (d['purpose'] as ResetPurpose) ?? 'reset',
+    };
+  });
 }
