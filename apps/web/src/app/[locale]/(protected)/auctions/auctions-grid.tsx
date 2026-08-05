@@ -3,6 +3,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Gavel, Heart, Search } from 'lucide-react';
 import { AuctionCard } from './auction-card';
+import { BatchCountdown } from '@/components/auctions/batch-countdown';
+import { batchEndsAt } from '@/lib/auctions/batch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { PublicAuction, CatalogTab } from '@/lib/buyer/list-public-auctions';
 
@@ -25,6 +27,7 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
   }
 
   const empty = items.length === 0;
+  const batchEnd = batchEndsAt(items);
 
   return (
     <div className="space-y-6">
@@ -34,7 +37,7 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
           aria-hidden
           className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-copper/10 blur-3xl pointer-events-none"
         />
-        <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-4 lg:gap-6">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
               Renew · Subastas
@@ -46,7 +49,14 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
               Encontrá tu próximo vehículo y pujá en tiempo real.
             </p>
           </div>
-          <div className="text-xs text-text-muted">
+
+          {/* Batch clock. Lotes share one closing time, so it belongs here
+              once rather than being read off each card. */}
+          {batchEnd !== null && (
+            <BatchCountdown endsAtMs={batchEnd} className="w-full lg:w-auto lg:min-w-[22rem]" />
+          )}
+
+          <div className="text-xs text-text-muted lg:text-right">
             <span className="num-tab text-text-strong font-semibold text-base">{items.length}</span>{' '}
             {items.length === 1 ? 'subasta' : 'subastas'}
           </div>

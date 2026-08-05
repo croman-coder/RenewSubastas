@@ -14,6 +14,16 @@
       "port": 3010
     },
     {
+      "comment": "Mirrors the root `dev:web` script: server components use the Admin SDK, which needs an explicit project id + emulator hosts or it throws 'unable to detect a project id'. Requires `pnpm emulators` running.",
+      "name": "web-emulators",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd apps/web && FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=carbid-staging GOOGLE_CLOUD_PROJECT=carbid-staging NEXT_PUBLIC_FIREBASE_PROJECT_ID=carbid-staging npx next dev --port 3012"
+      ],
+      "port": 3012
+    },
+    {
       "name": "web-prod",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-lc", "cd apps/web && npx next start --port 3011"],

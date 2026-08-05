@@ -1,431 +1,210 @@
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Clock,
-  Flame,
-  Gavel,
-  Heart,
-  Hourglass,
-  Trophy,
-  type LucideIcon,
-} from 'lucide-react';
+import { ArrowRight, Clock, Gavel, Heart, Trophy } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
-import { TodayLabel } from '@/components/shell/today-label';
-import { RevealOnScroll } from '@/components/motion/reveal-on-scroll';
-import { Button } from '@/components/ui/button';
-import { KpiCard } from '@/components/brand/kpi-card';
+import { loadFavorites } from '@/lib/buyer/load-favorites';
+import { listPublicAuctions } from '@/lib/buyer/list-public-auctions';
+import { BatchCountdown } from '@/components/auctions/batch-countdown';
+import { batchEndsAt } from '@/lib/auctions/batch';
+import { AuctionCard } from '../auctions/auction-card';
 
 interface PageProps {
   params: { locale: string; audience: 'retail' | 'wholesale' };
 }
 
+/** How many cars the home shows before sending the buyer to the full catalog. */
+const HOME_GRID_LIMIT = 12;
+
+/**
+ * Buyer home.
+ *
+ * The auctions ARE the landing: a buyer who signs in wants to see what's on
+ * the block, not a dashboard about themselves. Personal numbers survive as a
+ * compact strip above the grid rather than a full KPI dashboard — they're
+ * context, not the destination. Deeper views (all bids, won, favorites) stay
+ * one click away in the strip and the nav.
+ *
+ * The audience comes from the URL segment, validated by the layout, and is
+ * passed to every query so the page can only ever show what the URL claims.
+ */
 export default async function BuyerHome({ params: { locale, audience } }: PageProps) {
-  // The audience is taken from the URL segment, validated by the layout
-  // (any other value falls through to notFound). Stats and links are scoped
-  // to that audience so the dashboard reflects exactly what the URL claims.
   const user = await getCurrentUser(locale);
-  const s = await loadBuyerStats(user.uid, audience);
+  const [stats, favorites, items] = await Promise.all([
+    loadBuyerStats(user.uid, audience),
+    loadFavorites(user.uid),
+    listPublicAuctions({ tab: 'all', audience }),
+  ]);
+
+  const favSet = new Set(favorites);
+  const shown = items.slice(0, HOME_GRID_LIMIT);
+  const hasMore = items.length > shown.length;
+  const batchEnd = batchEndsAt(items);
 
   return (
-    <div className="space-y-8">
-      {/* Hero */}
-      <header className="ink-mesh relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
-        {/* Faint dotted ink grid clipped to the hero so the panel reads
-            as a designed surface, not just a flat card. */}
-        <div
-          aria-hidden
-          className="ink-grid absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black_30%,transparent_75%)] pointer-events-none"
-        />
-        <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
-              <TodayLabel locale={locale} />
-            </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong text-pretty">
-              ¡Hola, {user.firstName || 'Buyer'}!
-            </h1>
-            <p className="mt-1 text-sm text-text-muted max-w-prose">
-              Tu resumen de subastas y pujas en Renew Subastas.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm">
-              <Link href={`/${locale}/auctions` as `/${string}`}>
-                <Gavel className="w-4 h-4 mr-1.5" /> Ver subastas
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/${locale}/${audience}/bids` as `/${string}`}>
-                <Heart className="w-4 h-4 mr-1.5" /> Mis pujas
-              </Link>
-            </Button>
-          </div>
+    <div className="space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong text-pretty">
+            Subastas en curso
+          </h1>
+          <p className="mt-1 text-sm text-text-muted">
+            Hola, {user.firstName || 'Buyer'} — estas son las unidades disponibles ahora.
+          </p>
         </div>
+        <Link
+          href={`/${locale}/auctions` as `/${string}`}
+          className={
+            'shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium ' +
+            'border border-text-subtle/25 text-text-strong [touch-action:manipulation] ' +
+            'transition-colors duration-200 hover:bg-bg-elev/70 ' +
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40'
+          }
+        >
+          Ver catálogo completo
+          <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+        </Link>
       </header>
 
-      {/* KPIs */}
-      <RevealOnScroll className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="Subastas activas"
-          value={s.liveAuctions}
-          caption="En curso ahora"
-          icon={<Gavel className="w-5 h-5" strokeWidth={2.25} />}
+      {/* Batch clock. Every lote closes at the same time, so it leads. */}
+      {batchEnd !== null && <BatchCountdown endsAtMs={batchEnd} />}
+
+      {/* Compact personal strip. Every tile is a link into the detail view it
+          summarises — a number the buyer can't act on is just decoration. */}
+      <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatTile
           href={`/${locale}/auctions`}
-          index={0}
+          icon={Gavel}
+          label="Activas"
+          value={stats.liveAuctions}
         />
-        <KpiCard
-          label="Estoy ganando"
-          value={s.myWinningCount}
-          caption="Sos el mejor postor"
-          icon={<Trophy className="w-5 h-5" strokeWidth={2.25} />}
-          emphasis="solid"
+        <StatTile
           href={`/${locale}/${audience}/bids`}
-          index={1}
-        />
-        <KpiCard
-          label="Mis pujas"
-          value={s.myActiveBidsCount}
-          caption="Subastas en las que pujé"
-          icon={<Heart className="w-5 h-5" strokeWidth={2.25} />}
-          href={`/${locale}/${audience}/bids`}
-          index={2}
-        />
-        <KpiCard
-          label="Ganadas"
-          value={s.myWonCount}
-          caption={
-            s.myWonGmvUsd > 0
-              ? `USD ${s.myWonGmvUsd.toLocaleString()} totales`
-              : 'Aún no ganaste ninguna'
-          }
-          icon={<Trophy className="w-5 h-5" strokeWidth={2.25} />}
-          href={`/${locale}/${audience}/won`}
-          index={3}
-        />
-      </RevealOnScroll>
-
-      {/* Two-column section: My winning auctions + Closing soon */}
-      <RevealOnScroll className="grid grid-cols-1 lg:grid-cols-2 gap-5" delayMs={60}>
-        <Panel
-          title="Estoy ganando ahora"
           icon={Trophy}
-          accent="copper"
-          ctaHref={`/${locale}/${audience}/bids`}
-          ctaLabel="Ver mis pujas"
-        >
-          {s.myWinning.length === 0 ? (
-            <EmptyRow text="Cuando seas el mejor postor de una subasta, aparecerá acá." />
-          ) : (
-            <ul className="space-y-1">
-              {s.myWinning.map((a, i) => (
-                <AuctionRow
-                  key={a.auctionId}
-                  href={`/${locale}/auctions/${a.auctionId}`}
-                  thumbnail={a.thumbnailUrl}
-                  title={`${a.make} ${a.model}`}
-                  year={a.year}
-                  primaryLine={`USD ${a.currentBid.toLocaleString()}`}
-                  secondaryLine={`Cierra ${formatRemainingShort(a.endsAtMs - Date.now())}`}
-                  highlight
-                  index={i}
-                />
-              ))}
-            </ul>
-          )}
-        </Panel>
+          label="Estoy ganando"
+          value={stats.myWinningCount}
+          emphasis
+        />
+        <StatTile
+          href={`/${locale}/${audience}/bids`}
+          icon={Heart}
+          label="Mis pujas"
+          value={stats.myActiveBidsCount}
+        />
+        <StatTile
+          href={`/${locale}/${audience}/won`}
+          icon={Trophy}
+          label="Ganadas"
+          value={stats.myWonCount}
+        />
+      </ul>
 
-        <Panel
-          title="Cierran pronto"
-          icon={Clock}
-          accent="amber"
-          ctaHref={`/${locale}/auctions?tab=closing`}
-          ctaLabel="Ver todas"
-        >
-          {s.closingSoon.length === 0 ? (
-            <EmptyRow text="Ninguna subasta cierra en las próximas 24 horas." />
-          ) : (
-            <ul className="space-y-1">
-              {s.closingSoon.map((a, i) => {
-                const remaining = a.endsAtMs - Date.now();
-                const urgent = remaining > 0 && remaining < 60 * 60 * 1000;
-                return (
-                  <AuctionRow
-                    key={a.id}
-                    href={`/${locale}/auctions/${a.id}`}
-                    thumbnail={a.thumbnailUrl}
-                    title={`${a.make} ${a.model}`}
-                    year={a.year}
-                    primaryLine={`USD ${(a.currentBid > 0 ? a.currentBid : a.startingPrice).toLocaleString()}`}
-                    secondaryLine={`Cierra ${formatRemainingShort(remaining)}`}
-                    urgent={urgent}
+      <section aria-labelledby="grid-heading" className="space-y-4">
+        <div className="flex items-end justify-between gap-3">
+          <h2 id="grid-heading" className="text-lg font-semibold tracking-tight text-text-strong">
+            Vehículos disponibles
+          </h2>
+          <p className="text-sm text-text-muted num-tab shrink-0">
+            {items.length} {items.length === 1 ? 'unidad' : 'unidades'}
+          </p>
+        </div>
+
+        {shown.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-text-subtle/25 bg-bg-elev/30 px-6 py-14 text-center">
+            <Clock
+              className="w-8 h-8 mx-auto text-text-subtle opacity-50"
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
+            <p className="mt-3 text-sm font-medium text-text-strong">
+              No hay subastas activas en este momento
+            </p>
+            <p className="mt-1 text-sm text-text-muted">
+              Te avisamos apenas se publique una nueva.
+            </p>
+          </div>
+        ) : (
+          <>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {shown.map((a, i) => (
+                <li key={a.id} className="min-w-0">
+                  <AuctionCard
+                    locale={locale}
+                    auction={a}
+                    isFavorite={favSet.has(a.id)}
+                    buyerUid={user.uid}
                     index={i}
                   />
-                );
-              })}
+                </li>
+              ))}
             </ul>
-          )}
-        </Panel>
-      </RevealOnScroll>
-
-      {/* Bottom row: Status counts + Favorites */}
-      <RevealOnScroll className="grid grid-cols-1 lg:grid-cols-3 gap-5" delayMs={80}>
-        <StatusCard live={s.liveAuctions} scheduled={s.scheduledAuctions} ended={s.endedAuctions} />
-        <Panel
-          title="Mis favoritos en vivo"
-          icon={Heart}
-          accent="lavender"
-          ctaHref={`/${locale}/auctions?tab=favorites`}
-          ctaLabel="Ver favoritos"
-        >
-          <div className="px-3 pb-2">
-            <div className="rounded-lg bg-bg-deep/40 px-4 py-5 text-center">
-              <p className="text-3xl font-bold tracking-tight num-tab text-text-strong">
-                {s.myFavoritesLiveCount}
-              </p>
-              <p className="text-xs text-text-muted mt-1">
-                {s.myFavoritesLiveCount === 1
-                  ? 'subasta favorita activa'
-                  : 'subastas favoritas activas'}
-              </p>
-            </div>
-          </div>
-        </Panel>
-        <Panel
-          title="Próximas a abrirse"
-          icon={Hourglass}
-          accent="amber"
-          ctaHref={`/${locale}/auctions`}
-          ctaLabel="Ver subastas"
-        >
-          <div className="px-3 pb-2">
-            <div className="rounded-lg bg-bg-deep/40 px-4 py-5 text-center">
-              <p className="text-3xl font-bold tracking-tight num-tab text-amber-700 dark:text-amber-300">
-                {s.scheduledAuctions}
-              </p>
-              <p className="text-xs text-text-muted mt-1">
-                {s.scheduledAuctions === 1 ? 'subasta programada' : 'subastas programadas'}
-              </p>
-            </div>
-          </div>
-        </Panel>
-      </RevealOnScroll>
+            {hasMore && (
+              <div className="pt-1 text-center">
+                <Link
+                  href={`/${locale}/auctions` as `/${string}`}
+                  className={
+                    'inline-flex items-center gap-1.5 h-11 px-5 rounded-lg text-sm font-semibold ' +
+                    'bg-text-strong text-bg-base [touch-action:manipulation] ' +
+                    'transition-opacity duration-200 hover:opacity-90 ' +
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
+                    'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
+                  }
+                >
+                  Ver las {items.length} unidades
+                  <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
 
-type Accent = 'copper' | 'mint' | 'lavender' | 'amber';
-
-// Monochrome accent chips for panel headers. Solid ink for the primary,
-// ringed light for the rest.
-const ACCENT: Record<Accent, { iconBg: string; iconText: string }> = {
-  copper: { iconBg: 'bg-text-strong', iconText: 'text-bg-base' },
-  mint: {
-    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
-    iconText: 'text-text-strong',
-  },
-  lavender: {
-    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
-    iconText: 'text-text-strong',
-  },
-  amber: {
-    iconBg: 'bg-text-strong/[0.08] ring-1 ring-text-subtle/25',
-    iconText: 'text-text-strong',
-  },
-};
-
-function Panel({
-  title,
-  icon: Icon,
-  accent,
-  ctaHref,
-  ctaLabel,
-  children,
-}: {
-  title: string;
-  icon: LucideIcon;
-  accent: Accent;
-  ctaHref: string;
-  ctaLabel: string;
-  children: React.ReactNode;
-}) {
-  const a = ACCENT[accent];
-  return (
-    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in duration-500 flex flex-col">
-      <header className="flex items-center justify-between px-5 pt-5 pb-3">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={'w-7 h-7 rounded-md grid place-items-center ' + a.iconBg + ' ' + a.iconText}
-          >
-            <Icon className="w-3.5 h-3.5" strokeWidth={2.25} />
-          </span>
-          <h2 className="text-sm font-semibold text-text-strong tracking-tight">{title}</h2>
-        </div>
-      </header>
-      <div className="px-3 pb-3 flex-1">{children}</div>
-      <div className="px-5 py-3 border-t border-text-subtle/10">
-        <Link
-          href={ctaHref as `/${string}`}
-          className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-copper transition-colors"
-        >
-          {ctaLabel} <ArrowRight className="w-3 h-3" />
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-function AuctionRow({
+function StatTile({
   href,
-  thumbnail,
-  title,
-  year,
-  primaryLine,
-  secondaryLine,
-  highlight,
-  urgent,
-  index,
+  icon: Icon,
+  label,
+  value,
+  emphasis = false,
 }: {
   href: string;
-  thumbnail: string | null;
-  title: string;
-  year: number;
-  primaryLine: string;
-  secondaryLine: string;
-  highlight?: boolean;
-  urgent?: boolean;
-  index: number;
+  icon: typeof Gavel;
+  label: string;
+  value: number;
+  emphasis?: boolean;
 }) {
   return (
-    <li
-      className="animate-in fade-in slide-in-from-bottom-1"
-      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
-    >
+    <li className="min-w-0">
       <Link
         href={href as `/${string}`}
         className={
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-bg-deep/50 group'
+          'group flex items-center gap-3 rounded-xl border px-3.5 py-3 [touch-action:manipulation] ' +
+          'transition-[border-color,background-color] duration-200 ' +
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ' +
+          (emphasis
+            ? 'border-copper/30 bg-copper/[0.07] hover:border-copper/50'
+            : 'border-text-subtle/15 bg-bg-elev/40 hover:border-text-strong/30 hover:bg-bg-elev/70')
         }
       >
-        {thumbnail ? (
-          <img
-            src={thumbnail}
-            alt=""
-            width={48}
-            height={48}
-            className="w-12 h-12 rounded-md object-cover shrink-0"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-md bg-bg-deep/60 shrink-0 grid place-items-center">
-            <Gavel className="w-4 h-4 text-text-muted/40" strokeWidth={1.5} />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-text-strong truncate group-hover:text-copper transition-colors">
-            {title} <span className="text-text-muted num-tab font-normal">{year}</span>
-          </p>
-          <p
-            className={
-              'text-xs num-tab mt-0.5 flex items-center gap-1 ' +
-              (urgent ? 'text-rose-400 font-medium' : 'text-text-muted')
-            }
-          >
-            {urgent && <Flame className="w-3 h-3" />}
-            {secondaryLine}
-          </p>
-        </div>
-        <div className="text-right shrink-0">
-          <p
-            className={
-              'text-sm font-semibold num-tab tracking-tight ' +
-              (highlight ? 'text-copper' : 'text-text-strong')
-            }
-          >
-            {primaryLine}
-          </p>
-        </div>
+        <span
+          className={
+            'shrink-0 w-9 h-9 rounded-lg grid place-items-center ring-1 ' +
+            (emphasis
+              ? 'bg-copper/15 ring-copper/25 text-copper'
+              : 'bg-text-strong/[0.07] ring-text-subtle/20 text-text-strong')
+          }
+        >
+          <Icon className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-xl font-semibold num-tab tracking-tight text-text-strong leading-none">
+            {value}
+          </span>
+          <span className="block mt-1 text-xs text-text-muted truncate">{label}</span>
+        </span>
       </Link>
     </li>
   );
-}
-
-function StatusCard({
-  live,
-  scheduled,
-  ended,
-}: {
-  live: number;
-  scheduled: number;
-  ended: number;
-}) {
-  const total = live + scheduled + ended;
-  return (
-    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in duration-500">
-      <header className="flex items-center gap-2.5 px-5 pt-5 pb-3">
-        <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong ring-1 ring-text-subtle/20 grid place-items-center">
-          <Gavel className="w-3.5 h-3.5" strokeWidth={2.25} />
-        </span>
-        <h2 className="text-sm font-semibold text-text-strong tracking-tight">
-          Estado del marketplace
-        </h2>
-      </header>
-      <div className="px-5 pb-5 space-y-3">
-        <StatusRow label="En curso" value={live} dot="bg-emerald-400" total={total} />
-        <StatusRow label="Programadas" value={scheduled} dot="bg-amber-400" total={total} />
-        <StatusRow label="Finalizadas" value={ended} dot="bg-zinc-500" total={total} />
-      </div>
-    </section>
-  );
-}
-
-function StatusRow({
-  label,
-  value,
-  dot,
-  total,
-}: {
-  label: string;
-  value: number;
-  dot: string;
-  total: number;
-}) {
-  const pct = total > 0 ? Math.max(2, Math.round((value / total) * 100)) : 0;
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs mb-1.5">
-        <span className="flex items-center gap-2 text-text-muted">
-          <span className={'w-1.5 h-1.5 rounded-full ' + dot} />
-          {label}
-        </span>
-        <span className="text-text-strong font-medium num-tab">{value}</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-bg-deep/60 overflow-hidden">
-        <div
-          className={'h-full rounded-full transition-all duration-500 ' + dot.replace('bg-', 'bg-')}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function EmptyRow({ text }: { text: string }) {
-  return (
-    <div className="px-3 py-6 text-center">
-      <p className="text-xs text-text-muted">{text}</p>
-    </div>
-  );
-}
-
-function formatRemainingShort(ms: number): string {
-  if (ms <= 0) return 'pronto';
-  const totalSec = Math.floor(ms / 1000);
-  const days = Math.floor(totalSec / 86400);
-  if (days >= 1) return `en ${days} día${days === 1 ? '' : 's'}`;
-  const hours = Math.floor(totalSec / 3600);
-  if (hours >= 1) return `en ${hours}h`;
-  const minutes = Math.floor(totalSec / 60);
-  if (minutes >= 1) return `en ${minutes}m`;
-  return 'en segundos';
 }

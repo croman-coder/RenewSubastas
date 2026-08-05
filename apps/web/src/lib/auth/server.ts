@@ -79,6 +79,57 @@ export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser>
   }
 });
 
+/**
+ * Like {@link getCurrentUser} but returns `null` instead of redirecting when
+ * there's no usable session. For surfaces that render for signed-out
+ * visitors — today the public landing at `/[locale]` — where "not logged in"
+ * is a normal state, not an error.
+ *
+ * Deliberately does NOT reuse getCurrentUser: that function's contract is
+ * "redirect on any problem", and its redirects throw NEXT_REDIRECT, which we
+ * would have to catch and swallow here. Catching control-flow errors to
+ * invert a function's contract is exactly how a real auth failure ends up
+ * silently rendering a page as anonymous. A disabled or role-less account
+ * returns null here (rendered as a visitor) rather than being bounced to
+ * /login, because a public page has somewhere sensible to put them.
+ */
+export const getOptionalUser = cache(async (): Promise<CurrentUser | null> => {
+  const cookie = cookies().get(SESSION_COOKIE_NAME)?.value;
+  if (!cookie) return null;
+  try {
+    const decoded = await adminAuth().verifySessionCookie(cookie, true);
+    const status = (decoded as { status?: string }).status;
+    const role = (decoded as { role?: Role }).role;
+    if (status !== 'active' || !role) return null;
+
+    let firstName = '';
+    let audience: 'retail' | 'wholesale' | undefined;
+    try {
+      const snap = await getFirestore(getAdminApp()).doc(`users/${decoded.uid}`).get();
+      const data = snap.data() ?? {};
+      const profile = (data['profile'] ?? {}) as Record<string, unknown>;
+      firstName =
+        ((profile['firstName'] as string | undefined) ?? (data['firstName'] as string | undefined))
+          ?.toString()
+          .trim() ?? '';
+      if (role === 'buyer') {
+        audience =
+          (profile['audience'] as 'retail' | 'wholesale' | undefined) ??
+          (decoded as { audience?: 'retail' | 'wholesale' }).audience ??
+          'retail';
+      }
+    } catch {
+      /* swallow — fallback below */
+    }
+    if (!firstName) firstName = friendlyFromEmail(decoded.email ?? '');
+    if (role === 'buyer' && !audience) audience = 'retail';
+    return { uid: decoded.uid, role, email: decoded.email ?? '', firstName, audience };
+  } catch {
+    // Expired / revoked / malformed cookie — treat as a visitor.
+    return null;
+  }
+});
+
 export async function requireRole(locale: string, allowed: Role[]): Promise<CurrentUser> {
   const user = await getCurrentUser(locale);
   if (!allowed.includes(user.role)) redirect(`/${locale}${homeFor(user.role, user.audience)}`);
