@@ -1,5 +1,5 @@
 'use client';
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, isSupported, type Messaging } from 'firebase/messaging';
 import { httpsCallable } from 'firebase/functions';
 import { fb } from './client';
 
@@ -61,18 +61,41 @@ function waitForActive(reg: ServiceWorkerRegistration): Promise<void> {
   });
 }
 
-let cached: Messaging | null = null;
-function getClient(): Messaging | null {
-  if (typeof window === 'undefined') return null;
-  if (!cached) {
-    try {
-      cached = getMessaging(fb.app);
-    } catch (err) {
-      console.warn('[messaging] getMessaging failed', err);
-      return null;
-    }
+let clientPromise: Promise<Messaging | null> | null = null;
+
+/**
+ * Resolve the Messaging instance, or `null` on a browser that can't do web
+ * push.
+ *
+ * This MUST await the SDK's own async `isSupported()` before touching
+ * `getMessaging()`. `getMessaging()` fires that same probe internally on a
+ * DETACHED promise chain and `throw`s inside its `.then()` callback when it
+ * fails (see `getMessagingInWindow` in @firebase/messaging). Because the
+ * throw happens asynchronously, outside the synchronous call frame, a
+ * `try/catch` wrapped around `getMessaging()` cannot intercept it — the
+ * rejection escapes to `window.onunhandledrejection` and surfaces as an
+ * uncaught `messaging/unsupported-browser` error. That's exactly what was
+ * hitting Chrome/iOS in production, where WebKit only exposes the Push API
+ * to home-screen-installed PWAs (iOS 16.4+), so `isSupported()` is false in
+ * an ordinary tab.
+ *
+ * The probe result is memoised: it hits IndexedDB, and every caller wants
+ * the same answer for the life of the page.
+ */
+function getClient(): Promise<Messaging | null> {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (!clientPromise) {
+    clientPromise = (async () => {
+      try {
+        if (!(await isSupported())) return null;
+        return getMessaging(fb.app);
+      } catch (err) {
+        console.warn('[messaging] unavailable in this browser', err);
+        return null;
+      }
+    })();
   }
-  return cached;
+  return clientPromise;
 }
 
 /**
@@ -105,7 +128,7 @@ export function pushPermission(): NotificationPermission | 'unsupported' {
  */
 export async function enablePush(): Promise<string | null> {
   if (!isPushSupported()) return null;
-  const messaging = getClient();
+  const messaging = await getClient();
   if (!messaging) return null;
 
   const vapidKey = process.env['NEXT_PUBLIC_FIREBASE_VAPID_KEY'];
@@ -143,17 +166,31 @@ export async function enablePush(): Promise<string | null> {
  * is focused. By default Firebase suppresses notifications when the
  * page is open, so we get the raw payload here and let the caller
  * decide how to display it (toast, badge bump, etc.).
+ *
+ * Stays synchronous for callers (React effects want an unsubscribe back
+ * immediately) while the support probe resolves in the background. If the
+ * caller tears down before the probe settles, we never attach at all.
  */
 export function onForegroundPush(
   handler: (p: { title: string; body: string; url?: string }) => void,
 ): () => void {
-  const messaging = getClient();
-  if (!messaging) return () => {};
-  return onMessage(messaging, (payload) => {
-    const title = payload.notification?.title || payload.data?.['title'] || 'Renew Subastas';
-    const body =
-      payload.notification?.body || payload.data?.['body'] || 'Nueva actividad en tu cuenta.';
-    const url = payload.fcmOptions?.link || payload.data?.['url'];
-    handler({ title, body, ...(url ? { url } : {}) });
+  let unsub: (() => void) | null = null;
+  let cancelled = false;
+
+  void getClient().then((messaging) => {
+    if (!messaging || cancelled) return;
+    unsub = onMessage(messaging, (payload) => {
+      const title = payload.notification?.title || payload.data?.['title'] || 'Renew Subastas';
+      const body =
+        payload.notification?.body || payload.data?.['body'] || 'Nueva actividad en tu cuenta.';
+      const url = payload.fcmOptions?.link || payload.data?.['url'];
+      handler({ title, body, ...(url ? { url } : {}) });
+    });
   });
+
+  return () => {
+    cancelled = true;
+    unsub?.();
+    unsub = null;
+  };
 }

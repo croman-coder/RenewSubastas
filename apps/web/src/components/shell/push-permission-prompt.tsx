@@ -41,6 +41,14 @@ export function PushPermissionPrompt({ locale }: Props) {
     const perm = pushPermission();
     setState(perm);
 
+    // Bail before touching the Messaging SDK at all on a browser that can't
+    // do web push (Chrome/iOS in a normal tab, Safari < 16.4, private
+    // windows). This effect still runs even though the component renders
+    // null there, and the SDK surfaces its unsupported-browser failure as an
+    // *unhandled rejection* no try/catch can trap — see getClient() in
+    // lib/firebase/messaging.ts.
+    if (perm === 'unsupported') return;
+
     // Wire foreground messages regardless of whether we're showing the
     // banner. Buyers who enabled push on another tab still want toasts
     // here.
