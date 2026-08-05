@@ -17,6 +17,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+      # The Firebase emulators are a Java process. Pinned rather than relying
+      # on whatever JDK the runner image ships by default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Build shared packages
@@ -25,12 +31,22 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
-      # @carbid/functions tests are NOT here: they run against the Firebase
-      # emulator suite (see `pnpm emulators`). Everything below is emulator-free.
       - name: Test (no emulators)
         run: |
           pnpm --filter @carbid/shared-types test
           pnpm --filter @carbid/web test
+      # @carbid/functions tests talk to real Firestore/Auth through the
+      # emulators. Only auth + firestore are started: no test exercises the
+      # functions emulator (handlers are invoked directly) and the one test
+      # touching Storage mocks adminStorage. No --import, so this runs against
+      # a clean instance — verified 129/129 that way before landing this.
+      # Project id must match GCLOUD_PROJECT in functions/src/test/setup.ts.
+      - name: Test (functions, emulator-backed)
+        run: |
+          npx --yes firebase-tools@15 emulators:exec \
+            --only auth,firestore \
+            --project carbid-test \
+            'pnpm --filter @carbid/functions test'
       - name: Web build
         run: pnpm --filter @carbid/web build
         env:
