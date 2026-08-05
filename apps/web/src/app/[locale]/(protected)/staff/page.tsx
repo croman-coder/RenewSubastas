@@ -14,6 +14,8 @@ import { loadStaffStats } from '@/lib/staff/load-staff-stats';
 import { TodayLabel } from '@/components/shell/today-label';
 import { Button } from '@/components/ui/button';
 import { KpiCard } from '@/components/brand/kpi-card';
+import { BatchCountdown } from '@/components/auctions/batch-countdown';
+import { loadBatchEnd } from '@/lib/auctions/load-batch-end';
 
 interface PageProps {
   params: { locale: string };
@@ -24,7 +26,7 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
   // this dashboard and the rest of /staff/* below are inventory/auction
   // management — finanzas has no business reading vehicle/auction detail.
   const user = await requireRole(locale, ['admin', 'staff']);
-  const s = await loadStaffStats(user.uid);
+  const [s, batchEnd] = await Promise.all([loadStaffStats(user.uid), loadBatchEnd()]);
 
   const totalVehicles =
     s.vehicles.draft + s.vehicles.ready + s.vehicles.inAuction + s.vehicles.sold;
@@ -68,6 +70,10 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
           </div>
         </div>
       </header>
+
+      {/* Batch clock. Lotes close together, so the operator sees the deadline
+          before anything else on the panel. */}
+      {batchEnd !== null && <BatchCountdown endsAtMs={batchEnd} />}
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
