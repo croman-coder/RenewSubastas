@@ -1,8 +1,15 @@
 # CI workflows
 
-Only one workflow lives here: `pr.yml` (lint, typecheck, emulator-free tests,
-web build, functions build, format check). **There are deliberately no deploy
-workflows.** Please read this before adding one back.
+Only one workflow lives here: `pr.yml` (lint, typecheck, tests — including the
+emulator-backed `@carbid/functions` suite — web build, functions build, format
+check). **There are deliberately no deploy workflows.** Please read this before
+adding one back.
+
+The functions tests run under `firebase-tools emulators:exec` with only `auth`
+and `firestore` started: no test exercises the functions emulator (handlers are
+called directly) and the single Storage-touching test mocks `adminStorage`. It
+runs with no `--import`, so a test that quietly depends on seeded emulator data
+will fail in CI even though it passes locally against `.emulator-data`.
 
 ## How CARBID actually deploys
 
