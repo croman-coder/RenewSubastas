@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import {
@@ -26,7 +27,7 @@ const fmtUsd = (n: number) =>
   n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const InputSchema = z.object({
-  auctionId: z.string().min(1),
+  auctionId: DocId,
   // What the admin is recording. `paid` confirms the seña arrived;
   // `forfeited` lets admin manually release the auction before the
   // automatic deadline (e.g. buyer cancelled in person).

@@ -4,9 +4,10 @@ import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
-const InputSchema = z.object({ auctionId: z.string().min(1) });
+const InputSchema = z.object({ auctionId: DocId });
 
 export interface DeleteAuctionResult {
   ok: true;

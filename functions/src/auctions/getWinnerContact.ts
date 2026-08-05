@@ -3,10 +3,11 @@ import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { requireSignedIn } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 
 const InputSchema = z.object({
-  auctionId: z.string().min(1),
-  winnerUid: z.string().min(1),
+  auctionId: DocId,
+  winnerUid: DocId,
 });
 
 export interface WinnerContact {

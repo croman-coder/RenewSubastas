@@ -4,8 +4,9 @@ import { z } from 'zod';
 import { adminDb, adminStorage } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 
-const InputSchema = z.object({ vehicleId: z.string().min(1) });
+const InputSchema = z.object({ vehicleId: DocId });
 
 export interface DeleteVehicleResult {
   ok: true;

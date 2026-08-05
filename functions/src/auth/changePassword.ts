@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { adminAuth, adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireAdmin } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 import { sendEmail, RESEND_API_KEY } from '../lib/email.js';
 import { emailShell, body, badge, heading, callout, ctaButton } from '../lib/email-templates.js';
 import { issuePasswordSetLink } from './reset-tokens.js';
 
-const InputSchema = z.object({ uid: z.string().min(1) });
+const InputSchema = z.object({ uid: DocId });
 
 export interface GeneratePasswordResetResult {
   resetLink: string;

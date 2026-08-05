@@ -7,11 +7,12 @@ import { setUserClaims } from '../lib/claims.js';
 import { loadAppConfig } from '../lib/config.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireAdmin } from '../lib/errors.js';
+import { DocId } from '../lib/ids.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const InputSchema = z
   .object({
-    uid: z.string().min(1),
+    uid: DocId,
     role: RoleSchema.optional(),
     status: UserStatusSchema.optional(),
     audience: AudienceSchema.optional(),
