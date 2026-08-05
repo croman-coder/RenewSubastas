@@ -15,12 +15,16 @@ interface Props {
  * prominent clock is more useful than reading it off each card. Per-card
  * countdowns stay as-is: they're still correct, and a lote can be split.
  *
- * Uses `endsAtMs` as the initial `now` so the server render and the first
- * client render produce identical markup — seeding with the real clock
- * hydration-mismatches every digit.
+ * Seeded with the real clock so the SERVER renders the true remaining time.
+ * Seeding with `endsAtMs` instead (to force identical server/client markup)
+ * makes `remaining` 0 during SSR, so the delivered HTML reads "Lote cerrado"
+ * until hydration repaints it — wrong for crawlers, and a visible flash on a
+ * slow connection. The sub-second server/client difference is absorbed with
+ * `suppressHydrationWarning` on the digits, which is what it exists for.
+ * Same approach as the per-card timer in AuctionCard.
  */
 export function BatchCountdown({ endsAtMs, className = '' }: Props) {
-  const [now, setNow] = useState(endsAtMs);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     setNow(Date.now());
@@ -60,6 +64,7 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
       />
 
       <p
+        suppressHydrationWarning
         className={
           'relative inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold ' +
           'uppercase tracking-[0.18em] ' +
@@ -72,12 +77,13 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
 
       {/* One accessible string; the digits themselves are decorative so a
           screen reader doesn't read "0 7 d 0 4 h" character by character. */}
-      <p className="sr-only" aria-live="off">
+      <p className="sr-only" aria-live="off" suppressHydrationWarning>
         {label}
       </p>
 
       <div
         aria-hidden="true"
+        suppressHydrationWarning
         className="relative mt-1.5 flex items-baseline justify-center gap-2 sm:gap-3"
       >
         {done ? (
@@ -86,7 +92,11 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
           </span>
         ) : (
           <>
-            <Unit value={d} unit="d" urgent={urgent} />
+            {/* Days are demoted: a lote runs for a week, so the day figure
+                barely moves and stealing size from it makes the hours — the
+                number people actually watch — read as the headline. Hidden
+                entirely at 0 days rather than shown as a dead "00". */}
+            {d > 0 && <Unit value={d} unit="d" urgent={urgent} size="sm" />}
             <Unit value={h} unit="h" urgent={urgent} />
             <Unit value={m} unit="m" urgent={urgent} />
             <Unit value={s} unit="s" urgent={urgent} />
@@ -97,22 +107,40 @@ export function BatchCountdown({ endsAtMs, className = '' }: Props) {
   );
 }
 
-function Unit({ value, unit, urgent }: { value: number; unit: string; urgent: boolean }) {
+function Unit({
+  value,
+  unit,
+  urgent,
+  size = 'lg',
+}: {
+  value: number;
+  unit: string;
+  urgent: boolean;
+  size?: 'sm' | 'lg';
+}) {
+  const small = size === 'sm';
   return (
     <span className="inline-flex items-baseline">
       <span
         className={
-          'num-tab font-semibold tracking-tight tabular-nums ' +
-          'text-4xl sm:text-5xl lg:text-6xl leading-none ' +
-          (urgent ? 'text-rose-200' : 'text-text-strong')
+          'num-tab font-semibold tracking-tight tabular-nums leading-none ' +
+          (small ? 'text-xl sm:text-2xl lg:text-3xl ' : 'text-4xl sm:text-5xl lg:text-6xl ') +
+          (urgent
+            ? small
+              ? 'text-rose-200/70'
+              : 'text-rose-200'
+            : small
+              ? 'text-text-muted'
+              : 'text-text-strong')
         }
-        style={{ textShadow: '0 0 28px rgba(255,255,255,0.18)' }}
+        style={small ? undefined : { textShadow: '0 0 28px rgba(255,255,255,0.18)' }}
       >
         {String(value).padStart(2, '0')}
       </span>
       <span
         className={
-          'ml-0.5 text-xs sm:text-sm font-medium ' +
+          'ml-0.5 font-medium ' +
+          (small ? 'text-[10px] sm:text-xs ' : 'text-xs sm:text-sm ') +
           (urgent ? 'text-rose-300/80' : 'text-text-muted')
         }
       >

@@ -31,9 +31,11 @@ const usd = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 });
  * favorite handler is how you end up shipping a no-op heart button.
  */
 export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
-  // Seeded from endsAtMs (not Date.now()) so the server render and the first
-  // client render agree; seeding with the real clock mismatches on hydration.
-  const [now, setNow] = useState(auction.endsAtMs);
+  // Real clock, so the SERVER renders the true remaining time. Seeding from
+  // endsAtMs to force matching markup makes SSR emit "—" on every card until
+  // hydration. Sub-second drift is absorbed by suppressHydrationWarning below
+  // — same approach as the authenticated AuctionCard.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     setNow(Date.now());
@@ -117,6 +119,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           {status.label}
         </span>
         <span
+          suppressHydrationWarning
           className={
             'absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 ' +
             'rounded-md px-2 py-1 text-xs font-medium num-tab backdrop-blur-md ' +
