@@ -13,11 +13,6 @@ export interface Company {
   phone: string;
 }
 
-/** Everything the legal pages need is present. */
-export function companyIsComplete(c: Company): boolean {
-  return Boolean(c.legalName && c.ruc && c.address && c.email);
-}
-
 const EMPTY: Company = { legalName: '', ruc: '', address: '', email: '', phone: '' };
 
 /**

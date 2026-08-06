@@ -24,31 +24,16 @@ export function LegalFooter({ locale, company }: Props) {
   return (
     <footer className="mt-12 border-t border-text-subtle/15">
       <div className="mx-auto max-w-7xl px-4 md:px-8 py-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        {/* Company line only. RUC, address and contact stay out of the
+            footer by request — they're still stated where they're actually
+            required, in the "Quién trata tus datos" section of the privacy
+            policy and the opening clause of the terms, both fed from the
+            same configured values. */}
         <div className="min-w-0 space-y-1">
           <p className="text-sm font-medium text-text-strong">
             <span translate="no">Renew Subastas</span>
           </p>
-          {company.legalName && (
-            <p className="text-xs text-text-muted">
-              {company.legalName}
-              {company.ruc && <span className="num-tab"> · RUC {company.ruc}</span>}
-            </p>
-          )}
-          {company.address && <p className="text-xs text-text-muted">{company.address}</p>}
-          {(company.email || company.phone) && (
-            <p className="text-xs text-text-muted">
-              {company.email && (
-                <a
-                  href={`mailto:${company.email}`}
-                  className="hover:text-text-strong transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"
-                >
-                  {company.email}
-                </a>
-              )}
-              {company.email && company.phone && ' · '}
-              {company.phone && <span className="num-tab">{company.phone}</span>}
-            </p>
-          )}
+          {company.legalName && <p className="text-xs text-text-muted">{company.legalName}</p>}
         </div>
 
         <nav aria-label="Enlaces legales" className="shrink-0">

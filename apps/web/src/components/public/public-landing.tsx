@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Gavel, LogIn, ShieldCheck, Timer } from 'lucide-react';
 import { PublicTopbar } from './public-topbar';
 import { PublicAuctionsBrowser } from './public-auctions-browser';
+import { LandingFaq } from './landing-faq';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
 import { LegalFooter } from '@/components/legal/legal-footer';
 import { batchClock } from '@/lib/auctions/batch';
@@ -129,6 +130,8 @@ export function PublicLanding({ locale, items, company }: Props) {
           </section>
 
           <PublicAuctionsBrowser locale={locale} items={items} />
+
+          <LandingFaq />
         </div>
       </main>
 

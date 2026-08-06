@@ -1,4 +1,5 @@
 import { SITE_URL } from '@/lib/seo/site';
+import { LANDING_FAQS } from '@/lib/seo/faq';
 import type { Company } from '@/lib/legal/load-company';
 
 interface Props {
@@ -22,8 +23,22 @@ export function OrganizationJsonLd({ locale, company }: Props) {
     name: 'Renew Subastas',
     url: `${SITE_URL}/${locale}`,
     description:
-      'Plataforma de subastas de vehículos usados certificados en Paraguay, operada por Santa Rosa.',
+      'Plataforma de subastas de vehículos usados certificados en Paraguay, operada por Santa Rosa. Publica lotes de vehículos con fecha de cierre y permite pujar en línea en tiempo real.',
     areaServed: { '@type': 'Country', name: 'Paraguay' },
+    // States the auction service explicitly. Google's AI Overview was
+    // asserting that Renew "no realiza subastas públicas ni remates",
+    // synthesised from the sister dealership site; leaving the auction
+    // business implicit in a grid of cars invites that inference again.
+    makesOffer: {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Service',
+        name: 'Subastas de vehículos usados',
+        serviceType: 'Subasta de vehículos',
+        description:
+          'Subastas en línea de vehículos usados certificados: lotes con fecha y hora de cierre, pujas en tiempo real y adjudicación al mejor postor.',
+      },
+    },
   };
 
   if (company.legalName) data['legalName'] = company.legalName;
@@ -40,6 +55,30 @@ export function OrganizationJsonLd({ locale, company }: Props) {
     };
   }
 
+  // Mirrors the questions rendered on the page. Emitted as a separate graph
+  // node rather than nested so each is a valid top-level type.
+  const faq = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: LANDING_FAQS.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faq).replace(/</g, '\\u003c') }}
+      />
+      <OrgScript data={data} />
+    </>
+  );
+}
+
+function OrgScript({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"

@@ -144,8 +144,12 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
               />
             </div>
 
+            {/* Registration is open to the public now — accounts are no
+                longer handed out by an admin, so the old "solicitala a tu
+                administrador" line was telling visitors the opposite of what
+                the Google button right above it does. */}
             <p className="mt-6 text-center text-xs text-text-muted">
-              ¿No tenés cuenta? Solicitala a tu administrador.
+              ¿No tenés cuenta? Creá una con Google en un paso.
             </p>
           </div>
         </section>

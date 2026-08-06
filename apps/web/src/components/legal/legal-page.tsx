@@ -1,10 +1,9 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { LegalFooter } from './legal-footer';
 import { LEGAL_VERSION_DATE, type LegalSection } from '@/lib/legal/company-facts';
 import type { Company } from '@/lib/legal/load-company';
-import { companyIsComplete } from '@/lib/legal/load-company';
 
 interface Props {
   locale: string;
@@ -23,8 +22,6 @@ interface Props {
  * to get it wrong.
  */
 export function LegalPage({ locale, title, intro, sections, company }: Props) {
-  const incomplete = !companyIsComplete(company);
-
   return (
     <div className="min-h-dvh flex flex-col bg-bg-base">
       <a
@@ -71,24 +68,10 @@ export function LegalPage({ locale, title, intro, sections, company }: Props) {
         <p className="mt-3 text-sm sm:text-base text-text-muted text-pretty">{intro}</p>
         <p className="mt-2 text-xs text-text-subtle">Última actualización: {LEGAL_VERSION_DATE}</p>
 
-        {incomplete && (
-          <div
-            role="status"
-            className="mt-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/[0.08] px-4 py-3"
-          >
-            <AlertTriangle
-              className="w-4 h-4 mt-0.5 shrink-0 text-amber-400"
-              strokeWidth={2.25}
-              aria-hidden="true"
-            />
-            <p className="text-sm text-amber-200/90">
-              Faltan cargar los datos de la empresa (razón social, RUC, domicilio o contacto) en
-              Configuración → Datos de la empresa. Hasta completarlos, este documento queda
-              incompleto.
-            </p>
-          </div>
-        )}
-
+        {/* No "incomplete configuration" banner: it's operator-facing noise on
+            a public page. Unset fields are simply omitted from the prose (see
+            company-facts.ts), so the document never asserts an identity that
+            isn't configured — it just says less. */}
         <div className="mt-8 space-y-8">
           {sections.map((s, i) => (
             <section key={s.heading} aria-labelledby={`sec-${i}`} className="scroll-mt-20">

@@ -2,7 +2,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { isLocale } from '@/lib/seo/site';
+import { isLocale, SITE_URL } from '@/lib/seo/site';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
@@ -20,6 +20,10 @@ const display = Space_Grotesk({
 });
 
 export const metadata = {
+  // Without metadataBase, Next emits the generated opengraph-image as a
+  // relative URL and warns at build. A crawler or chat unfurl can't resolve
+  // a relative image, so the preview silently falls back to no image.
+  metadataBase: new URL(SITE_URL),
   title: 'Renew Subastas',
   description: 'Subastas de vehículos · Santa Rosa Paraguay SA',
 };
