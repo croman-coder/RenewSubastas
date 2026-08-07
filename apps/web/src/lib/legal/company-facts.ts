@@ -11,7 +11,7 @@ import type { Company } from './load-company';
  */
 
 /** Effective date shown on every legal page. Bump when the text changes. */
-export const LEGAL_VERSION_DATE = '5 de agosto de 2026';
+export const LEGAL_VERSION_DATE = '7 de agosto de 2026';
 
 export interface LegalSection {
   heading: string;
@@ -65,12 +65,13 @@ export function privacySections(c: Company): LegalSection[] {
     {
       heading: 'Con quién los compartimos',
       body: [
-        'No vendemos ni cedemos tus datos personales a terceros con fines publicitarios. Los compartimos únicamente con proveedores que nos prestan servicios necesarios para operar, y solo en la medida en que lo requieren:',
+        'No vendemos tus datos personales. Los compartimos únicamente con proveedores que nos prestan servicios necesarios para operar, y solo en la medida en que lo requieren:',
       ],
       bullets: [
         'Proveedores de infraestructura y alojamiento en la nube, que almacenan la base de datos y los archivos de la plataforma.',
         'Un proveedor de envío de correo electrónico transaccional, para las notificaciones de la plataforma.',
         'Un servicio de monitoreo de errores, que registra fallas técnicas de la aplicación.',
+        'Meta Platforms, únicamente si aceptaste las cookies de medición publicitaria: recibe las páginas que visitás dentro del sitio para medir el resultado de nuestros anuncios. No le enviamos tu nombre, documento, teléfono ni tus pujas. Si rechazaste las cookies, no se le envía nada.',
         'Autoridades competentes, cuando exista una obligación legal o un requerimiento judicial.',
       ],
     },
@@ -196,12 +197,13 @@ export function cookieSections(c: Company): LegalSection[] {
     {
       heading: 'Cookies que usamos',
       body: [
-        'Usamos la menor cantidad posible. No utilizamos cookies publicitarias ni compartimos datos con redes de anuncios.',
+        'Usamos la menor cantidad posible. Las que no son imprescindibles sólo se activan si las aceptás, y podés rechazarlas sin perder ninguna función de la plataforma.',
       ],
       bullets: [
         'Cookie de sesión: mantiene tu sesión iniciada mientras usás la plataforma. Es imprescindible para que el sitio funcione y no requiere consentimiento; sin ella no podrías permanecer autenticado.',
         'Preferencia de cookies: guarda la decisión que tomás en el aviso de cookies, para no volver a preguntarte en cada visita.',
         'Monitoreo de errores: cuando lo aceptás, un servicio de terceros registra información técnica ante una falla de la aplicación para poder diagnosticarla. Si lo rechazás, no se activa.',
+        'Medición publicitaria (Meta Pixel): cuando lo aceptás, se cargan cookies de Meta Platforms que registran las páginas que visitás dentro del sitio. Nos sirve para medir el resultado de nuestros anuncios y para mostrarte publicidad más relevante en Facebook e Instagram. Si lo rechazás, no se carga y no se envía ningún dato a Meta.',
       ],
     },
     {

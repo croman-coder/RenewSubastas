@@ -1,3 +1,5 @@
+import { loadMetaPixel } from '@/lib/analytics/meta-pixel';
+
 export type CookieConsent = 'accepted' | 'rejected';
 
 /**
@@ -25,10 +27,25 @@ export function writeCookieConsent(value: CookieConsent): void {
 }
 
 /**
- * Attach Sentry's Session Replay, which is the only non-essential tracking on
- * the site. Called from the Sentry client config on load when consent already
- * exists, and from the banner the moment the visitor accepts, so accepting
+ * Turn on everything that requires consent.
+ *
+ * Single entry point on purpose: every non-essential tracker has to be listed
+ * here and nowhere else, so "what fires only after the visitor agrees" is one
+ * readable list instead of a hunt through the codebase. Called on mount when
+ * a stored 'accepted' exists, and the moment someone accepts — so accepting
  * takes effect without a reload.
+ *
+ * Anything added here must also be disclosed in the cookie policy
+ * (lib/legal/company-facts.ts). A tracker the policy doesn't mention makes
+ * the policy false.
+ */
+export function applyConsent(): void {
+  void enableSentryReplay();
+  loadMetaPixel();
+}
+
+/**
+ * Attach Sentry's Session Replay.
  *
  * Import is dynamic so a visitor who never consents doesn't download the
  * replay bundle at all — gating the integration but still shipping the code

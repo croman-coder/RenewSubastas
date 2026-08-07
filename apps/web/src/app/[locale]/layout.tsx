@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
@@ -7,6 +8,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { CookieBanner } from '@/components/legal/cookie-banner';
+import { MetaPixelRouteTracker } from '@/components/analytics/meta-pixel-route-tracker';
 import '../globals.css';
 
 // Body: Inter (modern neutral grotesque, excellent at small sizes).
@@ -72,8 +74,15 @@ export default async function LocaleLayout({
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               {children}
               {/* Global: the choice has to be reachable from every surface,
-                  and Sentry Replay must stay off until it's made. */}
+                  and every consent-gated tracker stays off until it's made. */}
               <CookieBanner locale={locale} />
+              {/* Suspense is required, not decorative: useSearchParams opts
+                  the nearest boundary into client rendering, and without one
+                  the build fails. Isolating it here keeps every page static
+                  that already was. */}
+              <Suspense fallback={null}>
+                <MetaPixelRouteTracker />
+              </Suspense>
               <Toaster position="top-right" richColors closeButton />
             </ThemeProvider>
           </AuthProvider>

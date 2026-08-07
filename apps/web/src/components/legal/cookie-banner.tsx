@@ -5,7 +5,7 @@ import { Cookie } from 'lucide-react';
 import {
   readCookieConsent,
   writeCookieConsent,
-  enableSentryReplay,
+  applyConsent,
   type CookieConsent,
 } from '@/lib/legal/cookie-consent';
 
@@ -32,7 +32,7 @@ export function CookieBanner({ locale }: Props) {
 
   useEffect(() => {
     const existing = readCookieConsent();
-    if (existing === 'accepted') void enableSentryReplay();
+    if (existing === 'accepted') applyConsent();
     if (existing === null) setOpen(true);
 
     const reopen = () => setOpen(true);
@@ -42,7 +42,7 @@ export function CookieBanner({ locale }: Props) {
 
   function decide(value: CookieConsent) {
     writeCookieConsent(value);
-    if (value === 'accepted') void enableSentryReplay();
+    if (value === 'accepted') applyConsent();
     setOpen(false);
   }
 
