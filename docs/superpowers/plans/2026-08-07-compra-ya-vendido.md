@@ -1668,12 +1668,15 @@ git commit -m "feat(web): keep sold units visible until the lote closes; exclude
 - Create: `apps/web/src/components/auctions/sold-banner.tsx`
 - Modify: `apps/web/src/app/[locale]/(protected)/auctions/auction-card.tsx`
 - Modify: `apps/web/src/components/public/public-auction-card.tsx`
+- Modify: `apps/web/src/lib/buyer/load-auction.ts`
 - Modify: `apps/web/src/app/[locale]/(protected)/auctions/[id]/bid-panel.tsx`
 
 **Interfaces:**
 
 - Consumes: `PublicAuction.outcome` (Task 8), callable `buyNow` (Task 4).
-- Produces: `<SoldBanner variant="card" | "detail" />`.
+- Produces: `<SoldBanner variant="card" | "detail" />`; `AuctionDetail` gana `buyNowPrice: number | null` y `outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null`.
+
+**Nota:** las tarjetas de catálogo (`auction-card.tsx`, `public-auction-card.tsx`) leen `PublicAuction`, que Task 8 ya extendió con `outcome`. La página de detalle (`bid-panel.tsx`) lee `AuctionDetail` desde `load-auction.ts`, un loader distinto que Task 8 no toca — por eso el Step 2 de acá se lo agrega antes de que el panel lo use.
 
 - [ ] **Step 1: Crear el componente**
 
@@ -1719,7 +1722,24 @@ export function SoldBanner({ variant }: Props) {
 }
 ```
 
-- [ ] **Step 2: Usarlo en ambas tarjetas**
+- [ ] **Step 2: Agregar `buyNowPrice` y `outcome` a `AuctionDetail`**
+
+En `apps/web/src/lib/buyer/load-auction.ts`, agregar a la interfaz, junto a `audience`:
+
+```ts
+/** Precio de compra directa. null cuando la subasta no lo admite. */
+buyNowPrice: number | null;
+outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null;
+```
+
+Y en el `return` de `loadAuction`, junto a `audience`:
+
+```ts
+    buyNowPrice: (a['buyNowPrice'] as number | undefined) ?? null,
+    outcome: (a['outcome'] as AuctionDetail['outcome']) ?? null,
+```
+
+- [ ] **Step 3: Usarlo en ambas tarjetas**
 
 En `auction-card.tsx` y `public-auction-card.tsx`, dentro del contenedor de la foto (el `div` con `aspect-[4/3]`, que ya es `relative`), después del gradiente:
 
@@ -1743,7 +1763,7 @@ Agregar el import correspondiente. En la tarjeta pública, además, ocultar el b
         )}
 ```
 
-- [ ] **Step 3: Agregar el botón Compra ya al bid-panel**
+- [ ] **Step 4: Agregar el botón Compra ya al bid-panel**
 
 En `bid-panel.tsx`, antes del formulario de puja, cuando `auction.buyNowPrice` existe y `auction.bidCount === 0`:
 
@@ -1768,7 +1788,7 @@ En `bid-panel.tsx`, antes del formulario de puja, cuando `auction.buyNowPrice` e
       </div>
 ```
 
-- [ ] **Step 4: Diálogo de confirmación**
+- [ ] **Step 5: Diálogo de confirmación**
 
 Reusar el `Dialog` que el panel ya usa para confirmar pujas. Estado `confirmBuyNow: boolean`, y al aceptar:
 
@@ -1792,7 +1812,7 @@ Texto del diálogo, con el vehículo y el precio explícitos porque un click acc
 
 > Vas a comprar el {make} {model} {year} por USD {precio}. La subasta cierra al instante y tenés 24 h para abonar la seña.
 
-- [ ] **Step 5: Verificar en el navegador**
+- [ ] **Step 6: Verificar en el navegador**
 
 Levantar emuladores y `web-emulators`, sembrar una subasta con `buyNowPrice` y `bidCount: 0`, y comprobar:
 
@@ -1801,12 +1821,12 @@ Levantar emuladores y `web-emulators`, sembrar una subasta con `buyNowPrice` y `
 3. Al comprar, la página pasa al estado ganado.
 4. Con `outcome: 'sold_offline'`, la tarjeta muestra la franja y no ofrece pujar.
 
-- [ ] **Step 6: Typecheck, lint y commit**
+- [ ] **Step 7: Typecheck, lint y commit**
 
 Run: `pnpm --filter @carbid/web typecheck && pnpm --filter @carbid/web lint`
 
 ```bash
-git add apps/web/src/components/auctions/sold-banner.tsx apps/web/src/components/public/public-auction-card.tsx "apps/web/src/app/[locale]/(protected)/auctions"
+git add apps/web/src/components/auctions/sold-banner.tsx apps/web/src/components/public/public-auction-card.tsx apps/web/src/lib/buyer/load-auction.ts "apps/web/src/app/[locale]/(protected)/auctions"
 git commit -m "feat(web): Compra ya button + VENDIDO banner"
 ```
 
