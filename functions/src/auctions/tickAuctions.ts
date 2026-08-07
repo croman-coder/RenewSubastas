@@ -2,6 +2,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { loadAppConfig } from '../lib/config.js';
+import { closeAuctionAsSold } from '../lib/close-auction.js';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 export interface TickResult {
@@ -98,31 +99,28 @@ export async function runTickAuctions(now: number = Date.now()): Promise<TickRes
           outcome = 'sold';
         }
 
-        const auctionUpdate: Record<string, unknown> = {
-          status: 'ended',
-          outcome,
-          updatedAt: FieldValue.serverTimestamp(),
-        };
         if (outcome === 'sold' && winnerUid) {
-          auctionUpdate['winnerUid'] = winnerUid;
-          auctionUpdate['finalPrice'] = currentBid;
-          // Payment window opens when the auction closes. The buyer has
-          // `deadlineHours` (default 24) to wire the deposit. Stored as a
-          // Firestore Timestamp so a separate cron pass can sweep
-          // overdue auctions into `forfeited` deterministically.
-          auctionUpdate['paymentStatus'] = 'pending_payment';
-          auctionUpdate['paymentDepositPercent'] = depositPercent;
-          auctionUpdate['paymentDepositUsd'] = Math.round(currentBid * depositPercent * 100) / 100;
-          auctionUpdate['paymentDeadline'] = Timestamp.fromMillis(now + deadlineHours * 3600_000);
-        }
-        tx.update(doc.ref, auctionUpdate);
-
-        // Vehicle status transition (only if it still exists).
-        if (vehicleRef && vehicleSnap?.exists) {
-          tx.update(vehicleRef, {
-            status: outcome === 'sold' ? 'sold' : 'ready',
+          closeAuctionAsSold(tx, {
+            auctionRef: doc.ref,
+            vehicleRef: vehicleRef && vehicleSnap?.exists ? vehicleRef : null,
+            winnerUid,
+            finalPrice: currentBid,
+            depositPercent,
+            deadlineHours,
+            nowMs: now,
+          });
+        } else {
+          tx.update(doc.ref, {
+            status: 'ended',
+            outcome,
             updatedAt: FieldValue.serverTimestamp(),
           });
+          if (vehicleRef && vehicleSnap?.exists) {
+            tx.update(vehicleRef, {
+              status: 'ready',
+              updatedAt: FieldValue.serverTimestamp(),
+            });
+          }
         }
 
         return {
