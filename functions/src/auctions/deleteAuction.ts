@@ -19,8 +19,11 @@ export interface DeleteAuctionResult {
  *
  * Guardrails (protect financial + bidder state):
  *   - A `live` auction with bids cannot be deleted — cancel it first.
- *   - A `sold` auction cannot be deleted (it has a winner + payment
- *     state). Those are history.
+ *   - A sold auction cannot be deleted, platform (`outcome: 'sold'`, has a
+ *     winner + payment state) or showroom (`outcome: 'sold_offline'`,
+ *     written by markSoldOffline). Both are history — for sold_offline in
+ *     particular, soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy is the
+ *     ONLY record that sale ever happened; no callable can recreate it.
  *   - Allowed: `scheduled` (not yet open), `cancelled`, and `ended`
  *     auctions whose outcome was no_bids / reserve_not_met (no winner).
  *   - Frees the linked vehicle back to `ready` if it was held
@@ -47,7 +50,13 @@ export async function deleteAuctionHandler(req: CallableRequest): Promise<Delete
   const outcome = a['outcome'] as string | undefined;
   const bidCount = (a['bidCount'] as number) ?? 0;
 
-  if (status === 'sold' || outcome === 'sold') {
+  // outcome === 'sold_offline' is the showroom-sale case: markSoldOffline
+  // writes it (never `status: 'sold'` — status stays in the normal
+  // scheduled/live/ended/cancelled enum) and it carries the ONLY record of
+  // soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy. Missing it here let
+  // this callable permanently destroy that record — no callable can rewrite
+  // it after the fact. See deleteAuction.test.ts for the regression case.
+  if (status === 'sold' || outcome === 'sold' || outcome === 'sold_offline') {
     throw new HttpsError('failed-precondition', 'Cannot delete a sold auction.');
   }
   if (status === 'live' && bidCount > 0) {
