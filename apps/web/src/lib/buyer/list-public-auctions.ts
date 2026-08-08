@@ -15,6 +15,7 @@ export interface PublicAuction {
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
   startsAtMs: number;
   endsAtMs: number;
+  outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null;
 }
 
 export type CatalogTab = 'all' | 'closing' | 'favorites';
@@ -60,27 +61,46 @@ export async function listPublicAuctions({
     return results.sort((a, b) => a.endsAtMs - b.endsAtMs);
   }
 
-  let q: Query;
   if (tab === 'closing') {
     const in24h = new Date(Date.now() + 24 * 3600_000);
-    q = db
+    const q: Query = db
       .collection('auctions')
       .where('audience', '==', audience)
       .where('status', '==', 'live')
       .where('endsAt', '<=', in24h)
       .orderBy('endsAt', 'asc')
       .limit(pageSize);
-  } else {
-    q = db
+    const snap = await q.get();
+    return snap.docs.map(toItem);
+  }
+
+  // Las vendidas siguen visibles con su franja hasta que el lote al que
+  // pertenecían vence — sirve de prueba social de que se venden autos.
+  // Firestore no admite OR sobre campos distintos en una sola query, así
+  // que se traen ambos conjuntos y se ordenan en memoria (el lote es de
+  // decenas de unidades, no miles).
+  const [openSnap, soldSnap] = await Promise.all([
+    db
       .collection('auctions')
       .where('audience', '==', audience)
       .where('status', 'in', ['live', 'scheduled'])
       .orderBy('endsAt', 'asc')
-      .limit(pageSize);
-  }
-
-  const snap = await q.get();
-  return snap.docs.map(toItem);
+      .limit(pageSize)
+      .get(),
+    db
+      .collection('auctions')
+      .where('audience', '==', audience)
+      .where('status', '==', 'ended')
+      .where('endsAt', '>', new Date())
+      .orderBy('endsAt', 'asc')
+      .limit(pageSize)
+      .get(),
+  ]);
+  return [...openSnap.docs, ...soldSnap.docs]
+    .map(toItem)
+    .filter((a) => a.status !== 'ended' || a.outcome === 'sold' || a.outcome === 'sold_offline')
+    .sort((a, b) => a.endsAtMs - b.endsAtMs)
+    .slice(0, pageSize);
 }
 
 function toItem(d: FirebaseFirestore.QueryDocumentSnapshot): PublicAuction {
@@ -100,5 +120,6 @@ function toItem(d: FirebaseFirestore.QueryDocumentSnapshot): PublicAuction {
     status: (data['status'] as PublicAuction['status']) ?? 'scheduled',
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),
+    outcome: (data['outcome'] as PublicAuction['outcome']) ?? null,
   };
 }

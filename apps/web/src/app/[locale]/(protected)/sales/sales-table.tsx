@@ -44,6 +44,10 @@ export function SalesTable({ locale }: { locale: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Sólo ventas de plataforma. `sold_offline` se excluye a propósito: no hubo
+    // puja ganadora ni seña que gestionar, y sumarla inflaría el GMV. (Este es
+    // el ledger de finanzas — una venta de salón no tiene comprobante ni seña
+    // que esta pantalla pueda mostrar u operar.)
     const q = query(
       collection(fb.db, 'auctions'),
       where('status', '==', 'ended'),

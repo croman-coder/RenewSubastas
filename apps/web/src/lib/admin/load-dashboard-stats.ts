@@ -114,6 +114,8 @@ export async function loadDashboardStats(): Promise<DashboardStats> {
   ]);
 
   // ---- GMV: sum finalPrice across sold auctions ----
+  // Sólo ventas de plataforma. `sold_offline` se excluye a propósito: no hubo
+  // puja ganadora ni seña que gestionar, y sumarla inflaría el GMV.
   const gmvUsd = await safe(
     db
       .collection('auctions')
