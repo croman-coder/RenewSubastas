@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { scrubCredentialsFromUrl, scrubEventUrls } from './src/lib/observability/sentry-scrub';
 
 const dsn = process.env['NEXT_PUBLIC_SENTRY_DSN'];
 
@@ -34,5 +35,17 @@ if (dsn) {
       // landings (/es/login?utm_source=ig).
       /window\.webkit\.messageHandlers/,
     ],
+    // The reset-password and email-action pages carry a redeemable secret in
+    // their query string, and Sentry attaches the full URL to every event and
+    // breadcrumb. Redact those values before anything leaves the browser —
+    // see sentry-scrub.ts.
+    beforeSend: scrubEventUrls,
+    beforeBreadcrumb(crumb) {
+      for (const field of ['to', 'from', 'url'] as const) {
+        const value = crumb.data?.[field];
+        if (typeof value === 'string') crumb.data![field] = scrubCredentialsFromUrl(value);
+      }
+      return crumb;
+    },
   });
 }

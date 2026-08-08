@@ -19,10 +19,14 @@ export const REOPEN_EVENT = 'renew:cookie-preferences';
 /**
  * Cookie notice with a genuine reject.
  *
- * Rejecting is not cosmetic: it withholds Sentry Session Replay, the only
- * non-essential tracking here. The session cookie stays either way — it is
- * strictly necessary to keep someone logged in, so it isn't consent-gated,
- * and the policy says so plainly.
+ * Rejecting is not cosmetic: it withholds both non-essential trackers —
+ * Sentry Session Replay and the Meta Pixel. The session cookie stays either
+ * way — it is strictly necessary to keep someone logged in, so it isn't
+ * consent-gated, and the policy says so plainly.
+ *
+ * The blurb below must name every category applyConsent() turns on. Consent
+ * to "error monitoring" is not consent to advertising measurement, so adding
+ * a tracker there without amending this text collects a consent nobody gave.
  *
  * Renders nothing until mounted so the server never guesses at a choice it
  * cannot read, which would flash the banner at visitors who already decided.
@@ -78,7 +82,8 @@ export function CookieBanner({ locale }: Props) {
               </p>
               <p id="cookie-desc" className="mt-0.5 text-sm text-text-muted text-pretty">
                 Las necesarias para mantener tu sesión son imprescindibles. Además, con tu permiso
-                registramos fallas técnicas para poder corregirlas.{' '}
+                registramos fallas técnicas para poder corregirlas y medimos el resultado de
+                nuestros anuncios.{' '}
                 <Link
                   href={`/${locale}/cookies` as `/${string}`}
                   className="underline underline-offset-2 hover:text-text-strong transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"

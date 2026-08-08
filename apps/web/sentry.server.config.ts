@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { scrubEventUrls } from './src/lib/observability/sentry-scrub';
 
 const dsn = process.env['SENTRY_DSN'] ?? process.env['NEXT_PUBLIC_SENTRY_DSN'];
 
@@ -32,7 +33,11 @@ if (dsn) {
           scrubVars(frame.vars as Record<string, unknown> | undefined);
         }
       }
-      return event;
+      // The reset-password and email-action routes carry a redeemable secret
+      // in their query string, and Sentry attaches the request URL to every
+      // event. These pages render server-side too, so the leak isn't
+      // client-only — see sentry-scrub.ts.
+      return scrubEventUrls(event);
     },
   });
 }

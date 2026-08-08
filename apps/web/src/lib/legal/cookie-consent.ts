@@ -35,9 +35,12 @@ export function writeCookieConsent(value: CookieConsent): void {
  * a stored 'accepted' exists, and the moment someone accepts — so accepting
  * takes effect without a reload.
  *
- * Anything added here must also be disclosed in the cookie policy
- * (lib/legal/company-facts.ts). A tracker the policy doesn't mention makes
- * the policy false.
+ * Anything added here must also be disclosed in TWO places: the cookie policy
+ * (lib/legal/company-facts.ts) and the banner blurb the visitor actually reads
+ * before deciding (components/legal/cookie-banner.tsx). The policy keeps the
+ * disclosure truthful; the banner keeps the consent informed. The pixel
+ * shipped with only the first updated, and the banner still described error
+ * monitoring alone — don't repeat that.
  */
 export function applyConsent(): void {
   void enableSentryReplay();
