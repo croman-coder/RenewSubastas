@@ -24,6 +24,7 @@ export { resolveBidders } from './auctions/resolveBidders.js';
 export { deleteVehicle } from './vehicles/deleteVehicle.js';
 export { placeBid } from './auctions/placeBid.js';
 export { buyNow } from './auctions/buyNow.js';
+export { markSoldOffline } from './auctions/markSoldOffline.js';
 export { tickAuctions } from './auctions/tickAuctions.js';
 export { sendBidOutbid } from './notifications/sendBidOutbid.js';
 export { sendAuctionWon } from './notifications/sendAuctionWon.js';
