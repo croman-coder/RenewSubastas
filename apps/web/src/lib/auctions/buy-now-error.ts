@@ -59,8 +59,21 @@ export function classifyBuyNowError({
   if (code.includes('permission-denied') || code.includes('unauthenticated')) {
     return { kind: 'message', text: 'No tenés permiso para realizar esta compra.' };
   }
+  // Blocking 4: not-found is NOT proof the auction was deleted. It's reachable
+  // two ways: (1) genuinely — deleteAuction.ts isn't transactional and CAN
+  // delete a live, zero-bid auction (exactly the state Compra ya requires) at
+  // the same instant a buyer's buyNow call is in flight; (2) transiently — a
+  // concurrent buyNow's transaction retry can observe a false not-found under
+  // heavy contention (root-caused during the task-11 fix wave; see its
+  // report) even though the document was never deleted. Telling the buyer
+  // "ya no existe" is actively wrong in case (2), and unhelpful in both:
+  // there is nothing to "look at again" the way the price-changed or
+  // already-sold messages offer. A neutral retry prompt is honest either way.
   if (code.includes('not-found')) {
-    return { kind: 'message', text: 'Esta subasta ya no existe.' };
+    return {
+      kind: 'message',
+      text: 'No pudimos confirmar tu compra en este momento. Actualizá la página e intentá de nuevo.',
+    };
   }
   return { kind: 'message', text: 'No se pudo completar la compra.' };
 }

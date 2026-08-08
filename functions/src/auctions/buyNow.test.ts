@@ -18,49 +18,66 @@ function asBuyer(uid = BUYER, audience = 'retail', data: Record<string, unknown>
   } as CallableRequest;
 }
 
+// Blocking 4 root-cause investigation: this was suspected as sequential
+// per-collection processing widening the window in which a slow/loaded
+// emulator could delay beforeEach past what the next test expects. Running
+// the 4 collections concurrently (they're independent — no ordering
+// requirement between them) shrinks that window. Confirmed by direct
+// measurement NOT to be the actual mechanism behind the flake (see the
+// task-11 fix report), but it's a legitimate speed-up with no downside, so
+// it stays.
 async function clearAll() {
-  for (const c of ['auctions', 'users', 'vehicles', 'rate_limits']) {
-    const docs = await adminDb().collection(c).listDocuments();
-    await Promise.all(
-      docs.map(async (d) => {
-        const subs = await d.collection('bids').listDocuments();
-        await Promise.all(subs.map((s) => s.delete()));
-        await d.delete();
-      }),
-    );
-  }
+  await Promise.all(
+    ['auctions', 'users', 'vehicles', 'rate_limits'].map(async (c) => {
+      const docs = await adminDb().collection(c).listDocuments();
+      await Promise.all(
+        docs.map(async (d) => {
+          const [bids, priv] = await Promise.all([
+            d.collection('bids').listDocuments(),
+            d.collection('private').listDocuments(),
+          ]);
+          await Promise.all([...bids, ...priv].map((s) => s.delete()));
+          await d.delete();
+        }),
+      );
+    }),
+  );
 }
 
 async function seed(overrides: Record<string, unknown> = {}) {
-  await adminDb()
-    .doc(`auctions/${AUCTION}`)
-    .set({
-      vehicleId: 'v1',
-      audience: 'retail',
-      status: 'live',
-      startingPrice: 25000,
-      buyNowPrice: 34000,
-      bidIncrement: 500,
-      currentBid: 0,
-      bidCount: 0,
-      startsAt: Timestamp.fromMillis(Date.now() - 3600_000),
-      endsAt: Timestamp.fromMillis(Date.now() + 7 * 86400_000),
-      vehicleSnapshot: { make: 'Toyota', model: 'Hilux', year: 2021 },
-      ...overrides,
-    });
-  await adminDb().doc('vehicles/v1').set({ status: 'in_auction' });
-  await adminDb()
-    .doc(`users/${BUYER}`)
-    .set({
-      email: 'b@example.com',
-      profile: {
-        firstName: 'Juan',
-        lastName: 'Pérez',
+  // The three docs below are independent of each other (different
+  // collections, no data dependency) — same reasoning as clearAll() above.
+  await Promise.all([
+    adminDb()
+      .doc(`auctions/${AUCTION}`)
+      .set({
+        vehicleId: 'v1',
         audience: 'retail',
-        documentType: 'CI',
-        documentNumber: '1234567',
-      },
-    });
+        status: 'live',
+        startingPrice: 25000,
+        buyNowPrice: 34000,
+        bidIncrement: 500,
+        currentBid: 0,
+        bidCount: 0,
+        startsAt: Timestamp.fromMillis(Date.now() - 3600_000),
+        endsAt: Timestamp.fromMillis(Date.now() + 7 * 86400_000),
+        vehicleSnapshot: { make: 'Toyota', model: 'Hilux', year: 2021 },
+        ...overrides,
+      }),
+    adminDb().doc('vehicles/v1').set({ status: 'in_auction' }),
+    adminDb()
+      .doc(`users/${BUYER}`)
+      .set({
+        email: 'b@example.com',
+        profile: {
+          firstName: 'Juan',
+          lastName: 'Pérez',
+          audience: 'retail',
+          documentType: 'CI',
+          documentNumber: '1234567',
+        },
+      }),
+  ]);
 }
 
 describe('buyNow', () => {
@@ -175,27 +192,85 @@ describe('buyNow', () => {
     ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
+  // Deliberately does NOT use the shared AUCTION/BUYER fixtures the rest of
+  // this file reuses — its own auction + buyer ids that no other test here
+  // ever touches, so it can never be perturbed by anything left over from an
+  // earlier test regardless of cause. This was the leading hypothesis for
+  // the historical flake (state carry-over in clearAll()/seed()); direct
+  // measurement (task-11 fix report) shows it is NOT the actual mechanism —
+  // an isolated repro harness with no vitest, no beforeEach and no shared
+  // ids at all reproduces the same anomaly under heavy CPU contention, at
+  // close to the originally-reported rate. The isolation stays anyway as
+  // legitimate, zero-downside hardening; it just isn't the fix.
+  //
+  // The real, reproduced mechanism: under heavy CPU contention, a losing
+  // transaction's SDK-driven retry (triggered by Firestore detecting the
+  // winner's commit) can observe a false `not-found` for a document that was
+  // never deleted — most likely a local-emulator artifact under extreme
+  // scheduling delay, though buyNow can also see a GENUINE not-found in
+  // production via deleteAuction.ts, which is not transactional and can
+  // delete a live/zero-bid auction (the exact state Compra ya requires) at
+  // the same instant a buyNow call is in flight. Either way the loser must
+  // still fail cleanly with a code buy-now-error.ts maps honestly — see its
+  // not-found branch — rather than this test papering over a wrong result.
   it('bajo compras concurrentes exactamente una gana', async () => {
-    await adminDb()
-      .doc('users/buyer-2')
-      .set({
-        email: 'b2@example.com',
-        profile: {
-          firstName: 'Ana',
-          lastName: 'Gómez',
+    const RACE_AUCTION = 'race-a1';
+    const buyers = ['race-buyer-1', 'race-buyer-2'];
+
+    await Promise.all([
+      adminDb()
+        .doc(`auctions/${RACE_AUCTION}`)
+        .set({
+          vehicleId: 'race-v1',
           audience: 'retail',
-          documentType: 'CI',
-          documentNumber: '7654321',
-        },
-      });
-    // Order matches the promises below, so results[i] is the outcome for
-    // buyers[i] — lets us find out which of the two actually won without
-    // assuming it's always BUYER (the race can go either way).
-    const buyers = [BUYER, 'buyer-2'];
-    const results = await Promise.allSettled([
-      buyNowHandler(asBuyer(BUYER)),
-      buyNowHandler(asBuyer('buyer-2')),
+          status: 'live',
+          startingPrice: 25000,
+          buyNowPrice: 34000,
+          bidIncrement: 500,
+          currentBid: 0,
+          bidCount: 0,
+          startsAt: Timestamp.fromMillis(Date.now() - 3600_000),
+          endsAt: Timestamp.fromMillis(Date.now() + 7 * 86400_000),
+          vehicleSnapshot: { make: 'Toyota', model: 'Hilux', year: 2021 },
+        }),
+      adminDb()
+        .doc(`users/${buyers[0]}`)
+        .set({
+          email: 'race1@example.com',
+          profile: {
+            firstName: 'Juan',
+            lastName: 'Pérez',
+            audience: 'retail',
+            documentType: 'CI',
+            documentNumber: '1234567',
+          },
+        }),
+      adminDb()
+        .doc(`users/${buyers[1]}`)
+        .set({
+          email: 'race2@example.com',
+          profile: {
+            firstName: 'Ana',
+            lastName: 'Gómez',
+            audience: 'retail',
+            documentType: 'CI',
+            documentNumber: '7654321',
+          },
+        }),
     ]);
+
+    function asRaceBuyer(uid: string) {
+      return {
+        auth: { uid, token: { role: 'buyer', status: 'active', audience: 'retail' } as never },
+        rawRequest: {} as never,
+        data: { auctionId: RACE_AUCTION, expectedPrice: 34000 },
+      } as CallableRequest;
+    }
+
+    // Order matches buyers[], so results[i] is the outcome for buyers[i] —
+    // lets us find out which of the two actually won without assuming it's
+    // always buyers[0] (the race can go either way).
+    const results = await Promise.allSettled(buyers.map((uid) => buyNowHandler(asRaceBuyer(uid))));
 
     const fulfilled = results.filter((r) => r.status === 'fulfilled');
     const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
@@ -208,11 +283,11 @@ describe('buyNow', () => {
     expect(rejected[0]!.reason).toMatchObject({ code: 'failed-precondition' });
 
     const winnerUid = buyers[results.findIndex((r) => r.status === 'fulfilled')]!;
-    const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
+    const a = (await adminDb().doc(`auctions/${RACE_AUCTION}`).get()).data()!;
     expect(a['bidCount']).toBe(1);
     expect(a['winnerUid']).toBe(winnerUid);
 
-    const bids = await adminDb().collection(`auctions/${AUCTION}/bids`).get();
+    const bids = await adminDb().collection(`auctions/${RACE_AUCTION}/bids`).get();
     expect(bids.size).toBe(1);
   });
 });

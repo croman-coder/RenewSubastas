@@ -67,12 +67,19 @@ describe('classifyBuyNowError', () => {
     });
   });
 
-  it('maps not-found to a human message', () => {
+  // Blocking 4: not-found must NOT assert the auction was deleted — it's
+  // reachable both genuinely (a non-transactional deleteAuction racing a
+  // live, zero-bid auction) and transiently (a concurrent buyNow's
+  // transaction retry observing a false not-found under heavy contention,
+  // even though the doc still exists — see the task-11 fix report). A
+  // message claiming deletion would be wrong in the second case.
+  it('maps not-found to a neutral retry message, never a deletion claim', () => {
     const result = classifyBuyNowError({
       code: 'functions/not-found',
       message: 'Auction not found',
     });
-    expect(result).toEqual({ kind: 'message', text: 'Esta subasta ya no existe.' });
+    expect(result.kind).toBe('message');
+    expect((result as { text: string }).text).not.toMatch(/ya no existe|eliminad|borrad/i);
   });
 
   it('falls back to a generic human message for an unrecognized/missing code', () => {
