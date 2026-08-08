@@ -22,6 +22,7 @@ const InputSchema = z
     vehicleId: z.string().min(1),
     startingPrice: z.number().positive().finite().max(MAX_PRICE_USD),
     reservePrice: z.number().positive().finite().max(MAX_PRICE_USD).optional(),
+    buyNowPrice: z.number().positive().finite().max(MAX_PRICE_USD).optional(),
     bidIncrement: z.number().positive().finite().max(MAX_INCREMENT_USD),
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime(),
@@ -64,6 +65,17 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
       );
     }
 
+    if (
+      v.buyNowPrice !== undefined &&
+      v.reservePrice !== undefined &&
+      v.buyNowPrice <= v.reservePrice
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        'El precio de Compra ya debe ser mayor al precio objetivo.',
+      );
+    }
+
     const auctionRef = db.collection('auctions').doc();
     const images = (vData['images'] as Array<{ thumbnailUrl?: string; url?: string }>) ?? [];
     const firstImg = images[0];
@@ -83,6 +95,7 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
         ...(firstImg?.thumbnailUrl ? { thumbnailUrl: firstImg.thumbnailUrl } : {}),
       },
       startingPrice: v.startingPrice,
+      ...(v.buyNowPrice !== undefined ? { buyNowPrice: v.buyNowPrice } : {}),
       bidIncrement: v.bidIncrement,
       startsAt: new Date(v.startsAt),
       endsAt: new Date(v.endsAt),

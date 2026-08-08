@@ -192,3 +192,35 @@ describe('updateAuction live-status extend + hardEndsAt', () => {
     ).rejects.toMatchObject({ code: 'failed-precondition' });
   });
 });
+
+describe('updateAuction buyNowPrice validation', () => {
+  beforeEach(clearAll);
+
+  it('rechaza buyNowPrice menor o igual a la reserva', async () => {
+    await seedScheduledAuction('b1', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b1', reservePrice: 30000 }));
+    await expect(
+      updateAuctionHandler(asStaff({ auctionId: 'b1', buyNowPrice: 30000 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(
+      updateAuctionHandler(asStaff({ auctionId: 'b1', buyNowPrice: 29000 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('acepta buyNowPrice mayor a la reserva', async () => {
+    await seedScheduledAuction('b2', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b2', reservePrice: 30000 }));
+    await updateAuctionHandler(asStaff({ auctionId: 'b2', buyNowPrice: 34000 }));
+    const a = (await adminDb().doc('auctions/b2').get()).data()!;
+    expect(a['buyNowPrice']).toBe(34000);
+  });
+
+  it('permite limpiar buyNowPrice con null', async () => {
+    await seedScheduledAuction('b3', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b3', reservePrice: 30000 }));
+    await updateAuctionHandler(asStaff({ auctionId: 'b3', buyNowPrice: 34000 }));
+    await updateAuctionHandler(asStaff({ auctionId: 'b3', buyNowPrice: null }));
+    const a = (await adminDb().doc('auctions/b3').get()).data()!;
+    expect(a['buyNowPrice']).toBeUndefined();
+  });
+});
