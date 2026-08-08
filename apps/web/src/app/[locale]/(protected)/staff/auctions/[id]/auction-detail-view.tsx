@@ -10,6 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+import { isBuyNowBelowReserve } from '@/lib/auctions/buy-now-floor';
+import { MarkSoldDialog } from './mark-sold-dialog';
 
 interface BidEntry {
   id: string;
@@ -25,10 +28,12 @@ interface InitialAuction {
   thumbnailUrl: string | null;
   startingPrice: number;
   reservePrice: number | null;
+  /** Precio de compra directa. Visible para los compradores. null = no admite Compra ya. */
+  buyNowPrice: number | null;
   currentBid: number;
   bidCount: number;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
-  outcome: 'sold' | 'reserve_not_met' | 'no_bids' | null;
+  outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null;
   finalPrice: number | null;
   endsAtMs: number;
   startsAtMs: number;
@@ -63,6 +68,10 @@ export function AuctionDetailView({
   const [status, setStatus] = useState(initial.status);
   const [outcome, setOutcome] = useState(initial.outcome);
   const [currentBid, setCurrentBid] = useState(initial.currentBid);
+  // Kept live (not just the initial server-rendered value) so the warning in
+  // MarkSoldDialog always reflects bids placed while staff has this page
+  // open, not a stale count from page load.
+  const [bidCount, setBidCount] = useState(initial.bidCount);
   const [endsAtMs, setEndsAtMs] = useState(initial.endsAtMs);
   const [payment, setPayment] = useState(initial.payment);
   const [paymentBusy, setPaymentBusy] = useState(false);
@@ -74,7 +83,23 @@ export function AuctionDetailView({
   const canConfirm = role === 'admin' || role === 'finanzas';
   const canCancel = canManage && (status === 'scheduled' || status === 'live');
   const canEdit = canManage && (status === 'scheduled' || status === 'live');
-  const isSold = status === 'ended' && outcome === 'sold';
+  // Single definition of "vendida": a platform sale AND a showroom sale both
+  // count. This used to check only outcome === 'sold', which — combined with
+  // canDelete's separate outcome !== 'sold' check below — let staff delete an
+  // auction markSoldOffline had just closed, destroying the only record of
+  // soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy. canDelete now derives
+  // from this same isSold instead of re-deriving its own, so the two can't
+  // drift apart again the way they just did.
+  const isSold = status === 'ended' && isSoldOutcome(outcome);
+  // Deliberately narrower than isSold, and NOT a second definition of
+  // "vendida" that could drift from it: this gates the escrow/deposit
+  // section below, which only exists for a platform sale
+  // (closeAuctionAsSold writes winnerUid + paymentStatus + a deposit
+  // deadline). markSoldOffline writes none of that — the buyer paid in full
+  // at the showroom — so reusing the broader isSold here would render
+  // "Ganador: —" and a bogus "Pendiente" badge, with a "Confirmar seña
+  // recibida" button wired to a sale that has no seña.
+  const isPlatformSale = status === 'ended' && outcome === 'sold';
 
   async function recordPayment(action: 'paid' | 'forfeited') {
     const label = action === 'paid' ? 'Confirmar seña recibida' : 'Liberar adjudicación';
@@ -164,6 +189,7 @@ export function AuctionDetailView({
       setStatus((a['status'] as InitialAuction['status']) ?? 'scheduled');
       setOutcome((a['outcome'] as InitialAuction['outcome']) ?? null);
       setCurrentBid((a['currentBid'] as number) ?? 0);
+      setBidCount((a['bidCount'] as number) ?? 0);
       setEndsAtMs((a['endsAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0);
       setPayment({
         status: (a['paymentStatus'] as InitialAuction['payment']['status']) ?? null,
@@ -194,6 +220,21 @@ export function AuctionDetailView({
   const [fReserve, setFReserve] = useState(
     initial.reservePrice != null ? String(initial.reservePrice) : '',
   );
+  const [fBuyNow, setFBuyNow] = useState(
+    initial.buyNowPrice != null ? String(initial.buyNowPrice) : '',
+  );
+  // UX affordance only, catching the obvious case before the round trip.
+  // The server (updateAuction) is authoritative: it compares against the
+  // EFFECTIVE reserve after the whole edit (falling back to startingPrice
+  // when none survives) and owns both Spanish messages — this deliberately
+  // does not re-implement that, so it only fires when a reserve is present
+  // in the form. A buyNowPrice too low with no reserve set is caught by the
+  // server's own "...mayor al precio inicial." message instead.
+  // Gated to `status !== 'live'`: the buyNow/reserve fields only render (and
+  // are only sent in the payload) on the scheduled branch below, so a stale
+  // value lingering in state while `live` — where saveEdit only ever sends
+  // endsAt — must never block that unrelated save.
+  const buyNowInvalid = status !== 'live' && isBuyNowBelowReserve(fBuyNow, fReserve);
 
   // Delete allowed for admin/staff on auctions that carry no winner:
   // scheduled, cancelled, or ended-without-sale, and live only when no
@@ -204,7 +245,7 @@ export function AuctionDetailView({
     (status === 'scheduled' ||
       status === 'cancelled' ||
       (status === 'live' && currentBid <= 0) ||
-      (status === 'ended' && outcome !== 'sold'));
+      (status === 'ended' && !isSold));
 
   async function saveEdit() {
     setEditBusy(true);
@@ -226,6 +267,12 @@ export function AuctionDetailView({
         else {
           const rp = Number(fReserve);
           if (Number.isFinite(rp) && rp > 0) payloadBase['reservePrice'] = rp;
+        }
+        // Buy-now: same empty-string-clears-it convention as reserve above.
+        if (fBuyNow.trim() === '') payloadBase['buyNowPrice'] = null;
+        else {
+          const bn = Number(fBuyNow);
+          if (Number.isFinite(bn) && bn > 0) payloadBase['buyNowPrice'] = bn;
         }
       }
       await httpsCallable(fb.functions, 'updateAuction')(payloadBase);
@@ -280,6 +327,13 @@ export function AuctionDetailView({
             <Button type="button" variant="outline" size="sm" onClick={() => setEditing((e) => !e)}>
               {editing ? 'Cerrar' : 'Editar'}
             </Button>
+          )}
+          {canManage && (status === 'live' || status === 'scheduled') && (
+            <MarkSoldDialog
+              auctionId={auctionId}
+              bidCount={bidCount}
+              onDone={() => router.refresh()}
+            />
           )}
           {canCancel && (
             <Button
@@ -375,14 +429,35 @@ export function AuctionDetailView({
                     onChange={(e) => setFReserve(e.target.value)}
                   />
                   <p className="text-[11px] text-text-muted">
-                    Precio mínimo oculto. Si no se alcanza, no hay venta.
+                    No visible para compradores · precio mínimo oculto · si no se alcanza, no hay
+                    venta.
                   </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="f-buynow">Precio Compra ya (USD, opcional)</Label>
+                  <Input
+                    id="f-buynow"
+                    type="number"
+                    min={1}
+                    step="0.01"
+                    placeholder="Vacío = sin Compra ya"
+                    value={fBuyNow}
+                    onChange={(e) => setFBuyNow(e.target.value)}
+                  />
+                  <p className="text-[11px] text-text-muted">
+                    Visible para los compradores · opcional · debe superar el precio objetivo
+                  </p>
+                  {buyNowInvalid && (
+                    <p className="text-[11px] text-danger">
+                      Debe ser mayor a la reserva (USD {fReserve}).
+                    </p>
+                  )}
                 </div>
               </>
             )}
           </div>
           <div className="flex gap-2">
-            <Button type="button" size="sm" disabled={editBusy} onClick={saveEdit}>
+            <Button type="button" size="sm" disabled={editBusy || buyNowInvalid} onClick={saveEdit}>
               {editBusy ? 'Guardando…' : 'Guardar cambios'}
             </Button>
             <Button
@@ -406,7 +481,7 @@ export function AuctionDetailView({
         </p>
       </section>
 
-      {isSold && (
+      {isPlatformSale && (
         <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
