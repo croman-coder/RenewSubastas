@@ -57,11 +57,13 @@ export const AuctionSchema = z.object({
   outcome: AuctionOutcomeSchema.optional(),
   winnerUid: z.string().optional(),
   finalPrice: z.number().positive().optional(),
-  /** Precio real al que se vendió en salón. Sólo con outcome sold_offline. */
-  soldOfflinePriceUsd: z.number().positive().optional(),
-  soldOfflineAt: z.date().optional(),
-  /** uid del staff/admin que la marcó, para auditoría. */
-  soldOfflineBy: z.string().optional(),
+  // soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy deliberately NOT here —
+  // same reasoning as reservePrice above: this doc is buyer-readable
+  // (firestore.rules' audience-matching allow read), and the showroom sale
+  // price is internal reporting data, not something a buyer who lost the
+  // auction is owed (see sendAuctionSoldOffline.ts, which never includes it
+  // in the "subasta finalizada" email either). They live in
+  // auctions/{id}/private/internal — see AuctionPrivateSchema below.
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -75,5 +77,10 @@ export type Auction = z.infer<typeof AuctionSchema>;
  */
 export const AuctionPrivateSchema = z.object({
   reservePrice: z.number().positive().optional(),
+  /** Precio real al que se vendió en salón. Sólo con outcome sold_offline. */
+  soldOfflinePriceUsd: z.number().positive().optional(),
+  soldOfflineAt: z.date().optional(),
+  /** uid del staff/admin que la marcó, para auditoría. */
+  soldOfflineBy: z.string().optional(),
 });
 export type AuctionPrivate = z.infer<typeof AuctionPrivateSchema>;

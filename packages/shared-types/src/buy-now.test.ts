@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AuctionSchema, AuctionOutcomeSchema } from './auction.js';
+import { AuctionSchema, AuctionOutcomeSchema, AuctionPrivateSchema } from './auction.js';
 
 const base = {
   id: 'a1',
@@ -31,11 +31,29 @@ describe('campos de Compra ya y venta externa', () => {
     expect(AuctionOutcomeSchema.safeParse('sold_offline').success).toBe(true);
   });
 
-  it('acepta los campos de venta externa', () => {
-    const parsed = AuctionSchema.safeParse({
+  // Blocking 3: soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy moved off the
+  // public AuctionSchema onto AuctionPrivateSchema — the parent auctions/{id}
+  // doc is buyer-readable (firestore.rules' audience match), and the
+  // showroom sale price has no legitimate buyer-facing use. Zod strips
+  // unknown keys by default rather than rejecting them, so
+  // AuctionSchema.safeParse(...).success alone wouldn't catch a regression
+  // here — the real assertion is that they're gone from the PARSED output.
+  it('YA NO expone los campos de venta externa en el schema público', () => {
+    const parsed = AuctionSchema.parse({
       ...base,
       status: 'ended' as const,
       outcome: 'sold_offline' as const,
+      soldOfflinePriceUsd: 28000,
+      soldOfflineAt: new Date(),
+      soldOfflineBy: 'staff-uid',
+    }) as Record<string, unknown>;
+    expect(parsed['soldOfflinePriceUsd']).toBeUndefined();
+    expect(parsed['soldOfflineAt']).toBeUndefined();
+    expect(parsed['soldOfflineBy']).toBeUndefined();
+  });
+
+  it('acepta los campos de venta externa en el schema privado (auctions/{id}/private/internal)', () => {
+    const parsed = AuctionPrivateSchema.safeParse({
       soldOfflinePriceUsd: 28000,
       soldOfflineAt: new Date(),
       soldOfflineBy: 'staff-uid',

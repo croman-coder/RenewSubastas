@@ -44,6 +44,12 @@ export async function markSoldOfflineHandler(req: CallableRequest): Promise<Mark
 
   const db = adminDb();
   const auctionRef = db.doc(`auctions/${auctionId}`);
+  // soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy live here, not on the
+  // parent doc — same split as reservePrice (see AuctionPrivateSchema). The
+  // parent doc is buyer-readable (firestore.rules' audience match), and the
+  // showroom sale price is internal reporting data a buyer who lost the
+  // auction has no claim to seeing.
+  const privateRef = auctionRef.collection('private').doc('internal');
 
   await db.runTransaction(async (tx) => {
     const aSnap = await tx.get(auctionRef);
@@ -65,9 +71,6 @@ export async function markSoldOfflineHandler(req: CallableRequest): Promise<Mark
     tx.update(auctionRef, {
       status: 'ended',
       outcome: 'sold_offline',
-      soldOfflinePriceUsd: soldPriceUsd,
-      soldOfflineAt: FieldValue.serverTimestamp(),
-      soldOfflineBy: uid,
       // The displaced bidder is no longer "the top bidder" — leaving this
       // set would have bid-panel.tsx's isWinning/iWon (currentBidderUid ===
       // myUid && currentBid > 0, on an auction that is now ended) read as
@@ -79,6 +82,15 @@ export async function markSoldOfflineHandler(req: CallableRequest): Promise<Mark
       currentBidderUid: FieldValue.delete(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    tx.set(
+      privateRef,
+      {
+        soldOfflinePriceUsd: soldPriceUsd,
+        soldOfflineAt: FieldValue.serverTimestamp(),
+        soldOfflineBy: uid,
+      },
+      { merge: true },
+    );
 
     if (vehicleRef && vehicleSnap?.exists) {
       tx.update(vehicleRef, { status: 'sold', updatedAt: FieldValue.serverTimestamp() });

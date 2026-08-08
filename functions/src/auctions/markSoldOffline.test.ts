@@ -19,8 +19,15 @@ async function clearAll() {
     const docs = await adminDb().collection(c).listDocuments();
     await Promise.all(
       docs.map(async (d) => {
-        const subs = await d.collection('bids').listDocuments();
-        await Promise.all(subs.map((s) => s.delete()));
+        // Firestore doesn't cascade-delete subcollections when the parent
+        // doc is deleted — 'private' now holds soldOfflinePriceUsd (this
+        // file's own writes) alongside 'bids', and a leftover doc here would
+        // leak into the next test's assertions on the private doc.
+        const [bids, priv] = await Promise.all([
+          d.collection('bids').listDocuments(),
+          d.collection('private').listDocuments(),
+        ]);
+        await Promise.all([...bids, ...priv].map((s) => s.delete()));
         await d.delete();
       }),
     );
@@ -58,10 +65,36 @@ describe('markSoldOffline', () => {
     const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
     expect(a['status']).toBe('ended');
     expect(a['outcome']).toBe('sold_offline');
-    expect(a['soldOfflinePriceUsd']).toBe(28000);
-    expect(a['soldOfflineBy']).toBe('staff-uid');
-    expect(a['soldOfflineAt']).toBeDefined();
     expect((await adminDb().doc('vehicles/v1').get()).data()!['status']).toBe('sold');
+  });
+
+  // Blocking 3: soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy must land on
+  // the buyer-unreadable private doc, never on the parent auctions/{id} doc
+  // firestore.rules grants every matching-audience buyer read access to.
+  it('escribe los campos de venta externa en el doc privado, no en el público', async () => {
+    await markSoldOfflineHandler(asRole('staff'));
+    const priv = (await adminDb().doc(`auctions/${AUCTION}/private/internal`).get()).data()!;
+    expect(priv['soldOfflinePriceUsd']).toBe(28000);
+    expect(priv['soldOfflineBy']).toBe('staff-uid');
+    expect(priv['soldOfflineAt']).toBeDefined();
+
+    const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
+    expect(a['soldOfflinePriceUsd']).toBeUndefined();
+    expect(a['soldOfflineAt']).toBeUndefined();
+    expect(a['soldOfflineBy']).toBeUndefined();
+  });
+
+  // reservePrice already lives on this same private doc when the auction has
+  // one (see updateAuction.ts). The showroom-sale write uses {merge: true}
+  // specifically so it doesn't clobber that field — pin it so a future
+  // change to the merge options can't silently wipe a reserve that was set
+  // before the unit sold in the showroom.
+  it('conserva reservePrice preexistente en el doc privado al mergear', async () => {
+    await adminDb().doc(`auctions/${AUCTION}/private/internal`).set({ reservePrice: 27000 });
+    await markSoldOfflineHandler(asRole('staff'));
+    const priv = (await adminDb().doc(`auctions/${AUCTION}/private/internal`).get()).data()!;
+    expect(priv['reservePrice']).toBe(27000);
+    expect(priv['soldOfflinePriceUsd']).toBe(28000);
   });
 
   it('NO escribe ganador ni campos de pago', async () => {
