@@ -49,12 +49,24 @@ export function AuctionDetailView({
     endsAtMs: number;
     status: AuctionDetail['status'];
     currentBidderUid: string | null;
+    outcome: string | null;
+    winnerUid: string | null;
+    // Kept live (not just the initial server-rendered value) so a staff edit
+    // to buyNowPrice while a buyer has this page open — or a promotion from
+    // scheduled to live — reaches the confirm dialog and the buyNow call
+    // itself. Without this, the dialog could confirm a price that no longer
+    // matches the stored one; see buyNow.ts's expectedPrice check for the
+    // server-side half of this guard.
+    buyNowPrice: number | null;
   }>({
     currentBid: initial.currentBid,
     bidCount: initial.bidCount,
     endsAtMs: initial.endsAtMs,
     status: initial.status,
     currentBidderUid: null,
+    outcome: initial.outcome,
+    winnerUid: null,
+    buyNowPrice: initial.buyNowPrice,
   });
   const [bids, setBids] = useState<BidEntry[]>([]);
 
@@ -75,6 +87,11 @@ export function AuctionDetailView({
         endsAtMs: ms('endsAt'),
         status: (data['status'] as AuctionDetail['status']) ?? 'scheduled',
         currentBidderUid: (data['currentBidderUid'] as string | undefined) ?? null,
+        outcome: (data['outcome'] as string | undefined) ?? null,
+        winnerUid: (data['winnerUid'] as string | undefined) ?? null,
+        // Cleared via FieldValue.delete() when staff removes Compra ya, so
+        // "field absent" and "never had one" both correctly collapse to null.
+        buyNowPrice: (data['buyNowPrice'] as number | undefined) ?? null,
       });
     });
     const q = query(
@@ -239,8 +256,15 @@ export function AuctionDetailView({
             endsAtMs={live.endsAtMs}
             startingPrice={initial.startingPrice}
             currentBid={live.currentBid}
+            bidCount={live.bidCount}
             bidIncrement={initial.bidIncrement}
             currentBidderUid={live.currentBidderUid}
+            outcome={live.outcome}
+            winnerUid={live.winnerUid}
+            buyNowPrice={live.buyNowPrice}
+            make={initial.make}
+            model={initial.model}
+            year={initial.year}
             myUid={myUid}
             allowManualIncrement={allowManualIncrement}
           />

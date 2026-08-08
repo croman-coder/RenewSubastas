@@ -18,6 +18,10 @@ import {
 } from '@/components/ui/dialog';
 import { Trophy, Gavel } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
+import { SoldBanner } from '@/components/auctions/sold-banner';
+import { didBuyerWinAuction } from '@/lib/auctions/win-state';
+import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
 // typo or abuse; we surface the validation client-side too so the user gets
@@ -39,8 +43,18 @@ interface Props {
   endsAtMs: number;
   startingPrice: number;
   currentBid: number;
+  bidCount: number;
   bidIncrement: number;
   currentBidderUid: string | null;
+  /** Authoritative outcome/winner, written only by closeAuctionAsSold. Used
+   *  for "did I win", never for "am I currently leading" — see iWon below. */
+  outcome: string | null;
+  winnerUid: string | null;
+  /** Precio de compra directa. null cuando la subasta no la admite. */
+  buyNowPrice: number | null;
+  make: string;
+  model: string;
+  year: number;
   myUid: string;
   allowManualIncrement: boolean;
 }
@@ -51,8 +65,15 @@ export function BidPanel({
   endsAtMs,
   startingPrice,
   currentBid,
+  bidCount,
   bidIncrement,
   currentBidderUid,
+  outcome,
+  winnerUid,
+  buyNowPrice,
+  make,
+  model,
+  year,
   myUid,
   allowManualIncrement,
 }: Props) {
@@ -67,6 +88,9 @@ export function BidPanel({
   // quick-bid chips nor the manual submit call the network directly — they
   // stage the amount here and the dialog gates the actual call.
   const [pendingBid, setPendingBid] = useState<number | null>(null);
+  // Gates the "Compra ya" confirmation dialog. Separate from pendingBid: a
+  // buy-now has no amount to stage (the price is fixed), just a yes/no.
+  const [confirmBuyNow, setConfirmBuyNow] = useState(false);
   // Time-based end: the status field flips to 'ended' only on the next
   // scheduled tick (up to ~1 min late). The clock is the source of truth for
   // whether bidding is still open, so we close the panel as soon as endsAt
@@ -74,8 +98,61 @@ export function BidPanel({
   const timeEnded = Date.now() >= endsAtMs;
   const isLive = status === 'live' && !timeEnded;
   const ended = status === 'ended' || status === 'cancelled' || timeEnded;
+  // "Va ganando" is still the highest bidder while the auction runs. "Ganó"
+  // is not: only an adjudicated `outcome: 'sold'` close counts, so a
+  // showroom sale (or any other non-sold close) never congratulates whoever
+  // happened to be leading — see win-state.ts.
   const isWinning = currentBidderUid === myUid && currentBid > 0;
-  const iWon = ended && status !== 'cancelled' && isWinning;
+  const iWon = didBuyerWinAuction({ ended, outcome, winnerUid, myUid });
+  // For everyone who isn't the winner: a unit that sold (on the platform or
+  // in the showroom) is a materially different fact from one that simply
+  // ran out with no sale (reserve_not_met/no_bids/cancelled), and this panel
+  // used to say "Subasta finalizada." for all four alike — the same gap the
+  // catalog cards' SoldBanner exists to close, just reached by a direct link
+  // to the detail page instead of the catalog.
+  const isSold = isSoldOutcome(outcome);
+  const canBuyNow = buyNowPrice !== null && bidCount === 0;
+  // Shared by the Compra ya card and the confirmation dialog so both always
+  // show the exact same figure. '' only when canBuyNow is false, in which
+  // case nothing that reads it is rendered.
+  const buyNowPriceLabel = buyNowPrice !== null ? buyNowPrice.toLocaleString('es-PY') : '';
+
+  // The buy-now callable closes the auction outright — no amount to stage,
+  // just a confirmation. Kept separate from submitBid: different callable,
+  // different success copy, and a different (yes/no, not amount) dialog.
+  async function doBuyNow() {
+    // Guards a TS narrowing, not a real runtime path: the only way to reach
+    // this function is the confirm dialog's button, which only renders
+    // inside canBuyNow (buyNowPrice !== null). Bailing out instead of
+    // sending expectedPrice: 0 keeps a future wiring mistake from ever
+    // sending a value that could match a real stored price.
+    if (buyNowPrice === null) return;
+    setBusy(true);
+    try {
+      // expectedPrice is the exact figure shown in the confirm dialog
+      // (buyNowPriceLabel derives from this same prop) — the server rejects
+      // the call if the stored buyNowPrice has since changed, so a buyer
+      // never gets charged a price they didn't see. See buyNow.ts.
+      await httpsCallable(fb.functions, 'buyNow')({ auctionId, expectedPrice: buyNowPrice });
+      toast.success('¡Compra confirmada! Revisá tu correo para abonar la seña.');
+      router.refresh();
+    } catch (e) {
+      const classification = classifyBuyNowError(e as { code?: string; message?: string });
+      if (classification.kind === 'profile_incomplete') {
+        toast.error(t('errors.profileIncomplete'), {
+          action: {
+            label: t('errors.profileIncompleteCta'),
+            onClick: () => router.push(`/${locale}/settings/profile`),
+          },
+        });
+      } else {
+        toast.error(classification.text);
+      }
+    } finally {
+      setBusy(false);
+      setConfirmBuyNow(false);
+    }
+  }
 
   // The actual network call, extracted out of the old placeBid so the
   // confirmation dialog's confirm button can invoke it directly. Error
@@ -174,6 +251,15 @@ export function BidPanel({
         </div>
       );
     }
+    // Sold to someone else (platform sale) or sold in the showroom: this
+    // buyer didn't win, but the unit is unambiguously gone — the same mark
+    // the catalog cards use, not the generic "nothing to report" box below.
+    // An unsold, closed auction (reserve_not_met/no_bids/cancelled) and a
+    // sold one are different facts and must not read the same on the one
+    // page a buyer can land on directly from a shared link.
+    if (isSold) {
+      return <SoldBanner variant="detail" />;
+    }
     return (
       <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
         <div className="flex items-center gap-2">
@@ -243,6 +329,32 @@ export function BidPanel({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Compra ya: only while nobody has bid yet — the moment a first bid
+          lands, the price is set by competition instead, and the button
+          must disappear (canBuyNow already folds in bidCount === 0). */}
+      {canBuyNow && (
+        <>
+          <div className="rounded-xl border border-copper/30 bg-copper/[0.06] p-4 space-y-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
+                Compra ya
+              </p>
+              <p className="mt-0.5 text-2xl font-semibold num-tab tracking-tight text-text-strong">
+                USD {buyNowPriceLabel}
+              </p>
+            </div>
+            <Button type="button" className="w-full" onClick={() => setConfirmBuyNow(true)}>
+              Comprar ahora
+            </Button>
+            <p className="text-xs text-text-muted">Cerrás la compra al instante.</p>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-text-muted">
+            <span className="h-px flex-1 bg-text-subtle/20" />o pujá
+            <span className="h-px flex-1 bg-text-subtle/20" />
+          </div>
+        </>
       )}
 
       {/* Min / Increment / Max as three compact stat tiles — easier to
@@ -355,6 +467,35 @@ export function BidPanel({
             </Button>
             <Button type="button" disabled={busy} onClick={confirmPendingBid}>
               {busy ? t('submitting') : 'Confirmar puja'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Separate from the bid-confirm dialog above: a buy-now has a fixed
+          price (nothing to stage), and a click here costs thousands of
+          dollars instantly instead of just placing a bid, so the vehicle and
+          price are spelled out explicitly rather than left implicit. */}
+      <Dialog
+        open={confirmBuyNow}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setConfirmBuyNow(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar compra</DialogTitle>
+            <DialogDescription>
+              Vas a comprar el {make} {model} {year} por USD {buyNowPriceLabel}. La subasta cierra
+              al instante y tenés 24 h para abonar la seña.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmBuyNow(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={busy} onClick={doBuyNow}>
+              {busy ? 'Comprando…' : 'Confirmar compra'}
             </Button>
           </DialogFooter>
         </DialogContent>

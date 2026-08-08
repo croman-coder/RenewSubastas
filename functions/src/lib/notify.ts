@@ -2,15 +2,20 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './admin.js';
 import type { SendEmailResult } from './email.js';
 
-export type NotificationType = 'bid_outbid' | 'auction_won';
+export type NotificationType = 'bid_outbid' | 'auction_won' | 'auction_sold_offline';
 
 export interface RecordNotificationInput {
   type: NotificationType;
   toUid: string;
   toEmail: string;
   auctionId: string;
-  /** The bid that triggered the notification (for bid_outbid). */
-  bidId?: string;
+  /**
+   * The bid that triggered the notification (for bid_outbid). Auction-level
+   * notifications (auction_won, auction_sold_offline) have no single
+   * triggering bid, so callers pass `null` explicitly rather than omitting
+   * it — both mean the same thing once written (see the `?? null` below).
+   */
+  bidId?: string | null;
   result: SendEmailResult;
 }
 

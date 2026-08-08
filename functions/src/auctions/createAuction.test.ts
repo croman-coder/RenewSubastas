@@ -100,6 +100,34 @@ describe('createAuction', () => {
     ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
+  it('rejects buyNowPrice at or below startingPrice when no reserve is set', async () => {
+    const vehicleId = await seedVehicle('staff-1', 'ready');
+    await expect(
+      createAuctionHandler(
+        asStaff('staff-1', {
+          vehicleId,
+          startingPrice: 5000,
+          buyNowPrice: 5000,
+          bidIncrement: 500,
+          startsAt: new Date(Date.now() + 60_000).toISOString(),
+          endsAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+        }),
+      ),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(
+      createAuctionHandler(
+        asStaff('staff-1', {
+          vehicleId,
+          startingPrice: 5000,
+          buyNowPrice: 4000,
+          bidIncrement: 500,
+          startsAt: new Date(Date.now() + 60_000).toISOString(),
+          endsAt: new Date(Date.now() + 24 * 3600_000).toISOString(),
+        }),
+      ),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
   it('rejects when vehicle does not exist', async () => {
     await expect(
       createAuctionHandler(

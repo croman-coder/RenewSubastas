@@ -1,6 +1,7 @@
 import 'server-only';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore, type Query } from 'firebase-admin/firestore';
+import { isVisibleInCatalog } from './catalog-visibility';
 
 export interface PublicAuction {
   id: string;
@@ -15,6 +16,7 @@ export interface PublicAuction {
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
   startsAtMs: number;
   endsAtMs: number;
+  outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null;
 }
 
 export type CatalogTab = 'all' | 'closing' | 'favorites';
@@ -60,27 +62,49 @@ export async function listPublicAuctions({
     return results.sort((a, b) => a.endsAtMs - b.endsAtMs);
   }
 
-  let q: Query;
   if (tab === 'closing') {
     const in24h = new Date(Date.now() + 24 * 3600_000);
-    q = db
+    const q: Query = db
       .collection('auctions')
       .where('audience', '==', audience)
       .where('status', '==', 'live')
       .where('endsAt', '<=', in24h)
       .orderBy('endsAt', 'asc')
       .limit(pageSize);
-  } else {
-    q = db
+    const snap = await q.get();
+    return snap.docs.map(toItem);
+  }
+
+  // Las vendidas siguen visibles con su franja hasta que el lote al que
+  // pertenecían vence — sirve de prueba social de que se venden autos.
+  // Firestore no admite OR sobre campos distintos en una sola query, así
+  // que se traen ambos conjuntos y se ordenan en memoria (el lote es de
+  // decenas de unidades, no miles). Qué cuenta como "todavía visible" es
+  // responsabilidad de isVisibleInCatalog, no de esta query — ver ese
+  // archivo para el porqué.
+  const nowMs = Date.now();
+  const [openSnap, soldSnap] = await Promise.all([
+    db
       .collection('auctions')
       .where('audience', '==', audience)
       .where('status', 'in', ['live', 'scheduled'])
       .orderBy('endsAt', 'asc')
-      .limit(pageSize);
-  }
-
-  const snap = await q.get();
-  return snap.docs.map(toItem);
+      .limit(pageSize)
+      .get(),
+    db
+      .collection('auctions')
+      .where('audience', '==', audience)
+      .where('status', '==', 'ended')
+      .where('endsAt', '>', new Date(nowMs))
+      .orderBy('endsAt', 'asc')
+      .limit(pageSize)
+      .get(),
+  ]);
+  return [...openSnap.docs, ...soldSnap.docs]
+    .map(toItem)
+    .filter((a) => isVisibleInCatalog(a, nowMs))
+    .sort((a, b) => a.endsAtMs - b.endsAtMs)
+    .slice(0, pageSize);
 }
 
 function toItem(d: FirebaseFirestore.QueryDocumentSnapshot): PublicAuction {
@@ -100,5 +124,6 @@ function toItem(d: FirebaseFirestore.QueryDocumentSnapshot): PublicAuction {
     status: (data['status'] as PublicAuction['status']) ?? 'scheduled',
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),
+    outcome: (data['outcome'] as PublicAuction['outcome']) ?? null,
   };
 }

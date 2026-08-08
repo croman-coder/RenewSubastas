@@ -27,6 +27,9 @@ export interface AuctionDetail {
   endsAtMs: number;
   /** Missing/legacy auctions default to retail — mirrors audienceMatches() in firestore.rules. */
   audience: 'retail' | 'wholesale';
+  /** Precio de compra directa. null cuando la subasta no lo admite. */
+  buyNowPrice: number | null;
+  outcome: 'sold' | 'reserve_not_met' | 'no_bids' | 'sold_offline' | null;
 }
 
 export async function loadAuction(id: string): Promise<AuctionDetail | null> {
@@ -65,5 +68,7 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),
     audience: (a['audience'] as AuctionDetail['audience'] | undefined) ?? 'retail',
+    buyNowPrice: (a['buyNowPrice'] as number | undefined) ?? null,
+    outcome: (a['outcome'] as AuctionDetail['outcome']) ?? null,
   };
 }

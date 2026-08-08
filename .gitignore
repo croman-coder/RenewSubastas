@@ -15,6 +15,10 @@ out/
 apps/**/.env.local
 apps/**/.env.*.local
 
+# firebase functions v2 local secret overrides (defineSecret) — NEVER commit
+functions/.secret.local
+functions/*.secret.local
+
 # turbo / cache
 .turbo/
 

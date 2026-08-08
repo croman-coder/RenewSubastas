@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Clock, Gavel, LogIn } from 'lucide-react';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { SoldBanner } from '@/components/auctions/sold-banner';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 interface Props {
   locale: string;
@@ -51,6 +53,17 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
 
   const title = `${auction.make} ${auction.model} ${auction.year}`;
   const loginHref = `/${locale}/login?from=${encodeURIComponent(`/${locale}/auctions/${auction.id}`)}`;
+  // Single source of truth for every sold-state branch on this card (the
+  // banner, the CTA swap, and the overlay's accessible name) — three
+  // separately-evaluated copies of this condition is how one of them
+  // silently drifts from the other two.
+  const isSold = isSoldOutcome(auction.outcome);
+  // The overlay is the only focusable element on a sold card (the CTA below
+  // becomes plain text), so its accessible name is the *entire* experience
+  // for keyboard/screen-reader users here. Announcing "iniciar sesión para
+  // pujar" on a unit that's sold told them to go bid on something that no
+  // longer takes bids.
+  const overlayAriaLabel = isSold ? `${title} — vendido` : `${title} — iniciar sesión para pujar`;
 
   return (
     <article
@@ -71,7 +84,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           Cmd/middle-click still work. */}
       <Link
         href={loginHref as `/${string}`}
-        aria-label={`${title} — iniciar sesión para pujar`}
+        aria-label={overlayAriaLabel}
         className={
           'absolute inset-0 z-0 rounded-xl [touch-action:manipulation] ' +
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
@@ -103,6 +116,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           aria-hidden="true"
           className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 via-black/15 to-transparent"
         />
+        {isSold && <SoldBanner variant="card" />}
         <span
           className={
             'absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 ' +
@@ -160,20 +174,26 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
 
         {/* Above the overlay link so it's its own tab stop and reads as the
             primary action. Both lead to login; this one names the intent. */}
-        <Link
-          href={loginHref as `/${string}`}
-          className={
-            'relative z-[2] mt-auto w-full inline-flex items-center justify-center gap-1.5 ' +
-            'h-11 rounded-md [touch-action:manipulation] ' +
-            'bg-text-strong text-bg-base text-sm font-semibold ' +
-            'transition-opacity duration-200 hover:opacity-90 ' +
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
-            'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
-          }
-        >
-          <LogIn className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
-          Pujar
-        </Link>
+        {isSold ? (
+          <p className="relative z-[2] mt-auto w-full text-center text-sm text-text-muted">
+            Ya no disponible
+          </p>
+        ) : (
+          <Link
+            href={loginHref as `/${string}`}
+            className={
+              'relative z-[2] mt-auto w-full inline-flex items-center justify-center gap-1.5 ' +
+              'h-11 rounded-md [touch-action:manipulation] ' +
+              'bg-text-strong text-bg-base text-sm font-semibold ' +
+              'transition-opacity duration-200 hover:opacity-90 ' +
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
+              'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
+            }
+          >
+            <LogIn className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+            Pujar
+          </Link>
+        )}
       </div>
     </article>
   );

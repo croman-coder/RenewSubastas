@@ -17,6 +17,7 @@ const InputSchema = z.object({
   auctionId: z.string().min(1),
   startingPrice: z.number().positive().finite().max(MAX_PRICE_USD).optional(),
   reservePrice: z.number().positive().finite().max(MAX_PRICE_USD).nullable().optional(),
+  buyNowPrice: z.number().positive().finite().max(MAX_PRICE_USD).nullable().optional(),
   bidIncrement: z.number().positive().finite().max(MAX_INCREMENT_USD).optional(),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
@@ -27,7 +28,7 @@ export interface UpdateAuctionResult {
 }
 
 interface PriceChangeRecord {
-  field: 'startingPrice' | 'reservePrice';
+  field: 'startingPrice' | 'reservePrice' | 'buyNowPrice';
   from: number | null;
   to: number | null;
   isReduction: boolean;
@@ -94,9 +95,11 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
     }
 
     // Only fetch the private doc when we might actually need the current
-    // reserve: either the caller is touching it, or we're in the
+    // reserve: the caller is touching reservePrice, or buyNowPrice (which
+    // must be validated against the reserve below), or we're in the
     // `scheduled` branch where the reserve>=startingPrice check needs it.
-    const needsReserveRead = v.reservePrice !== undefined || status === 'scheduled';
+    const needsReserveRead =
+      v.reservePrice !== undefined || v.buyNowPrice !== undefined || status === 'scheduled';
     const privateSnap = needsReserveRead ? await tx.get(privateRef) : null;
     const currentReserve = privateSnap?.data()?.['reservePrice'] as number | undefined;
 
@@ -208,10 +211,68 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
       update['hardEndsAt'] = Timestamp.fromMillis(newEnd + MAX_TOTAL_EXTENSION_MS);
     }
 
-    if (Object.keys(update).length === 1 && reserveWrite === undefined) {
-      // Only updatedAt on the parent doc, and no reservePrice change either
-      // (that one lands on the private doc, not `update`) — nothing
-      // actually changed.
+    // buyNowPrice validation is not gated to a specific status branch (unlike
+    // the price fields above, which the `live` branch rejects outright). In
+    // practice it's reachable in two cases: freely on `scheduled`, or on
+    // `live` bundled with the mandatory endsAt extension — the `live` branch
+    // above still requires endsAt on every call, buyNowPrice or not.
+    if (v.buyNowPrice !== undefined) {
+      const currentBuyNowPrice = a['buyNowPrice'] as number | undefined;
+      after['buyNowPrice'] = v.buyNowPrice; // number, or null when cleared
+      if (v.buyNowPrice !== null) {
+        // Compare against the EFFECTIVE state after this edit, not the stale
+        // stored one — staff may change reservePrice/startingPrice and
+        // buyNowPrice in the same submit. Three-way on reserveWrite because
+        // `undefined` (untouched, fall back to stored) and `null` (being
+        // cleared, so there's no reserve left to compare against) must NOT
+        // collapse to the same branch, unlike a plain `??`.
+        const effectiveReserve: number | undefined =
+          reserveWrite === undefined ? currentReserve : (reserveWrite ?? undefined);
+        if (effectiveReserve !== undefined) {
+          if (v.buyNowPrice <= effectiveReserve) {
+            throw new HttpsError(
+              'invalid-argument',
+              'El precio de Compra ya debe ser mayor al precio objetivo.',
+            );
+          }
+        } else {
+          // No reserve will exist after this edit (never had one, or it's
+          // being cleared in this same submit) — the floor falls back to the
+          // (possibly just-edited) starting price. Without this, a
+          // reserve-less auction could carry a Compra Ya price at or below
+          // its own opening bid.
+          const effectiveStartingPrice = v.startingPrice ?? (a['startingPrice'] as number);
+          if (v.buyNowPrice <= effectiveStartingPrice) {
+            throw new HttpsError(
+              'invalid-argument',
+              'El precio de Compra ya debe ser mayor al precio inicial.',
+            );
+          }
+        }
+        update['buyNowPrice'] = v.buyNowPrice;
+      } else {
+        update['buyNowPrice'] = FieldValue.delete();
+      }
+      if (v.buyNowPrice !== (currentBuyNowPrice ?? null)) {
+        const from = currentBuyNowPrice ?? null;
+        const to = v.buyNowPrice; // number | null
+        priceChanges.push({
+          field: 'buyNowPrice',
+          from,
+          to,
+          isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+        });
+      }
+    }
+
+    if (
+      Object.keys(update).length === 1 &&
+      reserveWrite === undefined &&
+      v.buyNowPrice === undefined
+    ) {
+      // Only updatedAt on the parent doc, no reservePrice change (lands on
+      // the private doc, not `update`), and no buyNowPrice change either —
+      // nothing actually changed.
       throw new HttpsError('invalid-argument', 'No editable fields provided');
     }
 

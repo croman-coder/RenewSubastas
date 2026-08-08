@@ -54,10 +54,17 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
         thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
         startingPrice: (data['startingPrice'] as number) ?? 0,
         reservePrice,
+        buyNowPrice: (data['buyNowPrice'] as number | undefined) ?? null,
         currentBid: (data['currentBid'] as number) ?? 0,
         bidCount: (data['bidCount'] as number) ?? 0,
         status: (data['status'] as 'scheduled' | 'live' | 'ended' | 'cancelled') ?? 'scheduled',
-        outcome: (data['outcome'] as 'sold' | 'reserve_not_met' | 'no_bids' | undefined) ?? null,
+        outcome:
+          (data['outcome'] as
+            | 'sold'
+            | 'reserve_not_met'
+            | 'no_bids'
+            | 'sold_offline'
+            | undefined) ?? null,
         finalPrice: (data['finalPrice'] as number | undefined) ?? null,
         endsAtMs: ms('endsAt'),
         startsAtMs: ms('startsAt'),

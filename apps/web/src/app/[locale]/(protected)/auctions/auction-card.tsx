@@ -7,6 +7,8 @@ import { Heart, Clock, Gavel } from 'lucide-react';
 import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { fb } from '@/lib/firebase/client';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { SoldBanner } from '@/components/auctions/sold-banner';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 interface Props {
   locale: string;
@@ -57,7 +59,11 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
   const isUrgent = remainingMs > 0 && remainingMs < 60 * 60 * 1000;
   const isLive = auction.status === 'live';
 
-  const cardLabel = `${auction.make} ${auction.model} ${auction.year}`;
+  // Single source of truth for both sold-state branches on this card (the
+  // ribbon and the link's accessible name) — two separately-evaluated
+  // copies of this condition is how one silently drifts from the other.
+  const isSold = isSoldOutcome(auction.outcome);
+  const cardLabel = `${auction.make} ${auction.model} ${auction.year}${isSold ? ' — vendido' : ''}`;
 
   return (
     // Plain (non-interactive) wrapper — the actual navigation affordance is
@@ -105,6 +111,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none"
         />
+        {isSold && <SoldBanner variant="card" />}
         <button
           type="button"
           onClick={toggleFav}

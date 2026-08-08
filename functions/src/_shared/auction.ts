@@ -3,7 +3,14 @@ import { z } from 'zod';
 export const AuctionStatusSchema = z.enum(['scheduled', 'live', 'ended', 'cancelled']);
 export type AuctionStatus = z.infer<typeof AuctionStatusSchema>;
 
-export const AuctionOutcomeSchema = z.enum(['sold', 'reserve_not_met', 'no_bids']);
+export const AuctionOutcomeSchema = z.enum([
+  'sold',
+  'reserve_not_met',
+  'no_bids',
+  // Vendida fuera de la plataforma (salón). NO entra al GMV: no hubo puja
+  // ganadora, ni seña, ni comprobante que gestionar.
+  'sold_offline',
+]);
 
 export const VehicleSnapshotSchema = z.object({
   make: z.string(),
@@ -23,6 +30,13 @@ export const AuctionSchema = z.object({
   // buyer-readable doc meant every bidder could read the reserve straight
   // out of their own onSnapshot subscription and bid exactly that amount.
   bidIncrement: z.number().positive(),
+  /**
+   * Precio de compra directa. Visible para el comprador a propósito — es el
+   * número del botón. Debe ser MAYOR que reservePrice: si fuera menor,
+   * comprar ya costaría menos que la reserva y tickAuctions marcaría
+   * reserve_not_met sobre una unidad ya vendida.
+   */
+  buyNowPrice: z.number().positive().optional(),
   startsAt: z.date(),
   endsAt: z.date(),
   // Ceiling that buyer-triggered anti-sniping extensions in placeBid may
@@ -43,6 +57,13 @@ export const AuctionSchema = z.object({
   outcome: AuctionOutcomeSchema.optional(),
   winnerUid: z.string().optional(),
   finalPrice: z.number().positive().optional(),
+  // soldOfflinePriceUsd/soldOfflineAt/soldOfflineBy deliberately NOT here —
+  // same reasoning as reservePrice above: this doc is buyer-readable
+  // (firestore.rules' audience-matching allow read), and the showroom sale
+  // price is internal reporting data, not something a buyer who lost the
+  // auction is owed (see sendAuctionSoldOffline.ts, which never includes it
+  // in the "subasta finalizada" email either). They live in
+  // auctions/{id}/private/internal — see AuctionPrivateSchema below.
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -56,5 +77,10 @@ export type Auction = z.infer<typeof AuctionSchema>;
  */
 export const AuctionPrivateSchema = z.object({
   reservePrice: z.number().positive().optional(),
+  /** Precio real al que se vendió en salón. Sólo con outcome sold_offline. */
+  soldOfflinePriceUsd: z.number().positive().optional(),
+  soldOfflineAt: z.date().optional(),
+  /** uid del staff/admin que la marcó, para auditoría. */
+  soldOfflineBy: z.string().optional(),
 });
 export type AuctionPrivate = z.infer<typeof AuctionPrivateSchema>;
