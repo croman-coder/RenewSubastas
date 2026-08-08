@@ -65,15 +65,26 @@ export async function createAuctionHandler(req: CallableRequest): Promise<Create
       );
     }
 
-    if (
-      v.buyNowPrice !== undefined &&
-      v.reservePrice !== undefined &&
-      v.buyNowPrice <= v.reservePrice
-    ) {
-      throw new HttpsError(
-        'invalid-argument',
-        'El precio de Compra ya debe ser mayor al precio objetivo.',
-      );
+    // buyNowPrice must clear the reserve when one is set; with no reserve at
+    // all, it falls back to the starting price instead — otherwise a
+    // reserve-less auction could open with a Compra Ya price at or below its
+    // own starting bid. (reservePrice >= startingPrice is already enforced by
+    // the schema refine above, so these two branches can't contradict each
+    // other.)
+    if (v.buyNowPrice !== undefined) {
+      if (v.reservePrice !== undefined) {
+        if (v.buyNowPrice <= v.reservePrice) {
+          throw new HttpsError(
+            'invalid-argument',
+            'El precio de Compra ya debe ser mayor al precio objetivo.',
+          );
+        }
+      } else if (v.buyNowPrice <= v.startingPrice) {
+        throw new HttpsError(
+          'invalid-argument',
+          'El precio de Compra ya debe ser mayor al precio inicial.',
+        );
+      }
     }
 
     const auctionRef = db.collection('auctions').doc();

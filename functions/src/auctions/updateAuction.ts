@@ -28,7 +28,7 @@ export interface UpdateAuctionResult {
 }
 
 interface PriceChangeRecord {
-  field: 'startingPrice' | 'reservePrice';
+  field: 'startingPrice' | 'reservePrice' | 'buyNowPrice';
   from: number | null;
   to: number | null;
   isReduction: boolean;
@@ -216,21 +216,53 @@ export async function updateAuctionHandler(req: CallableRequest): Promise<Update
     // practice it's reachable in two cases: freely on `scheduled`, or on
     // `live` bundled with the mandatory endsAt extension — the `live` branch
     // above still requires endsAt on every call, buyNowPrice or not.
-    if (v.buyNowPrice !== undefined && v.buyNowPrice !== null) {
-      // Compare against the EFFECTIVE reserve after this edit: if staff
-      // changes both reservePrice and buyNowPrice in one submit, validating
-      // against the stale stored reserve would accept an inconsistent pair.
-      const effectiveReserve =
-        reserveWrite !== undefined && reserveWrite !== null ? reserveWrite : currentReserve;
-      if (effectiveReserve !== undefined && v.buyNowPrice <= effectiveReserve) {
-        throw new HttpsError(
-          'invalid-argument',
-          'El precio de Compra ya debe ser mayor al precio objetivo.',
-        );
+    if (v.buyNowPrice !== undefined) {
+      const currentBuyNowPrice = a['buyNowPrice'] as number | undefined;
+      after['buyNowPrice'] = v.buyNowPrice; // number, or null when cleared
+      if (v.buyNowPrice !== null) {
+        // Compare against the EFFECTIVE state after this edit, not the stale
+        // stored one — staff may change reservePrice/startingPrice and
+        // buyNowPrice in the same submit. Three-way on reserveWrite because
+        // `undefined` (untouched, fall back to stored) and `null` (being
+        // cleared, so there's no reserve left to compare against) must NOT
+        // collapse to the same branch, unlike a plain `??`.
+        const effectiveReserve: number | undefined =
+          reserveWrite === undefined ? currentReserve : (reserveWrite ?? undefined);
+        if (effectiveReserve !== undefined) {
+          if (v.buyNowPrice <= effectiveReserve) {
+            throw new HttpsError(
+              'invalid-argument',
+              'El precio de Compra ya debe ser mayor al precio objetivo.',
+            );
+          }
+        } else {
+          // No reserve will exist after this edit (never had one, or it's
+          // being cleared in this same submit) — the floor falls back to the
+          // (possibly just-edited) starting price. Without this, a
+          // reserve-less auction could carry a Compra Ya price at or below
+          // its own opening bid.
+          const effectiveStartingPrice = v.startingPrice ?? (a['startingPrice'] as number);
+          if (v.buyNowPrice <= effectiveStartingPrice) {
+            throw new HttpsError(
+              'invalid-argument',
+              'El precio de Compra ya debe ser mayor al precio inicial.',
+            );
+          }
+        }
+        update['buyNowPrice'] = v.buyNowPrice;
+      } else {
+        update['buyNowPrice'] = FieldValue.delete();
       }
-      update['buyNowPrice'] = v.buyNowPrice;
-    } else if (v.buyNowPrice === null) {
-      update['buyNowPrice'] = FieldValue.delete();
+      if (v.buyNowPrice !== (currentBuyNowPrice ?? null)) {
+        const from = currentBuyNowPrice ?? null;
+        const to = v.buyNowPrice; // number | null
+        priceChanges.push({
+          field: 'buyNowPrice',
+          from,
+          to,
+          isReduction: typeof from === 'number' && typeof to === 'number' && to < from,
+        });
+      }
     }
 
     if (

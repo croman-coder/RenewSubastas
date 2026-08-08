@@ -223,4 +223,72 @@ describe('updateAuction buyNowPrice validation', () => {
     const a = (await adminDb().doc('auctions/b3').get()).data()!;
     expect(a['buyNowPrice']).toBeUndefined();
   });
+
+  it('valida buyNowPrice contra la reserva NUEVA cuando ambas cambian en el mismo submit', async () => {
+    await seedScheduledAuction('b4', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b4', reservePrice: 20000 }));
+    // Same call raises the reserve to 30000 AND sets buyNowPrice to 32000 —
+    // must be validated against the NEW reserve (30000), not the stale
+    // stored one (20000).
+    await updateAuctionHandler(
+      asStaff({ auctionId: 'b4', reservePrice: 30000, buyNowPrice: 32000 }),
+    );
+    const a = (await adminDb().doc('auctions/b4').get()).data()!;
+    expect(a['buyNowPrice']).toBe(32000);
+    const priv = await adminDb().doc('auctions/b4/private/internal').get();
+    expect(priv.data()?.['reservePrice']).toBe(30000);
+  });
+
+  it('rechaza cuando buyNowPrice supera la reserva vieja pero no la nueva, en el mismo submit', async () => {
+    await seedScheduledAuction('b5', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b5', reservePrice: 20000 }));
+    // 25000 clears the OLD reserve (20000) but not the NEW one (30000) being
+    // set in this exact same call — must be rejected against the new value.
+    await expect(
+      updateAuctionHandler(asStaff({ auctionId: 'b5', reservePrice: 30000, buyNowPrice: 25000 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('acepta limpiar la reserva y fijar buyNowPrice por encima del precio inicial en el mismo submit', async () => {
+    await seedScheduledAuction('b6', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b6', reservePrice: 30000 }));
+    // Clearing the reserve and setting buyNowPrice=20000 together: 20000 is
+    // BELOW the old reserve (30000), but there is no reserve left after this
+    // edit, so the only floor left is startingPrice (10000) — must be
+    // accepted, not compared against the reserve being deleted.
+    await updateAuctionHandler(
+      asStaff({ auctionId: 'b6', reservePrice: null, buyNowPrice: 20000 }),
+    );
+    const a = (await adminDb().doc('auctions/b6').get()).data()!;
+    expect(a['buyNowPrice']).toBe(20000);
+    const priv = await adminDb().doc('auctions/b6/private/internal').get();
+    expect(priv.data()?.['reservePrice']).toBeUndefined();
+  });
+
+  it('rechaza buyNowPrice <= startingPrice cuando no hay reserva', async () => {
+    await seedScheduledAuction('b7', 10000);
+    await expect(
+      updateAuctionHandler(asStaff({ auctionId: 'b7', buyNowPrice: 10000 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(
+      updateAuctionHandler(asStaff({ auctionId: 'b7', buyNowPrice: 9000 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('un cambio de buyNowPrice también queda en priceChanges, incluyendo al limpiarlo', async () => {
+    await seedScheduledAuction('b8', 10000);
+    await updateAuctionHandler(asStaff({ auctionId: 'b8', reservePrice: 15000 }));
+    await updateAuctionHandler(asStaff({ auctionId: 'b8', buyNowPrice: 20000 }));
+    await updateAuctionHandler(asStaff({ auctionId: 'b8', buyNowPrice: null }));
+
+    const changes = await adminDb()
+      .collection('auctions/b8/priceChanges')
+      .where('field', '==', 'buyNowPrice')
+      .get();
+    expect(changes.size).toBe(2);
+    const set = changes.docs.find((d) => d.data()['to'] === 20000)!;
+    expect(set.data()['from']).toBeNull();
+    const cleared = changes.docs.find((d) => d.data()['to'] === null)!;
+    expect(cleared.data()['from']).toBe(20000);
+  });
 });
