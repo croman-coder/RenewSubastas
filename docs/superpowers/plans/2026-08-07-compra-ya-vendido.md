@@ -1788,6 +1788,44 @@ En `bid-panel.tsx`, antes del formulario de puja, cuando `auction.buyNowPrice` e
       </div>
 ```
 
+- [ ] **Step 4b: Que "ganaste" dependa del resultado real, no del último postor**
+
+Hoy `bid-panel.tsx:77-78` deduce el ganador del campo equivocado:
+
+```tsx
+const isWinning = currentBidderUid === myUid && currentBid > 0;
+const iWon = ended && status !== 'cancelled' && isWinning;
+```
+
+`currentBidderUid` significa "va ganando mientras la subasta corre", no "ganó". El
+campo autoritativo es `winnerUid`, que sólo escribe `closeAuctionAsSold`. Con una
+venta en salón la subasta cierra sin ganador, y este cálculo le muestra
+"¡Ganaste la subasta!" —con precio y promesa de correo de seña— al postor
+desplazado, mientras el aviso de la Task 7 le dice lo contrario. La Task 5 ya borra
+`currentBidderUid` en esa transición, así que el bug puntual queda tapado; esto
+cierra la clase entera para cualquier cierre futuro que no adjudique.
+
+`auction-detail-view.tsx` no lee `outcome` ni `winnerUid` hoy. Agregarlos al estado
+`live`, al handler de `onSnapshot` y a las props de `<BidPanel>`, con la misma forma
+que ya usan `currentBid`/`status`:
+
+```tsx
+    outcome: (data['outcome'] as string | undefined) ?? null,
+    winnerUid: (data['winnerUid'] as string | undefined) ?? null,
+```
+
+Y en `bid-panel.tsx`, con `outcome`/`winnerUid` en las props:
+
+```tsx
+// "Va ganando" sigue siendo del postor más alto en vivo. "Ganó" no: sólo lo es
+// quien quedó adjudicado, y sólo cuando la subasta cerró vendida por acá.
+const isWinning = currentBidderUid === myUid && currentBid > 0;
+const iWon = ended && outcome === 'sold' && winnerUid === myUid;
+```
+
+Verificar en el navegador que una subasta con `outcome: 'sold_offline'` y un postor
+previo NO muestra el bloque de "¡Ganaste!" a ese postor.
+
 - [ ] **Step 5: Diálogo de confirmación**
 
 Reusar el `Dialog` que el panel ya usa para confirmar pujas. Estado `confirmBuyNow: boolean`, y al aceptar:
