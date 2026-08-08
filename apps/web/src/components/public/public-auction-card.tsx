@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Clock, Gavel, LogIn } from 'lucide-react';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { SoldBanner } from '@/components/auctions/sold-banner';
 
 interface Props {
   locale: string;
@@ -103,6 +104,9 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           aria-hidden="true"
           className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 via-black/15 to-transparent"
         />
+        {(auction.outcome === 'sold' || auction.outcome === 'sold_offline') && (
+          <SoldBanner variant="card" />
+        )}
         <span
           className={
             'absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 ' +
@@ -160,20 +164,26 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
 
         {/* Above the overlay link so it's its own tab stop and reads as the
             primary action. Both lead to login; this one names the intent. */}
-        <Link
-          href={loginHref as `/${string}`}
-          className={
-            'relative z-[2] mt-auto w-full inline-flex items-center justify-center gap-1.5 ' +
-            'h-11 rounded-md [touch-action:manipulation] ' +
-            'bg-text-strong text-bg-base text-sm font-semibold ' +
-            'transition-opacity duration-200 hover:opacity-90 ' +
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
-            'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
-          }
-        >
-          <LogIn className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
-          Pujar
-        </Link>
+        {auction.outcome === 'sold' || auction.outcome === 'sold_offline' ? (
+          <p className="relative z-[2] mt-auto w-full text-center text-sm text-text-muted">
+            Ya no disponible
+          </p>
+        ) : (
+          <Link
+            href={loginHref as `/${string}`}
+            className={
+              'relative z-[2] mt-auto w-full inline-flex items-center justify-center gap-1.5 ' +
+              'h-11 rounded-md [touch-action:manipulation] ' +
+              'bg-text-strong text-bg-base text-sm font-semibold ' +
+              'transition-opacity duration-200 hover:opacity-90 ' +
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
+              'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
+            }
+          >
+            <LogIn className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+            Pujar
+          </Link>
+        )}
       </div>
     </article>
   );

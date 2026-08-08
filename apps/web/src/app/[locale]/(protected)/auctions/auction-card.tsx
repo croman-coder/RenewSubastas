@@ -7,6 +7,7 @@ import { Heart, Clock, Gavel } from 'lucide-react';
 import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { fb } from '@/lib/firebase/client';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { SoldBanner } from '@/components/auctions/sold-banner';
 
 interface Props {
   locale: string;
@@ -105,6 +106,9 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none"
         />
+        {(auction.outcome === 'sold' || auction.outcome === 'sold_offline') && (
+          <SoldBanner variant="card" />
+        )}
         <button
           type="button"
           onClick={toggleFav}

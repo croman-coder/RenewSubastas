@@ -49,12 +49,16 @@ export function AuctionDetailView({
     endsAtMs: number;
     status: AuctionDetail['status'];
     currentBidderUid: string | null;
+    outcome: string | null;
+    winnerUid: string | null;
   }>({
     currentBid: initial.currentBid,
     bidCount: initial.bidCount,
     endsAtMs: initial.endsAtMs,
     status: initial.status,
     currentBidderUid: null,
+    outcome: initial.outcome,
+    winnerUid: null,
   });
   const [bids, setBids] = useState<BidEntry[]>([]);
 
@@ -75,6 +79,8 @@ export function AuctionDetailView({
         endsAtMs: ms('endsAt'),
         status: (data['status'] as AuctionDetail['status']) ?? 'scheduled',
         currentBidderUid: (data['currentBidderUid'] as string | undefined) ?? null,
+        outcome: (data['outcome'] as string | undefined) ?? null,
+        winnerUid: (data['winnerUid'] as string | undefined) ?? null,
       });
     });
     const q = query(
@@ -239,8 +245,15 @@ export function AuctionDetailView({
             endsAtMs={live.endsAtMs}
             startingPrice={initial.startingPrice}
             currentBid={live.currentBid}
+            bidCount={live.bidCount}
             bidIncrement={initial.bidIncrement}
             currentBidderUid={live.currentBidderUid}
+            outcome={live.outcome}
+            winnerUid={live.winnerUid}
+            buyNowPrice={initial.buyNowPrice}
+            make={initial.make}
+            model={initial.model}
+            year={initial.year}
             myUid={myUid}
             allowManualIncrement={allowManualIncrement}
           />
