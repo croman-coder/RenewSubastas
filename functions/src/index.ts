@@ -30,6 +30,7 @@ export { sendBidOutbid } from './notifications/sendBidOutbid.js';
 export { sendAuctionWon } from './notifications/sendAuctionWon.js';
 export { sendAuctionLive } from './notifications/sendAuctionLive.js';
 export { sendAuctionSoldInternal } from './notifications/sendAuctionSoldInternal.js';
+export { sendAuctionSoldOffline } from './notifications/sendAuctionSoldOffline.js';
 export { savePushToken } from './notifications/savePushToken.js';
 export { logAuctionView } from './insights/logAuctionView.js';
 export { dailyUnsoldDigest } from './insights/dailyUnsoldDigest.js';
