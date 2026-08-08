@@ -22,6 +22,22 @@ describe('classifyBuyNowError', () => {
     });
   });
 
+  // Blocking 1 fix: buyNow.ts now rejects a stale confirm (staff edited
+  // buyNowPrice between page load/dialog render and the click) with the same
+  // failed-precondition code as "lost the race" above — this must land on
+  // its own copy, not the generic "ya no disponible" one, or a buyer never
+  // learns the price moved.
+  it('maps a price-changed-underneath-you failed-precondition to its own message', () => {
+    const result = classifyBuyNowError({
+      code: 'functions/failed-precondition',
+      message: 'El precio de Compra ya cambió respecto al que ves en pantalla.',
+    });
+    expect(result).toEqual({
+      kind: 'message',
+      text: 'El precio de Compra ya cambió. Revisá el precio actualizado antes de confirmar.',
+    });
+  });
+
   it('maps resource-exhausted (rate limited) to a human message', () => {
     const result = classifyBuyNowError({
       code: 'functions/resource-exhausted',
@@ -71,6 +87,10 @@ describe('classifyBuyNowError', () => {
       { code: 'functions/failed-precondition', message: 'Esta subasta no está activa.' },
       { code: 'functions/failed-precondition', message: 'Esta subasta ya cerró.' },
       { code: 'functions/failed-precondition', message: 'Esta subasta no admite compra directa.' },
+      {
+        code: 'functions/failed-precondition',
+        message: 'El precio de Compra ya cambió respecto al que ves en pantalla.',
+      },
       { code: 'functions/invalid-argument', message: 'Invalid input' },
     ];
     for (const input of inputs) {

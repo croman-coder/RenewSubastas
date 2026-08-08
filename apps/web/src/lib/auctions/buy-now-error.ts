@@ -17,9 +17,10 @@ export type BuyNowErrorClassification =
  * placeBid's, which this codebase matches by message substring), but the
  * *code* is what's stable across those branches and across the auth/registry
  * failures (unauthenticated, not-found, invalid-argument) that surface only
- * generic English text. `profile_incomplete` is the one case still matched
- * by message: it's a magic string, not a code, by the same convention
- * placeBid's error handling already uses.
+ * generic English text. Two cases are still matched by message instead —
+ * magic strings, not codes, by the same convention placeBid's error handling
+ * already uses: `profile_incomplete`, and the expectedPrice mismatch (which
+ * otherwise shares its code with every other failed-precondition branch).
  *
  * The one scenario this task is built around — two buyers racing for the
  * same buy-now unit — always lands here as `failed-precondition` (bidCount
@@ -35,6 +36,19 @@ export function classifyBuyNowError({
   }
   if (code.includes('resource-exhausted')) {
     return { kind: 'message', text: 'Demasiados intentos. Probá de nuevo en un minuto.' };
+  }
+  // The price-changed-underneath-you case (buyNow.ts's expectedPrice check)
+  // shares its code with every other failed-precondition branch below
+  // (already sold, ended, has bids, no buyNowPrice) — code alone can't tell
+  // them apart, so this one is matched by message substring first, same
+  // convention as profile_incomplete above. It must never fall through to
+  // the generic "ya no disponible" text: that would tell a buyer the unit is
+  // gone when the real story is "the price moved, look again."
+  if (code.includes('failed-precondition') && message.includes('precio de Compra ya cambió')) {
+    return {
+      kind: 'message',
+      text: 'El precio de Compra ya cambió. Revisá el precio actualizado antes de confirmar.',
+    };
   }
   if (code.includes('failed-precondition')) {
     return {

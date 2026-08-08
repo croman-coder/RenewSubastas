@@ -121,9 +121,19 @@ export function BidPanel({
   // just a confirmation. Kept separate from submitBid: different callable,
   // different success copy, and a different (yes/no, not amount) dialog.
   async function doBuyNow() {
+    // Guards a TS narrowing, not a real runtime path: the only way to reach
+    // this function is the confirm dialog's button, which only renders
+    // inside canBuyNow (buyNowPrice !== null). Bailing out instead of
+    // sending expectedPrice: 0 keeps a future wiring mistake from ever
+    // sending a value that could match a real stored price.
+    if (buyNowPrice === null) return;
     setBusy(true);
     try {
-      await httpsCallable(fb.functions, 'buyNow')({ auctionId });
+      // expectedPrice is the exact figure shown in the confirm dialog
+      // (buyNowPriceLabel derives from this same prop) — the server rejects
+      // the call if the stored buyNowPrice has since changed, so a buyer
+      // never gets charged a price they didn't see. See buyNow.ts.
+      await httpsCallable(fb.functions, 'buyNow')({ auctionId, expectedPrice: buyNowPrice });
       toast.success('¡Compra confirmada! Revisá tu correo para abonar la seña.');
       router.refresh();
     } catch (e) {

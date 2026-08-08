@@ -7,11 +7,14 @@ import { buyNowHandler } from './buyNow.js';
 const AUCTION = 'a1';
 const BUYER = 'buyer-1';
 
+// expectedPrice defaults to seed()'s buyNowPrice (34000) so every existing
+// call site below keeps working unchanged; tests covering the mismatch
+// itself override it explicitly.
 function asBuyer(uid = BUYER, audience = 'retail', data: Record<string, unknown> = {}) {
   return {
     auth: { uid, token: { role: 'buyer', status: 'active', audience } as never },
     rawRequest: {} as never,
-    data: { auctionId: AUCTION, ...data },
+    data: { auctionId: AUCTION, expectedPrice: 34000, ...data },
   } as CallableRequest;
 }
 
@@ -131,6 +134,39 @@ describe('buyNow', () => {
     await expect(buyNowHandler(asBuyer())).rejects.toMatchObject({
       code: 'failed-precondition',
     });
+  });
+
+  // Blocking 1: the confirm dialog shows whatever buyNowPrice the buyer's
+  // client last saw; staff can edit it (even on a live auction — see
+  // updateAuction.ts) between that render and this call. Without this check
+  // the transaction would silently close at the NEW stored price while the
+  // buyer only ever confirmed the old one.
+  it('rechaza si el precio esperado ya no coincide con el actual', async () => {
+    await expect(
+      buyNowHandler(asBuyer(BUYER, 'retail', { expectedPrice: 99999 })),
+    ).rejects.toMatchObject({
+      code: 'failed-precondition',
+      message: 'El precio de Compra ya cambió respecto al que ves en pantalla.',
+    });
+    // No partial write: a rejected mismatch must leave the auction exactly
+    // as it was, not half-closed.
+    const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
+    expect(a['status']).toBe('live');
+    expect(a['outcome']).toBeUndefined();
+    expect(a['bidCount']).toBe(0);
+  });
+
+  it('rechaza sin expectedPrice — campo obligatorio, no hay más que un llamador', async () => {
+    await expect(
+      buyNowHandler({
+        auth: {
+          uid: BUYER,
+          token: { role: 'buyer', status: 'active', audience: 'retail' } as never,
+        },
+        rawRequest: {} as never,
+        data: { auctionId: AUCTION },
+      } as CallableRequest),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('rechaza un auctionId con separadores de path', async () => {

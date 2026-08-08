@@ -9,7 +9,15 @@ import { DocId } from '../lib/ids.js';
 import { loadAppConfig } from '../lib/config.js';
 import { closeAuctionAsSold } from '../lib/close-auction.js';
 
-const InputSchema = z.object({ auctionId: DocId });
+// Required, not optional: there is exactly one caller (bid-panel.tsx's
+// doBuyNow), and it always has a buyNowPrice on hand — canBuyNow already
+// gates the button on buyNowPrice !== null before the dialog can even open.
+// Making it optional would let a client that "forgot" to send it skip the
+// mismatch check below entirely, defeating the point of adding it.
+const InputSchema = z.object({
+  auctionId: DocId,
+  expectedPrice: z.number().positive().finite(),
+});
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
@@ -29,6 +37,12 @@ export interface BuyNowResult {
  *
  * El botón desaparece del cliente con la primera puja, pero eso se revalida
  * acá: alguien puede tener la página vieja abierta.
+ *
+ * `expectedPrice` (obligatorio) es el buyNowPrice que el comprador vio y
+ * confirmó en el diálogo. Se compara contra el valor ACTUAL del documento
+ * dentro de la transacción — si un staff lo editó entre el render del
+ * diálogo y este llamado, la compra se rechaza en vez de cobrar un precio
+ * que el comprador nunca confirmó.
  */
 export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult> {
   const { uid, role } = requireSignedIn(req);
@@ -37,7 +51,7 @@ export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult>
   }
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) throw new HttpsError('invalid-argument', 'Invalid input');
-  const { auctionId } = parsed.data;
+  const { auctionId, expectedPrice } = parsed.data;
 
   const callerAudience = (req.auth!.token['audience'] as string | undefined) ?? 'retail';
 
@@ -104,6 +118,23 @@ export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult>
     const buyNowPrice: unknown = a['buyNowPrice'];
     if (typeof buyNowPrice !== 'number') {
       throw new HttpsError('failed-precondition', 'Esta subasta no admite compra directa.');
+    }
+    // TOCTOU guard: the confirm dialog shows the buyer whatever buyNowPrice
+    // their client last saw, but staff can edit that field on a scheduled OR
+    // live auction (updateAuction.ts allows buyNowPrice through even on
+    // `live`) between the moment the dialog rendered and this call landing.
+    // Without re-checking the CURRENT stored value against what the buyer
+    // actually confirmed, this would silently charge finalPrice: <new price>
+    // for a dialog that said <old price> — irreversible and, from the
+    // buyer's screen, invisible. code stays 'failed-precondition' like every
+    // other guard in this transaction; the message is matched by substring
+    // in buy-now-error.ts so this specific case gets its own copy instead of
+    // collapsing into the generic "ya no disponible" text below it.
+    if (buyNowPrice !== expectedPrice) {
+      throw new HttpsError(
+        'failed-precondition',
+        'El precio de Compra ya cambió respecto al que ves en pantalla.',
+      );
     }
 
     const profile = (uSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;

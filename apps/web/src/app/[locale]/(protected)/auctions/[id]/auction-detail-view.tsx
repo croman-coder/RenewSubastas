@@ -51,6 +51,13 @@ export function AuctionDetailView({
     currentBidderUid: string | null;
     outcome: string | null;
     winnerUid: string | null;
+    // Kept live (not just the initial server-rendered value) so a staff edit
+    // to buyNowPrice while a buyer has this page open — or a promotion from
+    // scheduled to live — reaches the confirm dialog and the buyNow call
+    // itself. Without this, the dialog could confirm a price that no longer
+    // matches the stored one; see buyNow.ts's expectedPrice check for the
+    // server-side half of this guard.
+    buyNowPrice: number | null;
   }>({
     currentBid: initial.currentBid,
     bidCount: initial.bidCount,
@@ -59,6 +66,7 @@ export function AuctionDetailView({
     currentBidderUid: null,
     outcome: initial.outcome,
     winnerUid: null,
+    buyNowPrice: initial.buyNowPrice,
   });
   const [bids, setBids] = useState<BidEntry[]>([]);
 
@@ -81,6 +89,9 @@ export function AuctionDetailView({
         currentBidderUid: (data['currentBidderUid'] as string | undefined) ?? null,
         outcome: (data['outcome'] as string | undefined) ?? null,
         winnerUid: (data['winnerUid'] as string | undefined) ?? null,
+        // Cleared via FieldValue.delete() when staff removes Compra ya, so
+        // "field absent" and "never had one" both correctly collapse to null.
+        buyNowPrice: (data['buyNowPrice'] as number | undefined) ?? null,
       });
     });
     const q = query(
@@ -250,7 +261,7 @@ export function AuctionDetailView({
             currentBidderUid={live.currentBidderUid}
             outcome={live.outcome}
             winnerUid={live.winnerUid}
-            buyNowPrice={initial.buyNowPrice}
+            buyNowPrice={live.buyNowPrice}
             make={initial.make}
             model={initial.model}
             year={initial.year}
