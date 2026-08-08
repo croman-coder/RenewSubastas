@@ -42,9 +42,14 @@ export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult>
   const callerAudience = (req.auth!.token['audience'] as string | undefined) ?? 'retail';
 
   const db = adminDb();
-  const cfg = await loadAppConfig().catch(() => null);
-  const deadlineHours = cfg?.payment.deadlineHours ?? 24;
-  const depositPercent = cfg?.payment.depositPercent ?? 0.1;
+  // No .catch() here on purpose: loadAppConfig() already returns
+  // DEFAULT_CONFIG when app_config/global is simply missing (config.ts), so
+  // a thrown error here can only mean a genuine Firestore read failure — the
+  // one case where falling back to 0.1/24 would silently misprice a real,
+  // irreversible sale instead of just failing the call for a retry.
+  const cfg = await loadAppConfig();
+  const deadlineHours = cfg.payment.deadlineHours ?? 24;
+  const depositPercent = cfg.payment.depositPercent ?? 0.1;
 
   const auctionRef = db.doc(`auctions/${auctionId}`);
   const rlRef = db.doc(`rate_limits/buynow_${uid}`);
@@ -89,8 +94,15 @@ export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult>
         'Ya hay pujas en esta subasta: para participar tenés que pujar.',
       );
     }
-    const buyNowPrice = a['buyNowPrice'] as number | undefined;
-    if (buyNowPrice === undefined) {
+    // typeof, not `=== undefined`: a stored `null` (or any other non-number
+    // junk) must not slip through an unchecked cast and flow into
+    // closeAuctionAsSold as finalPrice — that would write finalPrice: null /
+    // paymentDepositUsd: 0 onto a sold auction. Not reachable today
+    // (createAuction omits the field, updateAuction clears it with
+    // FieldValue.delete()), but that invariant lives in another file; this
+    // is the money path, so it defends itself.
+    const buyNowPrice: unknown = a['buyNowPrice'];
+    if (typeof buyNowPrice !== 'number') {
       throw new HttpsError('failed-precondition', 'Esta subasta no admite compra directa.');
     }
 

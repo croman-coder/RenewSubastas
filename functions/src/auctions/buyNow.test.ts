@@ -76,6 +76,12 @@ describe('buyNow', () => {
     expect(a['winnerUid']).toBe(BUYER);
     expect(a['finalPrice']).toBe(34000);
     expect(a['paymentStatus']).toBe('pending_payment');
+    // Same transaction issues a second tx.update() on this same doc (the one
+    // in buyNow.ts itself, disjoint from closeAuctionAsSold's fields) — cover
+    // both write sets in one test so a future regression where one clobbers
+    // the other can't hide behind two tests that each only check their half.
+    expect(a['currentBid']).toBe(34000);
+    expect(a['bidCount']).toBe(1);
     expect((await adminDb().doc('vehicles/v1').get()).data()!['status']).toBe('sold');
   });
 
@@ -146,13 +152,31 @@ describe('buyNow', () => {
           documentNumber: '7654321',
         },
       });
-    const [r1, r2] = await Promise.allSettled([
+    // Order matches the promises below, so results[i] is the outcome for
+    // buyers[i] — lets us find out which of the two actually won without
+    // assuming it's always BUYER (the race can go either way).
+    const buyers = [BUYER, 'buyer-2'];
+    const results = await Promise.allSettled([
       buyNowHandler(asBuyer(BUYER)),
       buyNowHandler(asBuyer('buyer-2')),
     ]);
-    const ok = [r1, r2].filter((r) => r.status === 'fulfilled');
-    expect(ok).toHaveLength(1);
+
+    const fulfilled = results.filter((r) => r.status === 'fulfilled');
+    const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    // The loser must fail *cleanly* — a generic/unhandled error or a
+    // resource-exhausted from the rate limiter would pass an "only one
+    // fulfilled" check just as well, but would mean the retry saw something
+    // other than the re-asserted precondition (already sold / already bid).
+    expect(rejected[0]!.reason).toMatchObject({ code: 'failed-precondition' });
+
+    const winnerUid = buyers[results.findIndex((r) => r.status === 'fulfilled')]!;
     const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
     expect(a['bidCount']).toBe(1);
+    expect(a['winnerUid']).toBe(winnerUid);
+
+    const bids = await adminDb().collection(`auctions/${AUCTION}/bids`).get();
+    expect(bids.size).toBe(1);
   });
 });
