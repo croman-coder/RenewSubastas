@@ -8,6 +8,7 @@ import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { fb } from '@/lib/firebase/client';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 import { SoldBanner } from '@/components/auctions/sold-banner';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 interface Props {
   locale: string;
@@ -61,7 +62,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
   // Single source of truth for both sold-state branches on this card (the
   // ribbon and the link's accessible name) — two separately-evaluated
   // copies of this condition is how one silently drifts from the other.
-  const isSold = auction.outcome === 'sold' || auction.outcome === 'sold_offline';
+  const isSold = isSoldOutcome(auction.outcome);
   const cardLabel = `${auction.make} ${auction.model} ${auction.year}${isSold ? ' — vendido' : ''}`;
 
   return (

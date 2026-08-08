@@ -21,6 +21,7 @@ import { BlurNumber } from '@/components/brand/blur-number';
 import { SoldBanner } from '@/components/auctions/sold-banner';
 import { didBuyerWinAuction } from '@/lib/auctions/win-state';
 import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
 // typo or abuse; we surface the validation client-side too so the user gets
@@ -109,7 +110,7 @@ export function BidPanel({
   // used to say "Subasta finalizada." for all four alike — the same gap the
   // catalog cards' SoldBanner exists to close, just reached by a direct link
   // to the detail page instead of the catalog.
-  const isSoldOutcome = outcome === 'sold' || outcome === 'sold_offline';
+  const isSold = isSoldOutcome(outcome);
   const canBuyNow = buyNowPrice !== null && bidCount === 0;
   // Shared by the Compra ya card and the confirmation dialog so both always
   // show the exact same figure. '' only when canBuyNow is false, in which
@@ -246,7 +247,7 @@ export function BidPanel({
     // An unsold, closed auction (reserve_not_met/no_bids/cancelled) and a
     // sold one are different facts and must not read the same on the one
     // page a buyer can land on directly from a shared link.
-    if (isSoldOutcome) {
+    if (isSold) {
       return <SoldBanner variant="detail" />;
     }
     return (

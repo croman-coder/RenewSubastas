@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Clock, Gavel, LogIn } from 'lucide-react';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 import { SoldBanner } from '@/components/auctions/sold-banner';
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 
 interface Props {
   locale: string;
@@ -56,7 +57,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
   // banner, the CTA swap, and the overlay's accessible name) — three
   // separately-evaluated copies of this condition is how one of them
   // silently drifts from the other two.
-  const isSold = auction.outcome === 'sold' || auction.outcome === 'sold_offline';
+  const isSold = isSoldOutcome(auction.outcome);
   // The overlay is the only focusable element on a sold card (the CTA below
   // becomes plain text), so its accessible name is the *entire* experience
   // for keyboard/screen-reader users here. Announcing "iniciar sesión para

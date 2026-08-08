@@ -1,3 +1,5 @@
+import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+
 interface CatalogItem {
   status: string;
   outcome: string | null;
@@ -30,5 +32,5 @@ interface CatalogItem {
  */
 export function isVisibleInCatalog(item: CatalogItem, nowMs: number): boolean {
   if (item.status !== 'ended') return true;
-  return (item.outcome === 'sold' || item.outcome === 'sold_offline') && item.endsAtMs > nowMs;
+  return isSoldOutcome(item.outcome) && item.endsAtMs > nowMs;
 }
