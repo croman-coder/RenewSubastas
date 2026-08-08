@@ -1954,6 +1954,40 @@ Mostrar el error inline y deshabilitar el submit mientras `buyNowInvalid` sea tr
 
 Etiquetar también el input de reserva como **no visible para compradores**, porque confundirlos sería caro.
 
+- [ ] **Step 3b: No dejar borrar una subasta vendida en salón**
+
+El sweep de inventario de la Task 8 encontró esto en
+`staff/auctions/[id]/auction-detail-view.tsx` (el archivo de staff, no el del
+comprador):
+
+```tsx
+const isSold = status === 'ended' && outcome === 'sold';
+// …
+status === 'ended' && outcome !== 'sold';
+```
+
+Con `outcome: 'sold_offline'` ambas comparaciones dan el resultado equivocado:
+`isSold` queda `false` y `outcome !== 'sold'` queda `true`, así que `canDelete`
+habilita el borrado igual que en una subasta donde no pasó nada
+(`no_bids`/`reserve_not_met`). Y el diálogo de confirmación promete que "el
+vehículo vuelve a listo" —cuando `markSoldOffline` ya lo dejó en `sold`.
+
+Borrar ahí destruye el único registro de `soldOfflinePriceUsd`, `soldOfflineAt`
+y `soldOfflineBy` de una venta real. Es la clase de dato que después nadie puede
+reconstruir.
+
+Tratar `sold_offline` como vendida en los dos lugares:
+
+```tsx
+const isSold = status === 'ended' && (outcome === 'sold' || outcome === 'sold_offline');
+```
+
+y en `canDelete`, reemplazar `outcome !== 'sold'` por `!isSold` para que no haya
+dos definiciones de "vendida" que puedan divergir. Agregar `'sold_offline'` a la
+unión de `InitialAuction.outcome`, así el compilador cubre el próximo caso.
+
+Verificar en el navegador que una subasta marcada VENDIDO no ofrece Eliminar.
+
 - [ ] **Step 4: Verificar en el navegador**
 
 Como staff: cargar `buyNowPrice` menor a la reserva y confirmar que el submit queda bloqueado con el mensaje; cargar uno mayor y confirmar que persiste. Marcar VENDIDO en una subasta con pujas y confirmar que aparece la advertencia con el número correcto.
