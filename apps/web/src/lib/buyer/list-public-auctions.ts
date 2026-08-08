@@ -1,6 +1,7 @@
 import 'server-only';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore, type Query } from 'firebase-admin/firestore';
+import { isVisibleInCatalog } from './catalog-visibility';
 
 export interface PublicAuction {
   id: string;
@@ -78,7 +79,10 @@ export async function listPublicAuctions({
   // pertenecían vence — sirve de prueba social de que se venden autos.
   // Firestore no admite OR sobre campos distintos en una sola query, así
   // que se traen ambos conjuntos y se ordenan en memoria (el lote es de
-  // decenas de unidades, no miles).
+  // decenas de unidades, no miles). Qué cuenta como "todavía visible" es
+  // responsabilidad de isVisibleInCatalog, no de esta query — ver ese
+  // archivo para el porqué.
+  const nowMs = Date.now();
   const [openSnap, soldSnap] = await Promise.all([
     db
       .collection('auctions')
@@ -91,14 +95,14 @@ export async function listPublicAuctions({
       .collection('auctions')
       .where('audience', '==', audience)
       .where('status', '==', 'ended')
-      .where('endsAt', '>', new Date())
+      .where('endsAt', '>', new Date(nowMs))
       .orderBy('endsAt', 'asc')
       .limit(pageSize)
       .get(),
   ]);
   return [...openSnap.docs, ...soldSnap.docs]
     .map(toItem)
-    .filter((a) => a.status !== 'ended' || a.outcome === 'sold' || a.outcome === 'sold_offline')
+    .filter((a) => isVisibleInCatalog(a, nowMs))
     .sort((a, b) => a.endsAtMs - b.endsAtMs)
     .slice(0, pageSize);
 }

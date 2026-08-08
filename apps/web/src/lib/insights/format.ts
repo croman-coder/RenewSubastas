@@ -29,6 +29,7 @@ export const AUCTION_OUTCOME_LABEL: Record<string, string> = {
   sold: 'vendida',
   reserve_not_met: 'reserva no alcanzada',
   no_bids: 'sin pujas',
+  sold_offline: 'vendida en salón',
 };
 
 const usdFormatter = new Intl.NumberFormat('es-PY', {
