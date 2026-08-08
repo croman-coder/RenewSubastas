@@ -52,6 +52,17 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
 
   const title = `${auction.make} ${auction.model} ${auction.year}`;
   const loginHref = `/${locale}/login?from=${encodeURIComponent(`/${locale}/auctions/${auction.id}`)}`;
+  // Single source of truth for every sold-state branch on this card (the
+  // banner, the CTA swap, and the overlay's accessible name) — three
+  // separately-evaluated copies of this condition is how one of them
+  // silently drifts from the other two.
+  const isSold = auction.outcome === 'sold' || auction.outcome === 'sold_offline';
+  // The overlay is the only focusable element on a sold card (the CTA below
+  // becomes plain text), so its accessible name is the *entire* experience
+  // for keyboard/screen-reader users here. Announcing "iniciar sesión para
+  // pujar" on a unit that's sold told them to go bid on something that no
+  // longer takes bids.
+  const overlayAriaLabel = isSold ? `${title} — vendido` : `${title} — iniciar sesión para pujar`;
 
   return (
     <article
@@ -72,7 +83,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           Cmd/middle-click still work. */}
       <Link
         href={loginHref as `/${string}`}
-        aria-label={`${title} — iniciar sesión para pujar`}
+        aria-label={overlayAriaLabel}
         className={
           'absolute inset-0 z-0 rounded-xl [touch-action:manipulation] ' +
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
@@ -104,9 +115,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           aria-hidden="true"
           className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 via-black/15 to-transparent"
         />
-        {(auction.outcome === 'sold' || auction.outcome === 'sold_offline') && (
-          <SoldBanner variant="card" />
-        )}
+        {isSold && <SoldBanner variant="card" />}
         <span
           className={
             'absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 ' +
@@ -164,7 +173,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
 
         {/* Above the overlay link so it's its own tab stop and reads as the
             primary action. Both lead to login; this one names the intent. */}
-        {auction.outcome === 'sold' || auction.outcome === 'sold_offline' ? (
+        {isSold ? (
           <p className="relative z-[2] mt-auto w-full text-center text-sm text-text-muted">
             Ya no disponible
           </p>

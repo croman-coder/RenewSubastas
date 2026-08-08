@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Trophy, Gavel } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
+import { SoldBanner } from '@/components/auctions/sold-banner';
 import { didBuyerWinAuction } from '@/lib/auctions/win-state';
 import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
 
@@ -102,6 +103,13 @@ export function BidPanel({
   // happened to be leading — see win-state.ts.
   const isWinning = currentBidderUid === myUid && currentBid > 0;
   const iWon = didBuyerWinAuction({ ended, outcome, winnerUid, myUid });
+  // For everyone who isn't the winner: a unit that sold (on the platform or
+  // in the showroom) is a materially different fact from one that simply
+  // ran out with no sale (reserve_not_met/no_bids/cancelled), and this panel
+  // used to say "Subasta finalizada." for all four alike — the same gap the
+  // catalog cards' SoldBanner exists to close, just reached by a direct link
+  // to the detail page instead of the catalog.
+  const isSoldOutcome = outcome === 'sold' || outcome === 'sold_offline';
   const canBuyNow = buyNowPrice !== null && bidCount === 0;
   // Shared by the Compra ya card and the confirmation dialog so both always
   // show the exact same figure. '' only when canBuyNow is false, in which
@@ -231,6 +239,15 @@ export function BidPanel({
           </div>
         </div>
       );
+    }
+    // Sold to someone else (platform sale) or sold in the showroom: this
+    // buyer didn't win, but the unit is unambiguously gone — the same mark
+    // the catalog cards use, not the generic "nothing to report" box below.
+    // An unsold, closed auction (reserve_not_met/no_bids/cancelled) and a
+    // sold one are different facts and must not read the same on the one
+    // page a buyer can land on directly from a shared link.
+    if (isSoldOutcome) {
+      return <SoldBanner variant="detail" />;
     }
     return (
       <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
