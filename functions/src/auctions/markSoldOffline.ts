@@ -7,7 +7,11 @@ import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { DocId } from '../lib/ids.js';
 
-const MAX_PRICE_USD = 10_000_000;
+// Same ceiling as createAuction.ts / updateAuction.ts for the identical
+// inventory (startingPrice/reservePrice/buyNowPrice) — nothing about a
+// showroom sale of the same vehicle justifies a higher cap, and there is no
+// callable that can correct this field after the fact.
+const MAX_PRICE_USD = 200_000;
 
 const InputSchema = z.object({
   auctionId: DocId,
@@ -64,6 +68,15 @@ export async function markSoldOfflineHandler(req: CallableRequest): Promise<Mark
       soldOfflinePriceUsd: soldPriceUsd,
       soldOfflineAt: FieldValue.serverTimestamp(),
       soldOfflineBy: uid,
+      // The displaced bidder is no longer "the top bidder" — leaving this
+      // set would have bid-panel.tsx's isWinning/iWon (currentBidderUid ===
+      // myUid && currentBid > 0, on an auction that is now ended) read as
+      // true for them, rendering "¡Ganaste la subasta!" to the person whose
+      // vehicle was just sold to someone else in the showroom. currentBid
+      // stays: it's a true historical fact (the high bid when the unit was
+      // pulled), and the bids sub-collection keeps full per-bidder history
+      // regardless.
+      currentBidderUid: FieldValue.delete(),
       updatedAt: FieldValue.serverTimestamp(),
     });
 

@@ -79,6 +79,18 @@ describe('markSoldOffline', () => {
     expect(bids.docs.every((d) => d.data()['status'] === 'outbid')).toBe(true);
   });
 
+  // The displaced bidder must stop reading as "the top bidder" everywhere
+  // that field is checked without also checking outcome — e.g. bid-panel.tsx's
+  // isWinning = currentBidderUid === myUid && currentBid > 0, which for an
+  // ended auction becomes "you won". currentBid itself is a historical fact
+  // (the high bid when the unit was pulled) and must survive untouched.
+  it('borra currentBidderUid pero conserva currentBid', async () => {
+    await markSoldOfflineHandler(asRole('staff'));
+    const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
+    expect(a['currentBidderUid']).toBeUndefined();
+    expect(a['currentBid']).toBe(26000);
+  });
+
   it('acepta staff y admin, rechaza buyer y finanzas', async () => {
     await markSoldOfflineHandler(asRole('admin'));
     await clearAll();
@@ -94,8 +106,28 @@ describe('markSoldOffline', () => {
     });
   });
 
+  it('rechaza sin autenticación', async () => {
+    await expect(
+      markSoldOfflineHandler({
+        rawRequest: {} as never,
+        data: { auctionId: AUCTION, soldPriceUsd: 28000 },
+      } as CallableRequest),
+    ).rejects.toMatchObject({ code: 'unauthenticated' });
+  });
+
   it('rechaza si la subasta ya está cerrada', async () => {
     await seed({ status: 'ended', outcome: 'sold' });
+    await expect(markSoldOfflineHandler(asRole('staff'))).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
+  });
+
+  // Distinct from the case above: the literal double-marking scenario (staff
+  // tries to mark it sold_offline again) rather than "already sold on
+  // platform". Same status check, same rejection, but the brief only named
+  // the sold/sold_offline pair — pin both halves of it explicitly.
+  it('rechaza si ya fue marcada sold_offline', async () => {
+    await seed({ status: 'ended', outcome: 'sold_offline' });
     await expect(markSoldOfflineHandler(asRole('staff'))).rejects.toMatchObject({
       code: 'failed-precondition',
     });
@@ -104,6 +136,22 @@ describe('markSoldOffline', () => {
   it('rechaza un precio no positivo', async () => {
     await expect(
       markSoldOfflineHandler(asRole('staff', { soldPriceUsd: 0 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('rechaza un precio negativo', async () => {
+    await expect(
+      markSoldOfflineHandler(asRole('staff', { soldPriceUsd: -100 })),
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  // Mirrors the 200_000 cap createAuction.ts/updateAuction.ts enforce on the
+  // same vehicles' startingPrice/reservePrice/buyNowPrice — there's no
+  // callable to correct this field after the fact, so a typo'd extra digit
+  // must be rejected up front rather than becoming a permanent bad row.
+  it('rechaza un precio por encima del máximo', async () => {
+    await expect(
+      markSoldOfflineHandler(asRole('staff', { soldPriceUsd: 200_001 })),
     ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
