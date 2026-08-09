@@ -2,7 +2,13 @@ export const META_PIXEL_ID = '1864069597698281';
 
 declare global {
   interface Window {
-    fbq?: FbqFn & { callMethod?: (...args: unknown[]) => void; queue?: unknown[] };
+    fbq?: FbqFn & {
+      callMethod?: (...args: unknown[]) => void;
+      queue?: unknown[];
+      push?: unknown;
+      loaded?: boolean;
+      version?: string;
+    };
     _fbq?: unknown;
   }
 }
@@ -10,6 +16,7 @@ declare global {
 type FbqFn = (...args: unknown[]) => void;
 
 let injected = false;
+let granted = false;
 
 /**
  * Paths whose query string carries a live, redeemable credential.
@@ -24,6 +31,10 @@ let injected = false;
  *
  * - /auth/set-password?token=…    (reset-tokens.ts, single-use, 72h)
  * - /auth/action?…&oobCode=…      (Firebase email-action bearer code)
+ *
+ * This matters MORE under consent mode than it did before. The pixel used to
+ * load only for visitors who accepted; now it bootstraps for everyone, so
+ * without this guard every single reset-link click would reach Meta.
  *
  * Keep this list in step with any future route that puts a secret in the URL.
  */
@@ -41,42 +52,70 @@ export function isCredentialBearingPath(pathname: string): boolean {
   return CREDENTIAL_BEARING_PATHS.some((p) => clean.endsWith(p) || clean.includes(`${p}/`));
 }
 
-/** Whether the pixel script has been injected and its first PageView sent. */
+/** Whether fbevents.js has been injected and the pixel initialised. */
 export function isMetaPixelLoaded(): boolean {
   return injected;
 }
 
+/** Whether the visitor has granted consent, so events are actually processed. */
+export function isMetaConsentGranted(): boolean {
+  return granted;
+}
+
 /**
- * Load the Meta Pixel.
+ * Install the pixel with consent withheld.
  *
- * ONLY ever called after the visitor accepts cookies — see applyConsent() in
- * lib/legal/cookie-consent.ts. This is advertising tracking that sends page
- * visits to Meta, so firing it before consent would both ignore the reject
- * button and contradict the published cookie policy.
+ * Runs for EVERY visitor, before any choice is made — which is a deliberate
+ * change from the original consent-gated install, and the reason the wording
+ * in lib/legal/company-facts.ts had to change with it.
+ *
+ * Meta's consent API then holds every event instead of sending it, so nothing
+ * about the visit's navigation reaches Meta until grantMetaConsent() runs.
+ * What Meta does learn immediately is the fbevents.js request and the config
+ * fetch that `init` triggers — IP, referrer and the page's domain. That is
+ * unavoidable once the script loads at all, and it is why the cookie policy
+ * now says the file downloads on every visit and only the measurement waits.
+ *
+ * Why accept that cost: with the script absent, Meta's own tooling reports
+ * "no pixel detected" and the no-code event configurator refuses to open,
+ * regardless of how many events consenting visitors actually generate.
  *
  * Hand-written rather than pasted from Meta's minified snippet so it can be
- * read and typed. Behaviour matches: define the fbq queue shim, append the
- * loader script, then init + first PageView.
- *
- * Meta's snippet also ships a <noscript> tracking pixel. It is deliberately
- * omitted: a visitor with JavaScript disabled can't have used our consent
- * banner, so that image would track exactly the people who never agreed.
+ * read and typed. Meta's <noscript> tracking image stays omitted: it cannot
+ * honour a consent signal at all, so under this model it would track exactly
+ * the people who never agreed.
  *
  * No-ops on a credential-bearing page without marking itself loaded, so
- * arriving on a reset link first doesn't disable the pixel for the whole
+ * landing on a reset link first doesn't disable the pixel for the rest of the
  * session — the route tracker retries on the next safe navigation.
  */
-export function loadMetaPixel(): void {
+export function bootstrapMetaPixel(): void {
   if (typeof window === 'undefined' || injected) return;
   if (isCredentialBearingPath(window.location.pathname)) return;
   injected = true;
 
   if (!window.fbq) {
-    const fbq: Window['fbq'] = function (...args: unknown[]) {
+    // Every property here is part of the contract fbevents.js expects of a
+    // stub, not decoration. An earlier version of this file set only `queue`,
+    // on the reasoning that the rest of Meta's minified snippet was noise —
+    // and it appeared to work, because `init` followed by `track` happened to
+    // drain anyway. Adding `consent revoke` as the first queued call exposed
+    // it: fbevents replayed that one entry and then stopped, leaving `init`
+    // and everything after it stuck in the queue forever. No init, no config
+    // fetch, no events, and nothing in the console to say so.
+    // Queues `arguments`, not a rest array. fbevents.js replays each entry by
+    // applying it as an argument list, and an Array is not an Arguments object
+    // — with a plain array it drained the first entry and abandoned the rest,
+    // stranding `init`. Meta's own snippet pushes `arguments` for this reason.
+    const fbq: Window['fbq'] = function (this: unknown, ...args: unknown[]) {
       const self = window.fbq!;
       if (self.callMethod) self.callMethod(...args);
-      else self.queue!.push(args);
+      // eslint-disable-next-line prefer-rest-params
+      else self.queue!.push(arguments);
     } as NonNullable<Window['fbq']>;
+    fbq.push = fbq;
+    fbq.loaded = true;
+    fbq.version = '2.0';
     fbq.queue = [];
     window.fbq = fbq;
     window._fbq = window._fbq ?? fbq;
@@ -87,23 +126,61 @@ export function loadMetaPixel(): void {
     document.head.appendChild(script);
   }
 
+  // Identify, then withhold — and the order is the opposite of what Meta's
+  // consent-mode docs show, for a measured reason. With `revoke` first,
+  // fbevents.js defers the whole queue: `init` is never processed, no config
+  // is fetched, the pixel is never registered, and Meta's own tooling still
+  // reports "no pixel detected" — which is the entire problem this is meant
+  // to solve. Verified in the browser: the queue drained `revoke` and left
+  // `init` stranded indefinitely.
+  //
+  // Initialising first registers the pixel (that is what the detector and the
+  // event configurator look for) and costs one config request to Meta
+  // carrying the pixel id and the page's domain. `init` on its own sends no
+  // PageView — Meta's snippet fires that as a separate `track` call, which we
+  // only make after consent. The revoke lands in the same tick, before any
+  // event could be generated.
   window.fbq?.('init', META_PIXEL_ID);
+  window.fbq?.('consent', 'revoke');
+}
+
+/**
+ * Release the queued events and start measuring.
+ *
+ * Called only from applyConsent() in lib/legal/cookie-consent.ts, i.e. only
+ * once the visitor has accepted. Bootstraps first if the pixel isn't installed
+ * yet — accepting on a credential-bearing page is a no-op, and the route
+ * tracker picks it up on the next safe navigation.
+ *
+ * The explicit PageView is needed because the one Meta fires on `init` was
+ * suppressed by the revoke above.
+ */
+export function grantMetaConsent(): void {
+  if (typeof window === 'undefined' || granted) return;
+  if (isCredentialBearingPath(window.location.pathname)) return;
+  if (!injected) bootstrapMetaPixel();
+  if (!injected) return;
+
+  granted = true;
+  window.fbq?.('consent', 'grant');
   window.fbq?.('track', 'PageView');
 }
 
 /**
  * Report a client-side route change.
  *
- * The app is a single-page router, so the pixel's own initial PageView is the
- * only one Meta would ever see without this — every subsequent navigation
- * would be invisible. No-ops when the pixel was never loaded (consent not
- * given), so it needs no consent check of its own.
+ * The app is a single-page router, so without this the only PageView Meta
+ * would ever see is the one grantMetaConsent() sends — every subsequent
+ * navigation would be invisible.
  *
- * Navigating INTO a credential-bearing page is silent for the same reason
- * loadMetaPixel() refuses to start there: the URL is the secret.
+ * Gated on `granted`, not on `injected`: after the bootstrap the pixel exists
+ * for everyone, so keying off installation would track visitors who declined.
+ *
+ * Navigating INTO a credential-bearing page is silent for the same reason the
+ * bootstrap refuses to start there: the URL is the secret.
  */
 export function trackMetaPageView(): void {
-  if (typeof window === 'undefined' || !injected) return;
+  if (typeof window === 'undefined' || !granted) return;
   if (isCredentialBearingPath(window.location.pathname)) return;
   window.fbq?.('track', 'PageView');
 }

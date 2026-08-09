@@ -1,25 +1,35 @@
 'use client';
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { isMetaPixelLoaded, loadMetaPixel, trackMetaPageView } from '@/lib/analytics/meta-pixel';
+import {
+  bootstrapMetaPixel,
+  grantMetaConsent,
+  isMetaConsentGranted,
+  trackMetaPageView,
+} from '@/lib/analytics/meta-pixel';
 import { readCookieConsent } from '@/lib/legal/cookie-consent';
 
 /**
- * Reports SPA navigations to the Meta Pixel.
+ * Installs the Meta Pixel and reports SPA navigations to it.
  *
- * The pixel fires its own PageView when it loads, and never again — the App
- * Router swaps pages client-side without a document load, so without this
- * every view after the first would be invisible to Meta.
+ * Runs on every navigation, and does three things in order of what the visitor
+ * has agreed to:
  *
- * It also owns the retry. loadMetaPixel() refuses to start on a
- * credential-bearing page (the URL is a secret there), so a visitor who
- * already consented and then opens a password-reset link lands with the pixel
- * unloaded. Without this retry it would stay unloaded for the rest of the
- * session. Hence the consent read here — the gate still lives in
- * applyConsent(), this only asks whether it was already passed.
+ * 1. Bootstraps the pixel for everyone, with consent withheld. This is what
+ *    makes Meta's tooling see the pixel as installed — without it the no-code
+ *    event configurator refuses to open no matter how many events consenting
+ *    visitors generate. No event is sent until step 2.
+ * 2. Grants consent if the visitor already accepted in a previous session, so
+ *    accepting once keeps working across visits without a second prompt.
+ * 3. Reports the navigation, but only once consent is actually granted.
  *
- * The two branches are exclusive on purpose: loadMetaPixel() sends its own
- * first PageView, so tracking as well would double-count that navigation.
+ * It also owns the retry for credential-bearing pages. The pixel refuses to
+ * install on /auth/set-password and /auth/action (the URL is the secret
+ * there), so a visitor landing on a reset link starts with no pixel; this
+ * picks it up on their next safe navigation.
+ *
+ * grant and track are exclusive on purpose: grantMetaConsent() sends its own
+ * PageView, so tracking as well would double-count that navigation.
  *
  * Renders nothing.
  */
@@ -28,9 +38,10 @@ export function MetaPixelRouteTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    bootstrapMetaPixel();
     if (readCookieConsent() !== 'accepted') return;
-    if (isMetaPixelLoaded()) trackMetaPageView();
-    else loadMetaPixel();
+    if (isMetaConsentGranted()) trackMetaPageView();
+    else grantMetaConsent();
   }, [pathname, searchParams]);
 
   return null;

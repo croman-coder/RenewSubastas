@@ -11,7 +11,7 @@ import type { Company } from './load-company';
  */
 
 /** Effective date shown on every legal page. Bump when the text changes. */
-export const LEGAL_VERSION_DATE = '7 de agosto de 2026';
+export const LEGAL_VERSION_DATE = '8 de agosto de 2026';
 
 export interface LegalSection {
   heading: string;
@@ -71,7 +71,7 @@ export function privacySections(c: Company): LegalSection[] {
         'Proveedores de infraestructura y alojamiento en la nube, que almacenan la base de datos y los archivos de la plataforma.',
         'Un proveedor de envío de correo electrónico transaccional, para las notificaciones de la plataforma.',
         'Un servicio de monitoreo de errores, que registra fallas técnicas de la aplicación.',
-        'Meta Platforms, únicamente si aceptaste las cookies de medición publicitaria: recibe las páginas que visitás dentro del sitio para medir el resultado de nuestros anuncios. No le enviamos tu nombre, documento, teléfono ni tus pujas. Si rechazaste las cookies, no se le envía nada.',
+        'Meta Platforms: si aceptaste las cookies de medición publicitaria, recibe las páginas que visitás dentro del sitio para medir el resultado de nuestros anuncios. No le enviamos tu nombre, documento, teléfono ni tus pujas. Si las rechazaste, no recibe nada de tu navegación: sólo queda el registro de tu dirección IP por la descarga de su archivo de medición, que se hace en todas las visitas y llega desactivado.',
         'Autoridades competentes, cuando exista una obligación legal o un requerimiento judicial.',
       ],
     },
@@ -203,7 +203,7 @@ export function cookieSections(c: Company): LegalSection[] {
         'Cookie de sesión: mantiene tu sesión iniciada mientras usás la plataforma. Es imprescindible para que el sitio funcione y no requiere consentimiento; sin ella no podrías permanecer autenticado.',
         'Preferencia de cookies: guarda la decisión que tomás en el aviso de cookies, para no volver a preguntarte en cada visita.',
         'Monitoreo de errores: cuando lo aceptás, un servicio de terceros registra información técnica ante una falla de la aplicación para poder diagnosticarla. Si lo rechazás, no se activa.',
-        'Medición publicitaria (Meta Pixel): cuando lo aceptás, se cargan cookies de Meta Platforms que registran las páginas que visitás dentro del sitio. Nos sirve para medir el resultado de nuestros anuncios y para mostrarte publicidad más relevante en Facebook e Instagram. Si lo rechazás, no se carga y no se envía ningún dato a Meta.',
+        'Medición publicitaria (Meta Pixel): el archivo de medición de Meta Platforms se descarga en todas las visitas, pero arranca con la medición desactivada. Recién cuando aceptás se activa y empieza a registrar las páginas que visitás dentro del sitio, para medir el resultado de nuestros anuncios y mostrarte publicidad más relevante en Facebook e Instagram. Si lo rechazás, no se guarda ninguna cookie de Meta ni se registra tu navegación; lo único que Meta ve es la descarga del archivo, que como cualquier descarga desde un servidor ajeno deja registrada tu dirección IP.',
       ],
     },
     {
