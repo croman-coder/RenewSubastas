@@ -1,6 +1,7 @@
 import { Activity, Eye } from 'lucide-react';
 import { KpiCard } from '@/components/brand/kpi-card';
 import type { TrafficInsights } from '@/lib/insights/load-traffic';
+import { ANONYMOUS_FUNNEL_STAGES, SIGNED_IN_FUNNEL_STAGES } from '@/lib/insights/traffic-summary';
 import { TrafficSeriesChart } from './traffic-series-chart';
 import { TrafficSourceBreakdown } from './traffic-source-breakdown';
 import { TrafficFunnel } from './traffic-funnel';
@@ -9,13 +10,31 @@ interface Props {
   insights: TrafficInsights;
 }
 
+/** "10 días" / "1 día", for interpolating into the two funnel descriptions below. */
+function diasLabel(days: number): string {
+  return `${days} día${days === 1 ? '' : 's'}`;
+}
+
 /**
  * Site-wide traffic block for /staff/insights, above the per-vehicle list.
- * Answers the three questions the design doc frames this feature around
- * (docs/superpowers/specs/2026-08-08-trafico-web-design.md) in that order:
- * how many people come in, where from, and — last, full width — where they
- * drop off. The funnel is placed last and given the most horizontal room on
- * purpose: it is the number that turns into a decision, not the raw counts.
+ *
+ * Presents TWO separate journeys, never one combined funnel — this app's
+ * own routing makes `home` (recorded only for anonymous visitors) and
+ * `catalog`/`detail` (recorded only for signed-in ones) two essentially
+ * disjoint populations; see the doc comment on `ANONYMOUS_FUNNEL_STAGES` /
+ * `SIGNED_IN_FUNNEL_STAGES` in traffic-summary.ts for the routing evidence.
+ * A percentage computed across that boundary measures the login wall, not
+ * visitor drop-off, so no number here ever spans the two:
+ *
+ *   - "Anónimos" (home -> login), paired with the source breakdown right
+ *     next to it — together they answer Croman's actual question: the
+ *     Instagram spend brought N people, and M of them tried to sign in.
+ *   - "Con sesión" (catalog -> detail), its own full-width block, visually
+ *     and structurally separate from the row above: real browsing
+ *     behaviour, but only of people who already have an account.
+ *
+ * Both funnel cards say their own scope in plain Spanish in their own
+ * header — the boundary is never left to be inferred from layout alone.
  *
  * `today` (live, partial) and `history`/`summary` (closed, complete) are two
  * independent data sources — see load-traffic.ts — so they get two
@@ -48,6 +67,7 @@ export function TrafficPanel({ insights }: Props) {
     views: d.totalViews,
     sessions: d.uniqueSessions,
   }));
+  const dias = diasLabel(summary.days);
 
   return (
     <section className="space-y-4">
@@ -88,17 +108,36 @@ export function TrafficPanel({ insights }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 [&>*]:h-full">
-            <div className="lg:col-span-2">
-              <TrafficSeriesChart
-                data={seriesData}
-                totalViews={summary.totalViews}
-                totalSessions={summary.totalSessions}
-              />
-            </div>
+          <TrafficSeriesChart
+            data={seriesData}
+            totalViews={summary.totalViews}
+            totalSessions={summary.totalSessions}
+          />
+
+          {/* Anónimos: paired with the source breakdown on purpose — together
+              they answer "el gasto en Instagram trajo N personas, y M
+              intentaron entrar". Neither card's number is ever combined with
+              the other's; they sit side by side because they're the same
+              story told two ways, not because they share a percentage. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>*]:h-full">
             <TrafficSourceBreakdown bySource={summary.bySource} days={summary.days} />
+            <TrafficFunnel
+              funnel={summary.funnel}
+              stages={ANONYMOUS_FUNNEL_STAGES}
+              title="Anónimos"
+              description={`Visitantes sin cuenta: cuántos entraron a la home y cuántos de esos llegaron al login. No incluye catálogo ni fichas — esas páginas piden cuenta iniciada. Últimos ${dias}.`}
+            />
           </div>
-          <TrafficFunnel funnel={summary.funnel} days={summary.days} />
+
+          {/* Con sesión: intentionally its own full-width block, visually
+              separate from the row above — a different population, so it
+              never sits beside "Anónimos" as if the two connected. */}
+          <TrafficFunnel
+            funnel={summary.funnel}
+            stages={SIGNED_IN_FUNNEL_STAGES}
+            title="Con sesión"
+            description={`Compradores con cuenta iniciada: catálogo visto y fichas abiertas. No incluye visitantes anónimos — sin cuenta no se puede ver estas páginas. Últimos ${dias}.`}
+          />
         </>
       )}
     </section>

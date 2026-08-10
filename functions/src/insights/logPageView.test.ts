@@ -15,6 +15,14 @@ function anon(data: Record<string, unknown>, userAgent?: string): CallableReques
   } as CallableRequest;
 }
 
+function signedIn(role: string, data: Record<string, unknown>): CallableRequest {
+  return {
+    auth: { uid: `${role}-1`, token: { role, status: 'active' } as never },
+    rawRequest: {} as never,
+    data,
+  } as CallableRequest;
+}
+
 async function clearAll() {
   for (const c of ['page_views', 'rate_limits']) {
     const docs = await adminDb().collection(c).listDocuments();
@@ -42,6 +50,30 @@ describe('logPageView', () => {
     const views = await allPageViews();
     expect(views).toHaveLength(1);
     expect(views[0]!['sessionId']).toBe(SESSION_ID);
+  });
+
+  it('skips staff/admin/finanzas callers entirely — same exclusion as logAuctionView', async () => {
+    for (const role of ['staff', 'admin', 'finanzas'] as const) {
+      const res = await logPageViewHandler(signedIn(role, { path: '/es', sessionId: SESSION_ID }));
+      expect(res).toEqual({ ok: true, logged: false });
+    }
+
+    // Must assert the collection is empty, not merely that every response
+    // said logged:false — a bug that wrote first and reported false anyway
+    // would still leak internal browsing into the report.
+    const docs = await adminDb().collection('page_views').listDocuments();
+    expect(docs).toHaveLength(0);
+  });
+
+  it("a buyer's own page views still count in full — the exclusion is role-specific, not auth-specific", async () => {
+    const res = await logPageViewHandler(signedIn('buyer', { path: '/es', sessionId: SESSION_ID }));
+    expect(res).toEqual({ ok: true, logged: true });
+
+    const views = await allPageViews();
+    expect(views).toHaveLength(1);
+    // Same exact field set as the anonymous case — signing in doesn't
+    // change what gets stored, only whether the write happens at all.
+    expect(Object.keys(views[0]!).sort()).toEqual(['at', 'pathKind', 'sessionId', 'source']);
   });
 
   it('saves a home-page view with exactly the right fields and no others', async () => {

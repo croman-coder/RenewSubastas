@@ -24,9 +24,47 @@ export type Source = 'ig' | 'fb' | 'google' | 'direct' | 'other';
  *  in `functions/src/insights/aggregateTraffic.ts`. */
 export type FunnelStage = Exclude<PathKind, 'other'>;
 
-/** Order matters: this IS the funnel's step order, first-to-last. */
+/** Every funnel stage, in the order `functions/src/insights/aggregateTraffic.ts`
+ *  stores them in `funnel`. This is the full stored key set for building/
+ *  summing the record — it is NOT "the funnel" to render; see
+ *  `ANONYMOUS_FUNNEL_STAGES` / `SIGNED_IN_FUNNEL_STAGES` below for that. */
 export const FUNNEL_STAGES: readonly FunnelStage[] = ['home', 'catalog', 'detail', 'login'];
 const SOURCES: readonly Source[] = ['ig', 'fb', 'google', 'direct', 'other'];
+
+/**
+ * The two journeys this app's routing can actually produce — NOT one
+ * four-stage funnel. Verified directly against the route code, not assumed:
+ *
+ * - `apps/web/src/app/[locale]/page.tsx` calls `getOptionalUser()` and
+ *   `redirect()`s away IF a session exists — so `home` is recorded ONLY for
+ *   visitors with no session.
+ * - `/auctions` and `/auctions/[id]` live under `(protected)`, whose layout
+ *   renders `<AppShell>`, which calls `getCurrentUser()`
+ *   (`apps/web/src/lib/auth/server.ts`) — `if (!cookie) redirect('/login')`.
+ *   So `catalog` and `detail` are recorded ONLY for signed-in users; an
+ *   anonymous click straight into either — e.g. an Instagram ad linking to a
+ *   specific vehicle's detail page — is redirected to `/login` before either
+ *   page ever renders, and is recorded as a `login` view, not a `detail`
+ *   view.
+ *
+ * `home` and `catalog`/`detail` therefore describe two essentially disjoint
+ * populations (anonymous vs. already-signed-in). A percentage computed
+ * BETWEEN them (e.g. "catalog as a share of home") isn't measuring visitor
+ * drop-off — it's measuring the login wall, since almost nobody can be in
+ * both buckets on the same day. `login` sits with the anonymous group: it's
+ * where an anonymous session ends up whether it clicks "iniciar sesión"
+ * from the home page or gets redirected off `/auctions`(`/{id}`) for having
+ * no session — either way, a session recorded here has not yet
+ * authenticated.
+ */
+export const ANONYMOUS_FUNNEL_STAGES: readonly FunnelStage[] = ['home', 'login'];
+
+/** The other journey: real browsing behaviour, but only of people who
+ *  already have an account (see `ANONYMOUS_FUNNEL_STAGES` above for the
+ *  verified routing reasoning). The design doc's worked example — "400 saw
+ *  the catalog, 90 opened a listing" — describes exactly this group; a
+ *  plain visitor cannot generate a `catalog` or `detail` view at all. */
+export const SIGNED_IN_FUNNEL_STAGES: readonly FunnelStage[] = ['catalog', 'detail'];
 
 /**
  * Mirrors `TrafficDailyAggregate` in `functions/src/insights/aggregateTraffic.ts`
@@ -99,13 +137,14 @@ export function summarizeTrafficHistory(
 export interface FunnelStepStat {
   stage: FunnelStage;
   count: number;
-  /** Share of the FIRST stage's count (`home`, today). `null` when the
+  /** Share of the group's FIRST stage count (the first entry of whichever
+   *  `stages` list was passed to `buildFunnelSteps`). `null` when that
    *  first stage's own count is 0 — "% of zero" isn't a meaningful number,
    *  not a coerced 0%. */
   pctOfFirst: number | null;
-  /** Share retained versus the stage immediately before this one in
-   *  `FUNNEL_STAGES`. `null` for the first stage (nothing precedes it) and
-   *  whenever the previous stage's count is 0, for the same reason as
+  /** Share retained versus the stage immediately before this one in the
+   *  same `stages` list. `null` for the first stage (nothing precedes it)
+   *  and whenever the previous stage's count is 0, for the same reason as
    *  `pctOfFirst`. */
   pctOfPrevious: number | null;
 }
@@ -116,18 +155,28 @@ function pct(count: number, base: number): number | null {
 }
 
 /**
- * Turns a raw `funnel` record into the ordered rows the panel renders,
- * pre-computing both percentages so the component stays presentation-only.
+ * Turns a raw `funnel` record into the ordered rows a panel renders for ONE
+ * journey — pass `ANONYMOUS_FUNNEL_STAGES` or `SIGNED_IN_FUNNEL_STAGES`
+ * (never the full `FUNNEL_STAGES`, see the comment on those constants for
+ * why: they cover two essentially disjoint populations, and a percentage
+ * computed across both measures the login wall, not visitor drop-off).
+ * `stages` has no default on purpose — every call site must say which
+ * journey it means.
+ *
+ * Pre-computes both percentages so the component stays presentation-only.
  * This — not the raw counts — is what turns "400 people showed up" into a
  * decision: where, specifically, does the drop happen.
  */
-export function buildFunnelSteps(funnel: Record<FunnelStage, number>): FunnelStepStat[] {
-  const firstStage = FUNNEL_STAGES[0]!;
+export function buildFunnelSteps(
+  funnel: Record<FunnelStage, number>,
+  stages: readonly FunnelStage[],
+): FunnelStepStat[] {
+  const firstStage = stages[0]!;
   const firstCount = funnel[firstStage];
 
-  return FUNNEL_STAGES.map((stage, i) => {
+  return stages.map((stage, i) => {
     const count = funnel[stage];
-    const previousStage = i > 0 ? FUNNEL_STAGES[i - 1]! : null;
+    const previousStage = i > 0 ? stages[i - 1]! : null;
     return {
       stage,
       count,
@@ -138,36 +187,42 @@ export function buildFunnelSteps(funnel: Record<FunnelStage, number>): FunnelSte
 }
 
 /**
- * Bar-width percentage for each funnel stage, sized against the funnel's
- * OWN largest stage count — deliberately NOT against `home` specifically.
+ * Bar-width percentage for each stage in `stages`, IN ORDER, sized against
+ * the LARGEST count among just those stages — deliberately NOT against
+ * `stages[0]` specifically. Returns one number per entry of `stages` (same
+ * order), so it lines up index-for-index with
+ * `buildFunnelSteps(funnel, stages)` — pass the SAME `stages` list to both.
  *
  * This answers a different question than `FunnelStepStat.pctOfFirst` above.
- * `pctOfFirst` answers "what share of home reached this stage", and is
- * honestly `null` when home itself is 0 — there is no meaningful "% of
- * zero". That's the right answer for the drop-off TEXT. But a bar chart
- * still has to size every bar by SOMETHING, and for this business a day
- * where `home` is 0 while `detail` is 200 is not a corner case: Santa
- * Rosa's Instagram ads link straight to a vehicle detail page, so a good
- * ad day can legitimately have zero classified home visits. Sizing bars
- * off `pctOfFirst` in that shape collapsed every bar to 0% width — home,
- * catalog, AND detail — while the number next to the detail bar still read
- * 200. Numbers right, chart looking broken, on exactly the screen this
- * feature exists to prove the ad spend works.
+ * `pctOfFirst` answers "what share of this group's first stage reached this
+ * stage", and is honestly `null` when that first stage's count is 0 — there
+ * is no meaningful "% of zero". That's the right answer for the drop-off
+ * TEXT. But a bar chart still has to size every bar by SOMETHING, and a
+ * zero first stage is not a corner case for the anonymous journey
+ * (`home` -> `login`, see `ANONYMOUS_FUNNEL_STAGES`): Santa Rosa's
+ * Instagram ads often link straight to a specific vehicle's detail page,
+ * and that route redirects an anonymous click to `/login` before anything
+ * else renders — so that visit is recorded as a `login` view, not a
+ * `detail` view, and `home` for that session is 0 (verified against the
+ * actual route code, see `ANONYMOUS_FUNNEL_STAGES`'s comment — an earlier
+ * version of this comment guessed the mechanism was "ads skip straight to
+ * `detail`", which is wrong: the redirect fires before `detail` is ever
+ * recorded at all). A day built entirely from clicks like that has
+ * `home: 0, login: 200`. Sizing bars off `pctOfFirst` there collapsed BOTH
+ * bars to 0% width while the count next to `login` still read 200 —
+ * numbers right, chart looking broken, on exactly the screen this feature
+ * exists to prove the ad spend works.
  *
  * Every returned value is in `[0, 100]` by construction (each stage's count
- * divided by the max of all stages can never exceed 1, and counts are never
- * negative) — callers do not need to re-clamp. Returns 0 for every stage,
- * never `NaN`, when the funnel itself is entirely empty (every stage's
- * count is 0).
+ * divided by the max of the given stages can never exceed 1, and counts are
+ * never negative) — callers do not need to re-clamp. Returns 0 for every
+ * stage, never `NaN`, when every given stage's count is 0.
  */
 export function funnelBarWidthsPct(
   funnel: Record<FunnelStage, number>,
-): Record<FunnelStage, number> {
-  const max = Math.max(...FUNNEL_STAGES.map((stage) => funnel[stage]));
-  const widths = zeroRecord(FUNNEL_STAGES);
-  if (max <= 0) return widths;
-  for (const stage of FUNNEL_STAGES) {
-    widths[stage] = Math.max(0, Math.min(100, Math.round((funnel[stage] / max) * 100)));
-  }
-  return widths;
+  stages: readonly FunnelStage[],
+): number[] {
+  const max = Math.max(...stages.map((stage) => funnel[stage]));
+  if (max <= 0) return stages.map(() => 0);
+  return stages.map((stage) => Math.max(0, Math.min(100, Math.round((funnel[stage] / max) * 100))));
 }

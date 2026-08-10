@@ -4,6 +4,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { DocId } from '../lib/ids.js';
+import type { Role } from '../lib/errors.js';
 import {
   classifyPath,
   classifySource,
@@ -55,6 +56,10 @@ function getUserAgent(req: CallableRequest): string | undefined {
   return Array.isArray(raw) ? raw[0] : raw;
 }
 
+/** Internal roles whose own browsing is excluded from the counter — same
+ *  three roles, same rationale, as `logAuctionView.ts`. */
+const EXCLUDED_ROLES: readonly Role[] = ['admin', 'staff', 'finanzas'];
+
 /**
  * Records one anonymous page view for the web-traffic counter.
  *
@@ -65,6 +70,18 @@ function getUserAgent(req: CallableRequest): string | undefined {
  * traffic never signs in. Requiring auth here would make the counter blind
  * to exactly the visitors it exists to count.
  *
+ * That said, `req.auth` is still populated whenever the CALLER happens to be
+ * signed in, even though it's never required — and `logAuctionView.ts`
+ * already excludes admin/staff/finanzas views from its own report ("el
+ * reporte es sobre demanda real, no navegación interna"). This callable
+ * stores no role, so there is no way to filter internal browsing out of
+ * `page_views` after the fact the way `logAuctionView`'s callers can be
+ * inspected retroactively — the exclusion has to happen HERE, at write
+ * time, matching that same rationale. A buyer's own page views still count
+ * in full; only the three internal roles are skipped. This is also what
+ * makes the `catalog`/`detail` funnel stages mean "buyers browsing" rather
+ * than "anyone signed in, including staff testing the app".
+ *
  * Stores exactly `{ pathKind, source, sessionId, auctionId?, at }` on
  * `page_views/{autoId}` (auto ids so writes distribute — no hot document
  * when a lot closes and everyone arrives at once). Never the raw path, never
@@ -73,6 +90,14 @@ function getUserAgent(req: CallableRequest): string | undefined {
  * then discarded.
  */
 export async function logPageViewHandler(req: CallableRequest): Promise<LogPageViewResult> {
+  // Cheap, no-DB-access check first: a privileged caller's view is a no-op
+  // no matter what the rest of the payload says, so there is nothing to
+  // gain from validating it first (same ordering `logAuctionView.ts` uses).
+  const callerRole = req.auth?.token['role'] as Role | undefined;
+  if (callerRole && EXCLUDED_ROLES.includes(callerRole)) {
+    return { ok: true, logged: false };
+  }
+
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) {
     throw new HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
