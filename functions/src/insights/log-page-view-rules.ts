@@ -200,9 +200,13 @@ export function classifySource(
     return 'other'; // Not a parseable URL. Still just 'other' — never thrown, never stored raw.
   }
 
-  if (host.endsWith('google.com')) return 'google';
-  if (host.endsWith('instagram.com')) return 'ig';
-  if (host.endsWith('facebook.com') || host === 'fb.com' || host.endsWith('.fb.com')) return 'fb';
+  // Exact host or a true subdomain only — `endsWith('google.com')` would also match
+  // an attacker-registered `notgoogle.com` or `reallygoogle.com`, silently crediting
+  // the wrong source. Every branch below needs the `.` boundary, not just `fb.com`.
+  if (host === 'google.com' || host.endsWith('.google.com')) return 'google';
+  if (host === 'instagram.com' || host.endsWith('.instagram.com')) return 'ig';
+  if (host === 'facebook.com' || host.endsWith('.facebook.com')) return 'fb';
+  if (host === 'fb.com' || host.endsWith('.fb.com')) return 'fb';
   return 'other';
 }
 

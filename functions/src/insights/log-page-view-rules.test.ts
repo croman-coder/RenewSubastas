@@ -98,6 +98,32 @@ describe('classifySource', () => {
     expect(classifySource(null, 'https://www.google.com/')).toBe('google');
   });
 
+  it('still recognizes a real subdomain of google, instagram, or facebook', () => {
+    expect(classifySource(null, 'https://accounts.google.com/')).toBe('google');
+    expect(classifySource(null, 'https://l.instagram.com/')).toBe('ig');
+    expect(classifySource(null, 'https://m.facebook.com/')).toBe('fb');
+  });
+
+  it('does not credit a look-alike domain as google (regression: needs a dot boundary)', () => {
+    // Found in review: `host.endsWith('google.com')` alone also matches
+    // 'notgoogle.com' and 'reallygoogle.com'. Anyone could register one of
+    // those, link to the site, and have the visit silently miscredited to
+    // Google — wrong attribution, not a credential leak, but this feature
+    // exists specifically to tell Santa Rosa where traffic comes from.
+    expect(classifySource(null, 'https://notgoogle.com/')).toBe('other');
+    expect(classifySource(null, 'https://reallygoogle.com/')).toBe('other');
+  });
+
+  it('does not credit a look-alike domain as ig (regression: needs a dot boundary)', () => {
+    expect(classifySource(null, 'https://fakeinstagram.com/')).toBe('other');
+  });
+
+  it('does not credit a look-alike domain as fb (regression: needs a dot boundary)', () => {
+    // The fb.com branch already had the correct `=== || endsWith('.fb.com')`
+    // shape; the bare facebook.com branch was the half that was missing it.
+    expect(classifySource(null, 'https://notfacebook.com/')).toBe('other');
+  });
+
   it('is direct when there is neither a utm_source nor a referrer', () => {
     expect(classifySource(null, null)).toBe('direct');
     expect(classifySource(undefined, undefined)).toBe('direct');
