@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { CookieBanner } from '@/components/legal/cookie-banner';
 import { MetaPixelRouteTracker } from '@/components/analytics/meta-pixel-route-tracker';
+import { TrafficTracker } from '@/components/analytics/traffic-tracker';
 import '../globals.css';
 
 // Body: Inter (modern neutral grotesque, excellent at small sizes).
@@ -79,9 +80,12 @@ export default async function LocaleLayout({
               {/* Suspense is required, not decorative: useSearchParams opts
                   the nearest boundary into client rendering, and without one
                   the build fails. Isolating it here keeps every page static
-                  that already was. */}
+                  that already was. TrafficTracker shares this boundary
+                  rather than getting its own for the same reason — it also
+                  needs useSearchParams. */}
               <Suspense fallback={null}>
                 <MetaPixelRouteTracker />
+                <TrafficTracker />
               </Suspense>
               <Toaster position="top-right" richColors closeButton />
             </ThemeProvider>

@@ -11,7 +11,7 @@ import type { Company } from './load-company';
  */
 
 /** Effective date shown on every legal page. Bump when the text changes. */
-export const LEGAL_VERSION_DATE = '8 de agosto de 2026';
+export const LEGAL_VERSION_DATE = '10 de agosto de 2026';
 
 export interface LegalSection {
   heading: string;
@@ -48,6 +48,7 @@ export function privacySections(c: Company): LegalSection[] {
         'Actividad en la plataforma: subastas que visitás, pujas que realizás, vehículos que marcás como favoritos y adjudicaciones obtenidas.',
         'Comprobantes de pago que subís voluntariamente para acreditar la seña.',
         'Datos técnicos: dirección IP, tipo de dispositivo y navegador, e información de errores cuando la aplicación falla.',
+        'Estadísticas de uso anónimas: para saber cuánta gente visita el sitio y en qué paso se cae, registramos qué tipo de página mirás (inicio, catálogo, la ficha de un vehículo, entre otras) y de dónde viene la visita (por ejemplo, un anuncio de Instagram). Este registro no usa cookies, no queda asociado a tu cuenta ni a tu identidad, y no guarda tu dirección IP ni ningún identificador persistente.',
       ],
     },
     {
