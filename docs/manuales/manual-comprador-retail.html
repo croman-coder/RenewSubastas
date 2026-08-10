@@ -1,0 +1,1519 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual del Comprador — Renew Subastas</title>
+<meta name="hz:slide-selector" content=".slide">
+<meta name="hz:canvas-width" content="1920">
+<meta name="hz:canvas-height" content="1080">
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-base: #070707;
+  --bg-elev: #0f0f0f;
+  --bg-deep: #1b1b1b;
+  --ink: #f8f8f8;
+  --body: #cfcfcf;
+  --muted: #a4a4a4;
+  --subtle: #636363;
+  --success: #51b67a;
+  --success-dim: #2c4536;
+  --warning: #eba941;
+  --warning-dim: #4a3c22;
+  --danger: #e85854;
+  --danger-dim: #4a2726;
+  --line: rgba(248,248,248,0.11);
+  --line-soft: rgba(248,248,248,0.06);
+  --card: rgba(248,248,248,0.035);
+  --card-strong: rgba(248,248,248,0.06);
+  --glow: rgba(248,248,248,0.10);
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html, body {
+  background: var(--bg-base);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@page { size: 1920px 1080px; margin: 0; }
+
+.slide {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-base);
+  color: var(--ink);
+  font-family: var(--font-body);
+  page-break-after: always;
+  break-after: page;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.slide:last-child { page-break-after: auto; break-after: auto; }
+
+/* ---------- background textures (monochrome only) ---------- */
+.glow-tr { position:absolute; top:-380px; right:-380px; width:1000px; height:1000px; border-radius:50%;
+  background: radial-gradient(circle, var(--glow) 0%, rgba(248,248,248,0) 68%); pointer-events:none; }
+.glow-bl { position:absolute; bottom:-420px; left:-420px; width:1000px; height:1000px; border-radius:50%;
+  background: radial-gradient(circle, rgba(248,248,248,0.07) 0%, rgba(248,248,248,0) 68%); pointer-events:none; }
+.grid-dots { position:absolute; inset:0; opacity:0.5;
+  background-image: radial-gradient(rgba(248,248,248,0.07) 1.5px, transparent 1.5px);
+  background-size: 34px 34px; pointer-events:none; }
+
+/* ---------- chrome: header / footer ---------- */
+.slide-header { position:absolute; top:58px; left:120px; right:120px; height:46px;
+  display:flex; align-items:center; justify-content:space-between; }
+.slide-header-line { position:absolute; top:118px; left:120px; right:120px; height:1px; background:var(--line); }
+.slide-body { position:absolute; top:160px; left:120px; right:120px; bottom:98px; }
+.slide-footer { position:absolute; bottom:42px; left:120px; right:120px; height:28px;
+  display:flex; align-items:center; justify-content:space-between; }
+
+.kicker { font-family:var(--font-body); font-weight:700; font-size:20px; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--muted); }
+.kicker.on-ink { color: var(--ink); }
+.kicker-strong { color: var(--ink); }
+.footer-word { font-family: var(--font-display); font-weight:600; font-size:19px; color:var(--subtle); letter-spacing:0.02em; }
+.footer-word b { color:var(--muted); font-weight:600; }
+.pagenum { font-family: var(--font-body); font-weight:600; font-size:19px; color:var(--subtle); font-variant-numeric: tabular-nums; }
+
+/* ---------- typography roles ---------- */
+.display { font-family:var(--font-display); font-weight:700; font-size:126px; line-height:1.04;
+  color:var(--ink); letter-spacing:-0.02em; }
+.h1 { font-family:var(--font-display); font-weight:700; font-size:66px; line-height:1.14;
+  color:var(--ink); letter-spacing:-0.01em; }
+.h1-lg { font-family:var(--font-display); font-weight:700; font-size:80px; line-height:1.1;
+  color:var(--ink); letter-spacing:-0.015em; }
+.h2 { font-family:var(--font-display); font-weight:600; font-size:40px; line-height:1.25; color:var(--ink); }
+.h3 { font-family:var(--font-display); font-weight:600; font-size:29px; line-height:1.3; color:var(--ink); }
+.lead { font-family:var(--font-body); font-weight:500; font-size:34px; line-height:1.5; color:var(--ink); }
+.body-xl { font-family:var(--font-body); font-weight:400; font-size:30px; line-height:1.6; color:var(--body); }
+.body-txt { font-family:var(--font-body); font-weight:400; font-size:25px; line-height:1.62; color:var(--body); }
+.body-sm { font-family:var(--font-body); font-weight:400; font-size:21px; line-height:1.55; color:var(--muted); }
+.caption { font-family:var(--font-body); font-weight:700; font-size:17px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted); }
+.quote-text { font-family:var(--font-display); font-weight:600; font-size:42px; line-height:1.38; color:var(--ink); }
+.num { font-variant-numeric: tabular-nums; }
+strong, b { font-weight:700; color:var(--ink); }
+em { font-family: var(--font-body); font-style: italic; color: var(--ink); }
+.on-ink { color: var(--ink); }
+.c-success { color: var(--success); }
+.c-warning { color: var(--warning); }
+.c-danger { color: var(--danger); }
+.c-muted { color: var(--muted); }
+
+/* ---------- layout helpers ---------- */
+.stack { display:flex; flex-direction:column; }
+.row { display:flex; flex-direction:row; }
+.gap-8  { gap:8px; } .gap-12 { gap:12px; } .gap-16 { gap:16px; } .gap-20 { gap:20px; }
+.gap-24 { gap:24px; } .gap-32 { gap:32px; } .gap-40 { gap:40px; } .gap-48 { gap:48px; } .gap-56{gap:56px;}
+.items-center { align-items:center; } .items-start{align-items:flex-start;} .items-end{align-items:flex-end;}
+.justify-between { justify-content:space-between; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; }
+.grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; }
+.w-full { width:100%; }
+.flex-1 { flex:1; }
+.rel { position:relative; }
+
+/* ---------- cards & surfaces ---------- */
+.card { background:var(--card); border:1px solid var(--line); border-radius:20px; }
+.card-strong { background:var(--card-strong); border:1px solid var(--line); border-radius:20px; }
+.card-flat { background:var(--bg-elev); border:1px solid var(--line); border-radius:20px; }
+.divider { height:1px; background:var(--line); width:100%; }
+.divider-v { width:1px; background:var(--line); align-self:stretch; }
+
+.pill { display:inline-flex; align-items:center; gap:10px; padding:9px 20px; border-radius:999px;
+  font-family:var(--font-body); font-weight:700; font-size:19px; letter-spacing:0.02em; }
+.pill-success { background: rgba(81,182,122,0.14); color:var(--success); border:1px solid rgba(81,182,122,0.3); }
+.pill-warning { background: rgba(235,169,65,0.14); color:var(--warning); border:1px solid rgba(235,169,65,0.32); }
+.pill-danger  { background: rgba(232,88,84,0.14); color:var(--danger); border:1px solid rgba(232,88,84,0.32); }
+.pill-neutral { background: var(--card-strong); color:var(--ink); border:1px solid var(--line); }
+
+.tag { display:inline-block; padding:6px 14px; border-radius:8px; font-family:var(--font-body);
+  font-weight:700; font-size:17px; letter-spacing:0.06em; text-transform:uppercase; }
+.tag-success { background:rgba(81,182,122,0.15); color:var(--success); }
+.tag-warning { background:rgba(235,169,65,0.15); color:var(--warning); }
+.tag-danger  { background:rgba(232,88,84,0.15); color:var(--danger); }
+.tag-neutral { background:var(--card-strong); color:var(--muted); }
+
+/* ---------- icon badges ---------- */
+.icon-badge { width:76px; height:76px; border-radius:20px; background:var(--card-strong);
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.icon-badge svg { width:38px; height:38px; }
+.icon-badge.sm { width:56px; height:56px; border-radius:14px; }
+.icon-badge.sm svg { width:28px; height:28px; }
+.icon-badge.success { background:rgba(81,182,122,0.13); border-color:rgba(81,182,122,0.32); color:var(--success); }
+.icon-badge.warning { background:rgba(235,169,65,0.13); border-color:rgba(235,169,65,0.32); color:var(--warning); }
+.icon-badge.danger  { background:rgba(232,88,84,0.13); border-color:rgba(232,88,84,0.32); color:var(--danger); }
+.icon-badge.ink     { background:rgba(248,248,248,0.12); border-color:rgba(248,248,248,0.3); color:var(--ink); }
+
+/* ---------- numbered steps ---------- */
+.step-row { display:flex; flex-direction:row; gap:32px; align-items:flex-start; }
+.step-num { width:64px; height:64px; min-width:64px; border-radius:50%; background:var(--card-strong);
+  border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:700; font-size:28px; color:var(--ink); }
+.step-num.filled { background:var(--ink); color:var(--bg-base); border-color:var(--ink); }
+.step-line { width:1.5px; flex:1; background:var(--line); margin:4px auto; min-height:20px; }
+.step-col { display:flex; flex-direction:column; align-items:center; }
+
+/* ---------- tables ---------- */
+table.tviz { border-collapse:collapse; width:100%; }
+table.tviz th { font-family:var(--font-body); font-weight:700; font-size:19px; letter-spacing:0.05em;
+  text-transform:uppercase; color:var(--muted); text-align:left; padding:0 22px 18px 22px; border-bottom:1px solid var(--line); }
+table.tviz td { font-family:var(--font-body); font-size:23px; color:var(--body); padding:22px; vertical-align:top;
+  border-bottom:1px solid var(--line-soft); }
+table.tviz tr:last-child td { border-bottom:none; }
+table.tviz td.hl { color:var(--ink); font-weight:700; }
+table.tviz td:first-child, table.tviz th:first-child { padding-left:0; }
+
+/* ---------- quote block ---------- */
+.quote-block { position:relative; border-left:5px solid var(--ink); padding: 8px 0 8px 44px; }
+.quote-mark { position:absolute; left:-12px; top:-38px; font-family:var(--font-display); font-size:120px;
+  color:var(--line); font-weight:700; line-height:1; }
+
+/* ---------- checklist ---------- */
+.check-item { display:flex; flex-direction:row; align-items:flex-start; gap:20px; }
+.check-dot { width:34px; height:34px; min-width:34px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; margin-top:2px; }
+
+/* ---------- SVG arrows / connectors ---------- */
+.conn-arrow { stroke:var(--muted); stroke-width:3; fill:none; }
+.conn-arrow-ink { stroke:var(--ink); stroke-width:3; fill:none; }
+
+/* ---------- misc ---------- */
+.wordmark { font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; }
+.wordmark .re { color:var(--ink); }
+.wordmark .new { color:var(--subtle); }
+.hairline-box { border:1px solid var(--line); border-radius:20px; }
+.mono-pill { font-family:var(--font-body); font-weight:600; background:var(--card-strong);
+  border:1px solid var(--line); border-radius:10px; padding:4px 12px; color:var(--ink); font-size: 0.9em;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone; line-height:1.7; }
+
+</style>
+</head>
+<body>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    <div class="glow-tr"></div>
+    <div class="grid-dots" style="opacity:0.35;"></div>
+    <div class="stack" style="position:absolute; left:120px; top:96px;">
+      <div class="row gap-12 items-center">
+        <div style="width:14px;height:14px;border-radius:4px;background:var(--ink);"></div>
+        <div class="kicker on-ink">Santa Rosa Paraguay S.A.</div>
+      </div>
+    </div>
+    <div class="stack" style="position:absolute; left:120px; top:340px; max-width:1500px;">
+      <div class="caption" style="font-size:22px;">Guía visual para compradores</div>
+      <div class="wordmark" style="font-size:64px; margin-top:28px;"><span class="re">Re</span><span class="new">new</span> Subastas</div>
+      <div class="display" style="font-size:104px; margin-top:18px;">Manual del<br>Comprador</div>
+      <div class="lead" style="margin-top:40px; max-width:1180px; color:var(--body);">
+        Todo lo que necesitás saber para pujar con confianza en renewsubastas.com.py —
+        desde entrar sin cuenta hasta pagar la seña de un vehículo que ganaste.
+      </div>
+    </div>
+    <div class="row gap-40 items-center" style="position:absolute; left:120px; bottom:80px;">
+      <div class="pill pill-neutral">renewsubastas.com.py</div>
+      <div class="body-sm" style="font-size:22px;">Pensado para seguirlo con el celular en la mano</div>
+    </div>
+    <div style="position:absolute; right:120px; bottom:80px;" class="body-sm num">01 / 41</div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Recorrido</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Recorrido del manual</div>
+      <div class="h1-lg">Seis partes, de punta a punta</div>
+      
+    </div><div class="grid-3 gap-24" style="margin-top:56px;"><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">01</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6"/><path d="M6.5 11.5l6-6 4 4-6 6z"/><path d="M4 20l6.5-6.5"/><path d="M13 20h7"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Antes de pujar</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">La regla de oro y lo que te compromete a pagar</div>
+        </div><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">02</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-4 4-6 7.5-6s6.2 2 7.5 6"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Tu cuenta</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">Entrar sin cuenta, crear la tuya con Google, iniciar sesión</div>
+        </div><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">03</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Explorar</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">Inicio, catálogo, la ficha de un vehículo, favoritos</div>
+        </div><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">04</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6"/><path d="M6.5 11.5l6-6 4 4-6 6z"/><path d="M4 20l6.5-6.5"/><path d="M13 20h7"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Pujar</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">Perfil obligatorio, el panel de pujar, Compra Ya</div>
+        </div><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">05</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H4.8A2.3 2.3 0 0 0 6 9.7M16 5.5h3.2A2.3 2.3 0 0 1 18 9.7"/><path d="M12 13.5V17"/><path d="M8.5 20.5h7"/><path d="M9.5 17.3h5l.6 3.2h-6.2z"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Ganar y pagar</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">Qué pasa al ganar, la seña, el cartel VENDIDO</div>
+        </div><div class="card" style="padding:34px 32px;">
+          <div class="row justify-between items-center">
+            <div class="h2" style="font-size:52px; color:var(--subtle);">06</div>
+            <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.4M12 18.1v2.4M20.5 12h-2.4M5.9 12H3.5M17.7 6.3l-1.7 1.7M8 16l-1.7 1.7M17.7 17.7L16 16M8 8L6.3 6.3"/></svg></div>
+          </div>
+          <div class="h3" style="margin-top:22px; font-size:28px;">Tu panel</div>
+          <div class="body-sm" style="margin-top:10px; font-size:20px;">Mis pujas, ganadas, cuotas y configuración</div>
+        </div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">02 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    <div class="glow-tr"></div>
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Antes de pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6"/><path d="M6.5 11.5l6-6 4 4-6 6z"/><path d="M4 20l6.5-6.5"/><path d="M13 20h7"/></svg></div>
+      <div class="caption" style="margin-top:28px;">Regla de oro Nº 1</div>
+      <div class="display" style="margin-top:22px; max-width:1620px;">Una puja es en firme.<br>No se puede retirar ni cancelar.</div>
+      <div class="lead" style="max-width:1500px;margin-top:36px;color:var(--body);">En el momento en que confirmás una puja, quedás comprometido a pagar ese monto si termina siendo el ganador. Vale exactamente igual para <strong>Compra Ya</strong>: confirmar ahí cierra la venta al instante, sin vuelta atrás.</div>
+    </div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">03 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Antes de pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack gap-32" style="height:100%; justify-content:center;">
+      <div class="caption">Así lo dice el propio sitio, cada vez que vas a pujar</div>
+      <div class="quote-block">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text">Vas a pujar USD {monto} por este vehículo.<br>Las pujas son en firme y no se pueden retirar.</div>
+      </div>
+      <div class="body-xl" style="margin-top:12px; max-width:1500px;">
+        Este cartel de confirmación aparece siempre, sin excepción, antes de que tu puja se registre — es tu última oportunidad de tocar &ldquo;Cancelar&rdquo; en vez de confirmar.
+      </div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">04 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Antes de pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Antes de arrancar</div>
+      <div class="h1-lg">Dos reglas más que tenés que conocer</div>
+      
+    </div><div style="display:grid; grid-template-columns:1fr 1fr; gap:48px;"><div><div class="card" style="padding:36px;">
+      <div class="stack gap-20">
+        <div class="icon-badge warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c0-1.2-1.3-2-3-2s-3 .9-3 2.1c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-.8-3-2"/></svg></div>
+        <div class="h3">Ganar te obliga a pagar una seña</div>
+        <div class="body-txt">Ganar una subasta te obliga a pagar una seña — un porcentaje del precio final — dentro de un plazo. Si no pagás a tiempo, perdés el vehículo. Todo el detalle está en la sección “Si no pagás a tiempo” de este manual.</div>
+      </div>
+    </div></div><div><div class="card" style="padding:36px;">
+      <div class="stack gap-20">
+        <div class="icon-badge ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c0-1.2-1.3-2-3-2s-3 .9-3 2.1c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-.8-3-2"/></svg></div>
+        <div class="h3">Todos los precios están en dólares</div>
+        <div class="body-txt">Cada precio que vas a ver en esta plataforma — inicial, puja actual, Compra Ya, seña — está expresado en <strong>USD</strong>. No hay precios en guaraníes en la subasta en sí (solo la calculadora de cuotas trabaja en guaraníes).</div>
+      </div>
+    </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">05 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Cómo llegás al sitio sin cuenta</div>
+      <div class="h1-lg">Mirar es libre. Pujar requiere cuenta.</div>
+      
+    </div><div style="margin-top:44px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Entrás sin cuenta</div>
+            <div class="body-txt">Si llegás a renewsubastas.com.py sin haber iniciado sesión — por ejemplo desde un anuncio de Instagram — ves la página pública con el catálogo completo: fotos, precio actual y tiempo restante de cada subasta.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Mirás todo lo que quieras</div>
+            <div class="body-txt">Podés navegar el catálogo público libremente. Lo único que no podés hacer sin cuenta es pujar.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocás “Pujar” cuando estés listo</div>
+            <div class="body-txt">El botón sobre cada auto dice “Pujar” (o “Iniciar sesión para pujar” en la portada) y te lleva directo al inicio de sesión. Al entrar, el sitio te devuelve automáticamente al mismo vehículo — no perdés el lugar.</div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">06 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h5.9a5 5 0 0 1-2.18 3.3v2.7h3.5c2.05-1.9 3.28-4.68 3.28-8.03z"/><path fill="#34A853" d="M12 23c2.94 0 5.4-.97 7.2-2.63l-3.5-2.7c-.97.65-2.22 1.04-3.7 1.04-2.84 0-5.25-1.92-6.11-4.5H2.28v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.89 14.21A6.6 6.6 0 0 1 5.5 12c0-.77.13-1.51.36-2.21V7H2.28A11 11 0 0 0 1 12c0 1.78.43 3.46 1.28 4.99z"/><path fill="#EA4335" d="M12 5.48c1.6 0 3.03.55 4.16 1.63l3.12-3.12C17.4 2.18 14.94 1 12 1A11 11 0 0 0 2.28 7l3.61 2.8c.86-2.58 3.27-4.32 6.11-4.32z"/></svg></div>
+      <div class="caption" style="margin-top:28px;">Crear tu cuenta</div>
+      <div class="h1-lg" style="margin-top:22px;">Un solo camino: tu cuenta de Google</div>
+      <div class="lead" style="max-width:1300px; margin-top:32px; color:var(--body);">
+        Renew Subastas <strong>no tiene un formulario de registro con contraseña.</strong> La única forma de crear una cuenta nueva de comprador es con Google — vas a ver el texto
+        <span class="mono-pill">&ldquo;¿No tenés cuenta? Creá una con Google en un paso.&rdquo;</span>
+      </div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">07 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Crear tu cuenta</div>
+      <div class="h1-lg">Los cuatro pasos</div>
+      
+    </div><div style="margin-top:40px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Andá al login</div>
+            <div class="body-txt">Entrá a renewsubastas.com.py/login, o tocá “Pujar” / “Iniciar sesión para pujar” en cualquier vehículo.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “Continuar con Google”</div>
+            <div class="body-txt">Debajo del formulario vas a ver la opción de registro con Google.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí tu cuenta</div>
+            <div class="body-txt">Seleccioná tu cuenta de Google en la ventana que se abre.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">4</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Esperá unos segundos</div>
+            <div class="body-txt">El sitio crea tu cuenta automáticamente como comprador y te lleva directo a “Preparando tu panel…” y después al catálogo, con tu nombre arriba.</div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">08 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Crear tu cuenta</div>
+      <div class="h1-lg">Antes de seguir, tres notas honestas</div>
+      
+    </div><div style="margin-top:48px;"><div class="stack gap-24"><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Tu nombre y apellido se toman automáticamente de tu cuenta de Google. Los podés corregir después en <strong>Configuración &gt; Perfil</strong>.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--warning);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Si el navegador bloquea la ventana emergente vas a leer: <span class="mono-pill">&ldquo;El navegador bloqueó la ventana de Google. Habilitá los pop-ups y reintentá.&rdquo;</span></div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Tu cuenta nueva <strong>no tiene contraseña todavía</strong> — entrás siempre con el botón de Google. Si alguna vez necesitás una, pedila con “¿Olvidaste tu contraseña?” en el login.</div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">09 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Iniciar sesión</div>
+      <div class="h1-lg">Dos formas de entrar si ya tenés cuenta</div>
+      
+    </div><div style="display:grid; grid-template-columns:1fr 1fr; gap:48px;"><div><div class="card" style="padding:40px;">
+      <div class="row gap-16 items-center"><div class="icon-badge sm"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.3h5.9a5 5 0 0 1-2.18 3.3v2.7h3.5c2.05-1.9 3.28-4.68 3.28-8.03z"/><path fill="#34A853" d="M12 23c2.94 0 5.4-.97 7.2-2.63l-3.5-2.7c-.97.65-2.22 1.04-3.7 1.04-2.84 0-5.25-1.92-6.11-4.5H2.28v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.89 14.21A6.6 6.6 0 0 1 5.5 12c0-.77.13-1.51.36-2.21V7H2.28A11 11 0 0 0 1 12c0 1.78.43 3.46 1.28 4.99z"/><path fill="#EA4335" d="M12 5.48c1.6 0 3.03.55 4.16 1.63l3.12-3.12C17.4 2.18 14.94 1 12 1A11 11 0 0 0 2.28 7l3.61 2.8c.86-2.58 3.27-4.32 6.11-4.32z"/></svg></div><div class="h3">Opción A · Con Google</div></div>
+      <div class="body-txt" style="margin-top:20px;">Recomendada si te registraste así.</div>
+      <div style="margin-top:26px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “Continuar con Google”</div>
+            <div class="body-txt">Elegí tu cuenta y listo.</div>
+          </div>
+        </div></div></div>
+    </div></div><div><div class="card" style="padding:40px;">
+      <div class="row gap-16 items-center"><div class="icon-badge sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4.5 7l7.5 6 7.5-6"/></svg></div><div class="h3">Opción B · Correo y contraseña</div></div>
+      <div class="body-txt" style="margin-top:20px;">Si alguna vez configuraste una contraseña.</div>
+      <div style="margin-top:26px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Escribí tu correo y contraseña</div>
+            <div class="body-txt">Y tocá “Entrar”.</div>
+          </div>
+        </div></div></div>
+    </div></div></div><div class="body-sm" style="margin-top:36px; font-size:22px;">Si te equivocás, el sitio avisa: <span class="mono-pill">&ldquo;Correo o contraseña inválidos.&rdquo;</span></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">10 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu cuenta</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">¿Olvidaste tu contraseña?</div>
+      <div class="h1-lg">Un administrador siempre está en el medio</div>
+      
+    </div><div style="margin-top:36px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “¿Olvidaste tu contraseña?”</div>
+            <div class="body-txt">En la pantalla de inicio de sesión.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Escribí tu correo y enviá la solicitud</div>
+            <div class="body-txt">El sitio confirma: <span class="mono-pill">&ldquo;Solicitud registrada. Si el email está registrado en Renew, el administrador recibirá tu solicitud y te enviará un link de recuperación a la brevedad.&rdquo;</span></div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Un administrador revisa el pedido</div>
+            <div class="body-txt">Esto <strong>no es automático</strong> — un administrador de Santa Rosa te manda el enlace para crear una contraseña nueva.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">4</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí tu contraseña nueva</div>
+            <div class="body-txt">Escribís la nueva contraseña dos veces (mínimo 8 caracteres) y confirmás.</div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">11 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">La pantalla de Inicio</div>
+      <div class="h1-lg">Tu panel personal, apenas entrás</div>
+      
+    </div><div class="grid-2 gap-56" style="margin-top:44px;"><div><div class="row gap-20 items-center" style="margin-bottom:26px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div><div class="h3" style="font-size:26px;">Reloj de cuenta regresiva</div><div class="body-sm" style="font-size:20px; margin-top:6px;">Si hay subastas cerrando o por abrir. Todas las de un mismo lote comparten la misma hora de cierre.</div></div></div><div class="row gap-20 items-center" style="margin-bottom:26px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12" width="2.6" height="8"/><rect x="12" y="8" width="2.6" height="12"/><rect x="17" y="14.5" width="2.6" height="5.5"/></svg></div><div><div class="h3" style="font-size:26px;">Cuatro números resumen</div><div class="body-sm" style="font-size:20px; margin-top:6px;">Activas · Estoy ganando · Mis pujas · Ganadas — cada uno es un enlace directo a esa lista.</div></div></div><div class="row gap-20 items-center" style="margin-bottom:26px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 15.5l1.4-5A2 2 0 0 1 7.8 9h8.4a2 2 0 0 1 1.9 1.5l1.4 5"/><rect x="3" y="15.5" width="18" height="4.5" rx="1.4"/><circle cx="7.5" cy="20" r="1.6"/><circle cx="16.5" cy="20" r="1.6"/></svg></div><div><div class="h3" style="font-size:26px;">Vehículos disponibles</div><div class="body-sm" style="font-size:20px; margin-top:6px;">Grilla con hasta 12 autos; si hay más, un botón te lleva al catálogo completo.</div></div></div><div class="row gap-20 items-center" style="margin-bottom:26px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg></div><div><div class="h3" style="font-size:26px;">La campanita 🔔</div><div class="body-sm" style="font-size:20px; margin-top:6px;">Te avisa en el momento — sin esperar el correo — cuando se publica una subasta nueva o cuando ganás.</div></div></div></div><div class="stack gap-24" style="justify-content:center;"><div class="body-sm" style="font-size:21px; margin-top:8px;">El menú lateral (o inferior en el celular) tiene cuatro accesos: <strong class="on-ink">Inicio, Subastas, Mis pujas, Ganadas.</strong></div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">12 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">El catálogo de subastas</div>
+      <div class="h1-lg">Tres pestañas, desde el menú “Subastas”</div>
+      
+    </div><div style="margin-top:48px;"><table class="tviz"><thead><tr><th style="width:360px;">Pestaña</th><th style="">Qué muestra</th></tr></thead><tbody><tr><td>Todas</td><td>Programadas, en curso, y las que acaban de cerrar (se mantienen visibles un tiempo)</td></tr><tr><td>Cierran pronto</td><td>Solo subastas en vivo que cierran dentro de las próximas 24 horas</td></tr><tr><td>Favoritos</td><td>Las que marcaste con el corazón</td></tr></tbody></table></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">13 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">El catálogo de subastas</div>
+      <div class="h1-lg">Qué muestra cada tarjeta</div>
+      
+    </div><div style="margin-top:44px; max-width:1400px;"><div class="stack gap-24"><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Foto, marca, modelo y año.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Estado en la esquina: <strong>Programada</strong>, <strong>En curso</strong>, <strong>Finalizada</strong> o <strong>Cancelada</strong>.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">&ldquo;Precio inicial&rdquo; si nadie pujó, o &ldquo;Puja actual&rdquo; con el monto de la mejor puja.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--danger);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Cronómetro de tiempo restante — se pone en rojo y parpadea con menos de una hora.</div>
+        </div></div></div><div class="body-sm" style="font-size:22px; margin-top:40px;">Tocá cualquiera para abrir la ficha completa del vehículo.</div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">14 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">La ficha de un vehículo</div>
+      <div class="h1-lg">Cómo leerla, de arriba hacia abajo</div>
+      
+    </div><div style="margin-top:36px;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;"><div><div class="card" style="padding:32px;"><div class="caption" style="margin-bottom:20px;">De arriba hacia abajo</div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.4"/></svg></div><div><div class="h3" style="font-size:24px;">Galería de fotos</div><div class="body-sm" style="font-size:19px; margin-top:4px;">Tocá las miniaturas para cambiar la foto grande.</div></div></div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M14 3.5V8h4"/></svg></div><div><div class="h3" style="font-size:24px;">Especificaciones</div><div class="body-sm" style="font-size:19px; margin-top:4px;">Transmisión, combustible, km, condición, color, chapa y VIN.</div></div></div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M14 3.5V8h4"/></svg></div><div><div class="h3" style="font-size:24px;">Descripción</div><div class="body-sm" style="font-size:19px; margin-top:4px;">El texto que Santa Rosa cargó sobre el vehículo.</div></div></div></div></div><div><div class="card" style="padding:32px;"><div class="caption" style="margin-bottom:20px;">La columna que más importa</div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div><div class="h3" style="font-size:24px;">Tiempo restante</div><div class="body-sm" style="font-size:19px; margin-top:4px;">Cronómetro grande — ámbar bajo 1 hora, rojo bajo 1 minuto.</div></div></div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c0-1.2-1.3-2-3-2s-3 .9-3 2.1c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-.8-3-2"/></svg></div><div><div class="h3" style="font-size:24px;">Puja actual</div><div class="body-sm" style="font-size:19px; margin-top:4px;">El monto en USD, cuántas pujas hubo, incremento mínimo.</div></div></div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6"/><path d="M6.5 11.5l6-6 4 4-6 6z"/><path d="M4 20l6.5-6.5"/><path d="M13 20h7"/></svg></div><div><div class="h3" style="font-size:24px;">Panel de pujar</div><div class="body-sm" style="font-size:19px; margin-top:4px;">Ver la sección siguiente.</div></div></div><div class="row gap-18 items-center" style="margin-bottom:22px;"><div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.7 19c1.1-3.2 3.3-5 6.3-5s5.2 1.8 6.3 5"/><circle cx="17" cy="8.5" r="2.6"/><path d="M15.5 14.2c2.3.3 3.9 1.9 4.8 4.8"/></svg></div><div><div class="h3" style="font-size:24px;">Pujas en vivo</div><div class="body-sm" style="font-size:19px; margin-top:4px;">Nombre y hora de cada puja — la más alta, primero.</div></div></div></div></div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">15 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">El &ldquo;anti-sniping&rdquo;</div>
+      <div class="h1-lg">Nadie te puede robar la subasta en el último segundo</div>
+      
+    </div>
+    <div class="body-xl" style="margin-top:28px; max-width:1500px;">
+      Si alguien puja en los últimos 60 segundos, el cierre se estira automáticamente esos mismos segundos más.
+    </div>
+    <div style="margin-top:20px;">
+    <svg width="1680" height="300" viewBox="0 0 1680 300" fill="none">
+      <line x1="60" y1="150" x2="1400" y2="150" stroke="var(--line)" stroke-width="3"/>
+      <circle cx="60" cy="150" r="9" fill="var(--muted)"/>
+      <circle cx="1060" cy="150" r="9" fill="var(--warning)"/>
+      <text x="60" y="110" fill="var(--muted)" font-family="Inter" font-size="22" font-weight="600">Arranca la cuenta regresiva</text>
+      <text x="1000" y="110" fill="var(--warning)" font-family="Inter" font-size="22" font-weight="700">Alguien puja en los últimos 60&nbsp;s</text>
+      <line x1="1060" y1="150" x2="1400" y2="150" stroke="var(--warning)" stroke-width="5" stroke-dasharray="10 10"/>
+      <path d="M1390 138l14 12-14 12" stroke="var(--warning)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="1080" y="200" fill="var(--ink)" font-family="Space Grotesk" font-size="26" font-weight="700">+60 s de cierre</text>
+      <text x="1080" y="234" fill="var(--muted)" font-family="Inter" font-size="20">El reloj salta hacia adelante, solo cuando esto pasa</text>
+      <rect x="1440" y="118" width="200" height="64" rx="14" fill="var(--card-strong)" stroke="var(--line)"/>
+      <text x="1540" y="145" text-anchor="middle" fill="var(--ink)" font-family="Space Grotesk" font-size="20" font-weight="700">Tope total</text>
+      <text x="1540" y="170" text-anchor="middle" fill="var(--muted)" font-family="Inter" font-size="18">+30 min</text>
+    </svg>
+    </div>
+    <div class="body-sm" style="font-size:22px; max-width:1400px;">Como tope, el cierre nunca se puede estirar más de <strong class="on-ink">30 minutos en total</strong> por encima de la hora programada originalmente.</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">16 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Explorar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Explorar</div>
+      <div class="h1-lg">Favoritos: guardalos con el corazón</div>
+      
+    </div>
+    <div class="row gap-56 items-center" style="margin-top:64px;">
+      <div class="icon-badge danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.35-9.5-8.8C.8 8 2 4.5 5.3 4.5c2 0 3.3 1.1 4 2.3.7 1.1.7 1.1 1.4 0 .7-1.2 2-2.3 4-2.3 3.3 0 4.5 3.5 2.8 6.7C19 15.65 12 20 12 20z"/></svg></div>
+      <div class="stack gap-20" style="max-width:1300px;">
+        <div class="body-xl">Tocá el corazón que aparece arriba a la derecha de la foto, en cualquier tarjeta del catálogo, para agregar o quitar un vehículo de tus favoritos.</div>
+        <div class="body-txt">No hace falta estar en la ficha del vehículo — podés marcarlo directamente desde la grilla. Tus favoritos aparecen después en la pestaña <strong>&ldquo;Favoritos&rdquo;</strong> del catálogo.</div>
+      </div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">17 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></div>
+      <div class="caption" style="margin-top:26px;">Antes de poder pujar (o usar Compra Ya)</div>
+      <div class="h1-lg" style="margin-top:20px;">Necesitás tu documento cargado</div>
+      <div class="quote-block" style="margin-top:40px; text-align:left; display:inline-block;">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text" style="font-size:34px;">Completá tu perfil (documento) para poder pujar.</div>
+      </div>
+      <div class="body-sm" style="font-size:22px; margin-top:24px;">Si lo intentás sin haberlo hecho, el sitio te muestra este aviso con un botón &ldquo;Completar perfil&rdquo;.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">18 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Completar tu perfil</div>
+      <div class="h1-lg">Los cinco pasos</div>
+      
+    </div><div style="margin-top:26px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Andá a Configuración &gt; Perfil</div>
+            <div class="body-txt">Desde el menú de tu cuenta, o seguí el botón del aviso.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Completá Nombre y Apellido</div>
+            <div class="body-txt"></div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí el tipo de documento</div>
+            <div class="body-txt">Cédula (CI), RUC o Pasaporte — y escribí el número: CI hasta 7 dígitos, RUC 7 a 12 dígitos, Pasaporte 5 a 15 caracteres.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">4</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Opcional: teléfono y dirección</div>
+            <div class="body-txt">Para Paraguay, el teléfono va sin prefijo (9 dígitos).</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">5</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “Guardar cambios”</div>
+            <div class="body-txt">Si el número no es válido para Paraguay, el sitio avisa antes de guardar: <span class="mono-pill">&ldquo;Documento inválido para Paraguay.&rdquo;</span></div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">19 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Cómo pujar</div>
+      <div class="h1-lg">Paso 1 · El panel de pujar</div>
+      
+    </div><div style="margin-top:40px; max-width:1500px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí un monto rápido</div>
+            <div class="body-txt">Tres botones ya calculados: el primero (resaltado) es el mínimo permitido; los otros dos suman uno y dos incrementos más. Si Santa Rosa habilitó la puja manual, también hay un campo para escribir cualquier monto igual o mayor al mínimo.</div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">20 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack gap-28" style="height:100%; justify-content:center;">
+      <div class="caption">Paso 2 y 3 · Confirmar</div>
+      <div class="quote-block">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text">Vas a pujar USD {monto} por este vehículo.<br>Las pujas son en firme y no se pueden retirar.</div>
+      </div>
+      <div class="body-xl" style="max-width:1500px;">Tocá <strong>&ldquo;Confirmar puja&rdquo;</strong> para enviarla, o &ldquo;Cancelar&rdquo; para volver atrás sin pujar. Si todo sale bien, vas a ver un aviso verde: <span class="mono-pill">&ldquo;Puja registrada por USD {monto}&rdquo;</span></div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">21 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H4.8A2.3 2.3 0 0 0 6 9.7M16 5.5h3.2A2.3 2.3 0 0 1 18 9.7"/><path d="M12 13.5V17"/><path d="M8.5 20.5h7"/><path d="M9.5 17.3h5l.6 3.2h-6.2z"/></svg></div>
+      <div class="caption" style="margin-top:26px;">Paso 4 · Mientras nadie te supere</div>
+      <div class="pill pill-success" style="margin-top:26px; font-size:32px; padding:16px 36px;">Estás ganando.</div>
+      <div class="body-xl" style="margin-top:32px; max-width:1300px;">El panel cambia y muestra esta franja verde con el trofeo — vas a seguir viéndola mientras sigas siendo el mejor postor.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">22 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Cómo pujar</div>
+      <div class="h1-lg">Reglas automáticas que vas a notar si las tocás</div>
+      
+    </div><div class="grid-2 gap-24" style="margin-top:44px;"><div class="card" style="padding:30px 34px;">
+      <div style="width:44px;height:5px;border-radius:4px;background:var(--danger);margin-bottom:18px;"></div>
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">No te podés superar a vos mismo</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Si ya sos el mejor postor, el botón no te deja volver a pujar por el mismo vehículo.</div>
+    </div><div class="card" style="padding:30px 34px;">
+      <div style="width:44px;height:5px;border-radius:4px;background:var(--warning);margin-bottom:18px;"></div>
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Tope de USD 200.000 por puja</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Un límite de seguridad contra errores de tipeo, no pensado para frenarte.</div>
+    </div><div class="card" style="padding:30px 34px;">
+      <div style="width:44px;height:5px;border-radius:4px;background:var(--warning);margin-bottom:18px;"></div>
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Máximo 10 pujas por minuto</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">En toda la plataforma. Si vas muy rápido: “Demasiadas pujas. Espera un momento.”</div>
+    </div><div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Solo subastas En curso</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Programada o Finalizada/Cancelada no admiten pujas.</div>
+    </div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">23 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Cómo pujar</div>
+      <div class="h1-lg">Qué significa “te superaron”</div>
+      
+    </div><div style="margin-top:40px; max-width:1500px;"><div class="stack gap-24"><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">En la ficha, el panel deja de mostrar &ldquo;Estás ganando.&rdquo; y el monto de &ldquo;Puja actual&rdquo; sube.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--warning);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">Te llega un correo <strong>&ldquo;Te superaron · {marca} {modelo} {año}&rdquo;</strong> con tu puja anterior contra la actual, y un botón &ldquo;Volver a pujar&rdquo;.</div>
+        </div><div class="check-item">
+          <div class="check-dot" style="background:rgba(248,248,248,0.08);color:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
+          <div class="body-txt" style="padding-top:2px;">En <strong>Mis pujas</strong>, esa subasta pasa a la pestaña &ldquo;Superado&rdquo;.</div>
+        </div></div></div><div class="body-txt" style="margin-top:36px; max-width:1500px;">No hay ningún límite para volver a pujar mientras la subasta siga en curso — podés recuperar la punta las veces que quieras, siempre que cada nueva puja sea en firme.</div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">24 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c0-1.2-1.3-2-3-2s-3 .9-3 2.1c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-.8-3-2"/></svg></div>
+      <div class="caption" style="margin-top:26px;">Compra Ya</div>
+      <div class="h1-lg" style="margin-top:20px; max-width:1500px;">Pagás el precio fijo y te llevás el vehículo al instante</div>
+      <div class="body-xl" style="margin-top:32px; max-width:1300px; color:var(--warning);"><strong style="color:var(--warning);">Regla clave: Compra Ya solo existe mientras nadie pujó todavía.</strong></div>
+      <div class="body-txt" style="margin-top:20px; max-width:1300px;">En el momento en que entra la primera puja de cualquier comprador, la opción desaparece para siempre de esa subasta. No todas las subastas la tienen — es opcional, decisión de Santa Rosa.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">25 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Compra Ya</div>
+      <div class="h1-lg">Cómo usarla, paso a paso</div>
+      
+    </div><div style="margin-top:32px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “Comprar ahora”</div>
+            <div class="body-txt">Si la subasta tiene Compra Ya y todavía no hay pujas, vas a ver una tarjeta con el precio fijo en USD.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Confirmá la compra</div>
+            <div class="body-txt">Aparece el cartel: <span class="mono-pill">&ldquo;Vas a comprar el {marca} {modelo} {año} por USD {precio}. La subasta cierra al instante y tenés 24 h para abonar la seña.&rdquo;</span> Ese &ldquo;24 h&rdquo; es el plazo más común — la hora límite exacta te la muestra la pantalla de &ldquo;Ganaste&rdquo;.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Listo</div>
+            <div class="body-txt">Si todo salió bien: <span class="mono-pill">&ldquo;¡Compra confirmada! Revisá tu correo para abonar la seña.&rdquo;</span></div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">26 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Pujar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Compra Ya</div>
+      <div class="h1-lg">Qué puede salir mal</div>
+      
+    </div><div style="margin-top:32px;"><div class="card" style="padding:28px 32px; margin-bottom:20px;">
+      <div class="row gap-18 items-center">
+        <div class="icon-badge sm danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+        <div><div class="h3" style="font-size:24px;">Alguien pujó un segundo antes que confirmes</div><div class="body-sm" style="font-size:20px; margin-top:8px;">&ldquo;Esta unidad ya no está disponible para compra directa.&rdquo;</div></div>
+      </div>
+    </div><div class="card" style="padding:28px 32px; margin-bottom:20px;">
+      <div class="row gap-18 items-center">
+        <div class="icon-badge sm warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+        <div><div class="h3" style="font-size:24px;">Santa Rosa cambió el precio mientras tenías el cartel abierto</div><div class="body-sm" style="font-size:20px; margin-top:8px;">&ldquo;El precio de Compra ya cambió. Revisá el precio actualizado antes de confirmar.&rdquo;</div></div>
+      </div>
+    </div><div class="card" style="padding:28px 32px; margin-bottom:20px;">
+      <div class="row gap-18 items-center">
+        <div class="icon-badge sm ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+        <div><div class="h3" style="font-size:24px;">Tu perfil no tiene documento cargado</div><div class="body-sm" style="font-size:20px; margin-top:8px;">&ldquo;Se te pide completarlo, igual que al pujar.&rdquo;</div></div>
+      </div>
+    </div></div><div class="body-sm" style="font-size:21px; margin-top:8px;">El sitio siempre te lo dice con un mensaje claro — y nunca te va a cobrar un precio distinto al que viste y confirmaste.</div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">27 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Cuando ganás una subasta</div>
+      <div class="h1-lg">Dos caminos posibles, mismo resultado</div>
+      
+    </div><div style="display:grid; grid-template-columns:1fr 1fr; gap:40px;"><div><div class="card" style="padding:36px;">
+      <div class="stack gap-20">
+        <div class="icon-badge ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6"/><path d="M6.5 11.5l6-6 4 4-6 6z"/><path d="M4 20l6.5-6.5"/><path d="M13 20h7"/></svg></div>
+        <div class="h3">Siendo el mejor postor</div>
+        <div class="body-txt">Cuando se acaba el tiempo y tu puja fue la más alta.</div>
+      </div>
+    </div></div><div><div class="card" style="padding:36px;">
+      <div class="stack gap-20">
+        <div class="icon-badge ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c0-1.2-1.3-2-3-2s-3 .9-3 2.1c0 3 6 1.4 6 4.3 0 1.3-1.3 2.2-3 2.2s-3-.8-3-2"/></svg></div>
+        <div class="h3">Con Compra Ya</div>
+        <div class="body-txt">Pagando el precio fijo al instante, antes de que termine el cronómetro.</div>
+      </div>
+    </div></div></div><div class="card-strong" style="padding:36px; margin-top:36px;">
+      <div class="row gap-24 items-center">
+        <div class="icon-badge success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H4.8A2.3 2.3 0 0 0 6 9.7M16 5.5h3.2A2.3 2.3 0 0 1 18 9.7"/><path d="M12 13.5V17"/><path d="M8.5 20.5h7"/><path d="M9.5 17.3h5l.6 3.2h-6.2z"/></svg></div>
+        <div>
+          <div class="pill pill-success" style="font-size:26px;">¡Ganaste la subasta!</div>
+          <div class="body-txt" style="margin-top:14px;">&ldquo;Adjudicaste este vehículo por USD {monto}. Te enviamos los pasos para pagar la seña por correo.&rdquo; — y te llega el correo <strong>&ldquo;¡Ganaste la subasta! {marca} {modelo} {año}&rdquo;</strong> con el precio final, la seña, los datos bancarios y la fecha límite.</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">28 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Pagar la seña</div>
+      <div class="h1-lg">El estado de tu adjudicación</div>
+      
+    </div>
+    <div class="body-xl" style="max-width:1500px;">Abrí el vehículo desde <strong>Ganadas</strong> o desde el enlace del correo. Arriba a la derecha vas a ver uno de estos tres estados:</div>
+    <div class="row gap-24" style="margin-top:44px;">
+      <span class="pill pill-warning">Pendiente de seña</span>
+      <span class="pill pill-success">Seña confirmada</span>
+      <span class="pill pill-danger">Adjudicación liberada</span>
+    </div>
+    <div class="card" style="padding:36px; margin-top:44px; max-width:1500px;">
+      <div class="row gap-20 items-center"><div class="icon-badge sm warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+      <div><div class="h3" style="font-size:26px;">Mientras esté pendiente</div>
+      <div class="body-txt" style="margin-top:10px;">Vas a ver un cronómetro grande y la frase <strong>&ldquo;Plazo final: {fecha y hora exacta} (hora Paraguay)&rdquo;</strong> — la misma hora límite que te llegó por correo.</div></div></div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">29 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Pagar la seña</div>
+      <div class="h1-lg">Los datos para transferir</div>
+      
+    </div>
+    <div class="row gap-56" style="margin-top:64px;">
+      <div class="icon-badge ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l8-5 8 5"/><path d="M4 10h16v1.5H4z"/><path d="M5.5 11.5v6.5M9.5 11.5v6.5M14.5 11.5v6.5M18.5 11.5v6.5"/><path d="M3.5 20h17"/></svg></div>
+      <div class="stack gap-24" style="max-width:1350px;">
+        <div class="body-xl">En &ldquo;Datos para la transferencia&rdquo; vas a encontrar el monto exacto de la seña en USD (y el porcentaje sobre el precio final), y los datos de la cuenta bancaria de Santa Rosa — en dólares y, si corresponde, en guaraníes.</div>
+        <div class="body-txt">Cada dato tiene un botón de copiar al lado. Si Santa Rosa todavía no cargó los datos bancarios, vas a leer: <span class="mono-pill">&ldquo;Santa Rosa Paraguay SA se va a contactar con vos para enviarte los datos de la cuenta.&rdquo;</span></div>
+      </div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">30 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Confirmá tu pago</div>
+      <div class="h1-lg">Subir el comprobante</div>
+      
+    </div><div style="margin-top:32px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Hacé la transferencia</div>
+            <div class="body-txt">Por el monto exacto de la seña, usando los datos bancarios.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí el archivo</div>
+            <div class="body-txt">“Elegir archivo (JPG, PNG o PDF · máx 10 MB)” — la foto o el PDF del comprobante.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:44px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Tocá “Enviar comprobante”</div>
+            <div class="body-txt">Vas a ver el aviso verde: <span class="mono-pill">&ldquo;Comprobante enviado&rdquo;</span> — un asesor de Santa Rosa lo va a verificar y te confirma a la brevedad.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">4</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Esperá la confirmación</div>
+            <div class="body-txt">Cuando Santa Rosa confirme, el estado pasa a &ldquo;Seña confirmada&rdquo; y te llega el correo &ldquo;Pago confirmado&rdquo;.</div>
+          </div>
+        </div></div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">31 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.8l9.3 16.2H2.7z"/><path d="M12 10v4.2"/><circle cx="12" cy="17" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+      <div class="caption" style="margin-top:26px;">Si no pagás a tiempo</div>
+      <div class="h1-lg" style="margin-top:20px; max-width:1500px;">El sistema libera la adjudicación automáticamente</div>
+      <div class="body-xl" style="margin-top:28px; max-width:1350px;">El plazo se cumple exactamente en la fecha y hora que viste — <strong>no hay tolerancia manual por default.</strong> El sistema lo revisa cada minuto.</div>
+      <div class="body-txt" style="margin-top:24px; max-width:1350px;">El vehículo vuelve a quedar disponible para una subasta nueva. No hay forma de &ldquo;reactivar&rdquo; tu compra anterior — por eso conviene pagar y subir el comprobante lo antes posible.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">32 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">El cartel VENDIDO</div>
+      <div class="h1-lg">Dos motivos posibles, un mismo resultado</div>
+      
+    </div>
+    <svg width="1680" height="340" viewBox="0 0 1680 340" fill="none">
+      <rect x="40" y="40" width="620" height="140" rx="18" fill="var(--card-strong)" stroke="var(--line)"/>
+      <text x="350" y="100" text-anchor="middle" fill="var(--ink)" font-family="Space Grotesk" font-size="26" font-weight="700">Se vendió en la plataforma</text>
+      <text x="350" y="140" text-anchor="middle" fill="var(--muted)" font-family="Inter" font-size="20">Alguien ganó pujando, o con Compra Ya</text>
+
+      <rect x="1020" y="40" width="620" height="140" rx="18" fill="var(--card-strong)" stroke="var(--line)"/>
+      <text x="1330" y="100" text-anchor="middle" fill="var(--ink)" font-family="Space Grotesk" font-size="26" font-weight="700">Se vendió en el salón</text>
+      <text x="1330" y="140" text-anchor="middle" fill="var(--muted)" font-family="Inter" font-size="20">Compra presencial mientras seguía en subasta</text>
+
+      <path d="M350 180 L350 240 Q350 260 460 260 L780 260" stroke="var(--muted)" stroke-width="3" fill="none"/>
+      <path d="M1330 180 L1330 240 Q1330 260 1220 260 L900 260" stroke="var(--muted)" stroke-width="3" fill="none"/>
+      <path d="M840 250 L840 300" stroke="var(--muted)" stroke-width="3" fill="none"/>
+      <path d="M828 288l12 16 12-16" stroke="var(--muted)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <rect x="660" y="300" width="360" height="0" />
+    </svg>
+    <div class="stack items-center" style="text-align:center; margin-top:-10px;">
+      <div class="pill pill-danger" style="font-size:34px; padding:18px 44px; letter-spacing:0.06em;">VENDIDO</div>
+      <div class="body-txt" style="margin-top:18px; max-width:1200px;">El cartel es el mismo en los dos casos — desde afuera no se distingue cuál pasó, y no hace falta: la unidad ya no se puede comprar por esta vía.</div>
+    </div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">33 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Ganar y pagar</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack gap-28" style="height:100%; justify-content:center;">
+      <div class="caption">Si vos habías pujado y se vendió en el salón</div>
+      <div class="h2">No vas a ver &ldquo;¡Ganaste la subasta!&rdquo;, aunque fueras el mejor postor</div>
+      <div class="quote-block">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text" style="font-size:32px;">La unidad {vehículo} por la que habías pujado se vendió en nuestro salón, así que la subasta se cerró antes de tiempo. Lamentamos el inconveniente. Tu puja no genera ningún cargo. Seguí atento: publicamos lotes nuevos con frecuencia.</div>
+      </div>
+      <div class="body-txt">Te llega el correo <strong>&ldquo;Subasta finalizada · {vehículo}&rdquo;</strong>. Tu puja no te compromete a nada, y en <strong>Mis pujas</strong> esa subasta figura como perdida.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">34 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu panel</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Mis pujas</div>
+      <div class="h1-lg">Una tabla con cuatro pestañas</div>
+      
+    </div><div style="margin-top:40px;"><table class="tviz"><thead><tr><th style="width:320px;">Pestaña</th><th style="">Qué ves ahí</th></tr></thead><tbody><tr><td>Ganando</td><td>Subastas en curso donde ahora mismo sos el mejor postor</td></tr><tr><td>Superado</td><td>Subastas en curso donde alguien te superó</td></tr><tr><td>Ganadas</td><td>Subastas cerradas que ganaste vos</td></tr><tr><td>Perdidas</td><td>Subastas cerradas que no ganaste (incluye ventas en salón mientras pujabas)</td></tr></tbody></table></div><div class="body-sm" style="font-size:21px; margin-top:28px;">Si pujaste varias veces por el mismo vehículo, solo se muestra tu puja más reciente.</div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">35 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu panel</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Tu panel</div>
+      <div class="h1-lg">Mis subastas ganadas</div>
+      
+    </div>
+    <div class="row gap-56 items-center" style="margin-top:64px;">
+      <div class="icon-badge success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 5.5H4.8A2.3 2.3 0 0 0 6 9.7M16 5.5h3.2A2.3 2.3 0 0 1 18 9.7"/><path d="M12 13.5V17"/><path d="M8.5 20.5h7"/><path d="M9.5 17.3h5l.6 3.2h-6.2z"/></svg></div>
+      <div class="stack gap-20" style="max-width:1350px;">
+        <div class="body-xl">Desde el menú, <strong>&ldquo;Ganadas&rdquo;</strong> lista cada vehículo que ganaste, con foto, precio final y un indicador de pago.</div>
+        <div class="row gap-16" style="margin-top:8px;"><span class="pill pill-success">Seña confirmada</span><span class="pill pill-danger">Liberada</span><span class="pill pill-warning">Quedan {tiempo}</span></div>
+        <div class="body-txt" style="margin-top:16px;">Tocá cualquiera para abrir la pantalla completa de pago.</div>
+      </div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">36 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu panel</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Tu panel</div>
+      <div class="h1-lg">La calculadora de cuotas</div>
+      <div class="lead" style="margin-top:20px;max-width:1250px;">Si Santa Rosa la habilitó para esa subasta.</div>
+    </div><div style="margin-top:12px;"><div class="stack" style="position:relative;">
+        <div class="step-row" style="margin-bottom:24px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Elegí el plazo en meses</div>
+            <div class="body-txt">Las opciones las define Santa Rosa.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:24px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Ajustá la entrega inicial en guaraníes</div>
+            <div class="body-txt">Viene precargada con un porcentaje sugerido del precio.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:24px; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">La cuota mensual se recalcula sola</div>
+            <div class="body-txt">También en guaraníes.</div>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0; position:relative;">
+          <div class="step-col">
+            <div class="step-num filled">4</div>
+            
+          </div>
+          <div class="stack gap-8" style="padding-top:6px;">
+            <div class="h3">Revisá las notas legales si querés</div>
+            <div class="body-txt">Las condiciones que haya cargado Santa Rosa.</div>
+          </div>
+        </div></div></div><div class="card" style="padding:20px 30px; margin-top:20px;">
+      <div class="row gap-16 items-center"><div class="icon-badge sm warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.15" fill="currentColor" stroke-width="2.4"/></svg></div>
+      <div class="body-sm" style="font-size:21px;">Es una <strong>simulación, sujeta a aprobación</strong> — no un crédito aprobado. Solo aparece si el precio supera un mínimo financiable; si no, vas a leer &ldquo;Disponible para montos desde USD {monto}.&rdquo;</div></div>
+    </div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">37 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu panel</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Tu panel</div>
+      <div class="h1-lg">Configuración de tu cuenta</div>
+      <div class="lead" style="margin-top:20px;max-width:1250px;">Cuatro secciones, desde tu nombre o el ícono de ajustes.</div>
+    </div><div class="grid-2 gap-24" style="margin-top:36px;"><div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Perfil</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Tus datos personales y de documento. El correo no se puede cambiar desde acá.</div>
+    </div><div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Seguridad</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Cambiar contraseña, y cerrar sesión en todos los dispositivos.</div>
+    </div><div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Preferencias</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Idioma, tema, y tres interruptores de notificaciones por email.</div>
+    </div><div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Zona de peligro</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Eliminar tu cuenta — ver la próxima diapositiva.</div>
+    </div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">38 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Tu panel</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body">
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="icon-badge danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14"/><path d="M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="M7 7l1 12.2A1.8 1.8 0 0 0 9.8 21h4.4a1.8 1.8 0 0 0 1.8-1.8L17 7"/><path d="M10 11v6M14 11v6"/></svg></div>
+      <div class="caption" style="margin-top:26px;">Zona de peligro</div>
+      <div class="h1-lg" style="margin-top:20px;">Eliminar mi cuenta — es irreversible</div>
+      <div class="grid-3 gap-24" style="margin-top:44px; max-width:1500px; text-align:left;">
+        <div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Al instante</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Tu cuenta se desactiva de inmediato.</div>
+    </div>
+        <div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">A los 30 días</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Tus datos personales se eliminan.</div>
+    </div>
+        <div class="card" style="padding:30px 34px;">
+      
+      <div class="h3" style="font-size:25px;margin-bottom:10px;">Para siempre</div>
+      <div class="body-sm" style="font-size:19px; color:var(--body);">Tus pujas y compras quedan en el historial, pero anonimizadas.</div>
+    </div>
+      </div>
+      <div class="body-sm" style="font-size:22px; margin-top:32px;">Para confirmar, tenés que escribir la palabra <span class="mono-pill">ELIMINAR</span> exactamente.</div>
+    </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">39 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    
+    <div class="slide-header">
+      <div class="kicker">Manual del Comprador Retail</div>
+      <div class="kicker">Resumen</div>
+    </div>
+    <div class="slide-header-line"></div>
+    <div class="slide-body"><div class="stack gap-16" style="align-items:flex-start;text-align:left;">
+      <div class="caption">Resumen</div>
+      <div class="h1-lg">Las reglas que no podés romper</div>
+      
+    </div><div style="margin-top:32px; max-width:1600px;"><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">1</div>
+      <div class="body-xl" style="padding-top:6px;">Una puja confirmada no se puede retirar.</div>
+    </div><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">2</div>
+      <div class="body-xl" style="padding-top:6px;">Necesitás el documento cargado en tu perfil antes de poder pujar o comprar.</div>
+    </div><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">3</div>
+      <div class="body-xl" style="padding-top:6px;">Compra Ya desaparece apenas hay una primera puja — es todo o nada.</div>
+    </div><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">4</div>
+      <div class="body-xl" style="padding-top:6px;">Ganar te obliga a pagar la seña dentro del plazo exacto de la pantalla “Ganaste” — no el del cartel de confirmación.</div>
+    </div><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">5</div>
+      <div class="body-xl" style="padding-top:6px;">Si no pagás a tiempo, perdés el vehículo sin excepción automática.</div>
+    </div><div class="row gap-20 items-start" style="margin-bottom:26px;">
+      <div class="step-num filled" style="width:48px;height:48px;font-size:22px;flex-shrink:0;">6</div>
+      <div class="body-xl" style="padding-top:6px;">El cartel VENDIDO significa lo mismo sin importar si fue por la plataforma o en el salón.</div>
+    </div></div></div>
+    <div class="slide-footer">
+      <div class="footer-word"><span class="wordmark"><b>Re</b>new Subastas</span> &nbsp;·&nbsp; Manual del Comprador</div>
+      <div class="pagenum num">40 / 41</div>
+    </div>
+    </div>
+<div class="slide " data-canvas-width="1920" data-canvas-height="1080">
+    <div class="glow-bl"></div>
+    <div class="stack items-center" style="height:100%; justify-content:center; text-align:center;">
+      <div class="wordmark" style="font-size:72px;"><span class="re">Re</span><span class="new">new</span> Subastas</div>
+      <div class="body-xl" style="margin-top:28px; color:var(--muted);">renewsubastas.com.py</div>
+      <div class="body-sm" style="margin-top:14px; font-size:22px;">Santa Rosa Paraguay S.A.</div>
+    </div>
+    </div>
+</body>
+</html>
