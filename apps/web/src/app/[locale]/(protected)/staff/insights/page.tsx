@@ -2,13 +2,15 @@ import Link from 'next/link';
 import { AlertTriangle, Eye, Gavel, TrendingDown } from 'lucide-react';
 import { requireRole } from '@/lib/auth/server';
 import { loadInsights } from '@/lib/insights/load-insights';
+import { loadTrafficInsights } from '@/lib/insights/load-traffic';
 import { VEHICLE_STATUS_LABEL, fmtUsd } from '@/lib/insights/format';
+import { TrafficPanel } from './_components/traffic-panel';
 
 export const dynamic = 'force-dynamic';
 
 export default async function InsightsPage({ params: { locale } }: { params: { locale: string } }) {
   await requireRole(locale, ['admin', 'staff']);
-  const rows = await loadInsights();
+  const [rows, traffic] = await Promise.all([loadInsights(), loadTrafficInsights()]);
 
   return (
     <div className="space-y-5">
@@ -23,6 +25,10 @@ export default async function InsightsPage({ params: { locale } }: { params: { l
           Quién mira cada vehículo, cómo se movió el precio y cuáles llevan 7+ días sin venderse.
         </p>
       </header>
+
+      <TrafficPanel insights={traffic} />
+
+      <h2 className="text-sm font-semibold text-text-strong tracking-tight">Por vehículo</h2>
 
       {rows.length === 0 ? (
         <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-10 text-center">

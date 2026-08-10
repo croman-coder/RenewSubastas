@@ -125,6 +125,30 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Anonymous web-traffic counter
+    // (docs/superpowers/specs/2026-08-08-trafico-web-design.md). Raw
+    // per-visit events: one doc per page view, auto-id'd, written only by
+    // the logPageView Cloud Function (Admin SDK bypasses rules — it has no
+    // requireSignedIn call on purpose, since anonymous visitors are the
+    // entire point). No client of any role — buyer, staff, or admin — ever
+    // reads or writes this collection directly; /staff/insights reads the
+    // rolled-up aggregate below instead. Deny both directions explicitly
+    // rather than relying on the implicit default-deny, same reasoning as
+    // password_set_tokens and rate_limits above.
+    match /page_views/{id} {
+      allow read, write: if false;
+    }
+
+    // Daily rollup of page_views (yesterday's Paraguay-local day), written
+    // only by the aggregateTraffic scheduler (Admin SDK). Read access
+    // mirrors app_config just above: admin/staff/finanzas can see traffic
+    // numbers, buyers never can — there is nothing buyer-specific in here,
+    // just site-wide counts.
+    match /insights_traffic_daily/{date} {
+      allow read:  if isAdmin() || isStaff() || isFinanzas();
+      allow write: if false;
+    }
+
     match /audit_logs/{id} {
       allow read:  if isAdmin();
       allow write: if false;
