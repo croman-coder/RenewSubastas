@@ -4,6 +4,26 @@
   command = "pnpm install --frozen-lockfile && pnpm --filter @carbid/shared-types build && pnpm --filter @carbid/web build"
   publish = "apps/web/.next"
 
+  # Skip the build when nothing that reaches the browser changed.
+  #
+  # This is a monorepo: `functions/`, `firestore.rules`, `firestore.indexes.json`
+  # and `docs/` all live beside the site but are deployed by the Firebase CLI, not
+  # by Netlify. Without this, a commit touching only an index definition still ran
+  # the full Next build and published a byte-identical site — real money for no
+  # change. Production deploys were 76% of this account's credit burn.
+  #
+  # Semantics are inverted on purpose: exit 0 means "ignore this commit", exit 1
+  # means "build it". `git diff --quiet` exits 0 when the listed paths are
+  # unchanged, which is exactly the skip condition, so no negation is needed.
+  #
+  # The list is deliberately over-inclusive. A build that wasn't needed costs
+  # credits; a build that was needed and got skipped ships a stale site, which is
+  # far worse. When in doubt, add the path.
+  #
+  # If CACHED_COMMIT_REF is unset (first build after enabling this, or a cleared
+  # cache) the command fails and Netlify builds — the safe direction.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps packages package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json netlify.toml"
+
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "9"
