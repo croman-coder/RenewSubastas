@@ -136,3 +136,38 @@ export function buildFunnelSteps(funnel: Record<FunnelStage, number>): FunnelSte
     };
   });
 }
+
+/**
+ * Bar-width percentage for each funnel stage, sized against the funnel's
+ * OWN largest stage count — deliberately NOT against `home` specifically.
+ *
+ * This answers a different question than `FunnelStepStat.pctOfFirst` above.
+ * `pctOfFirst` answers "what share of home reached this stage", and is
+ * honestly `null` when home itself is 0 — there is no meaningful "% of
+ * zero". That's the right answer for the drop-off TEXT. But a bar chart
+ * still has to size every bar by SOMETHING, and for this business a day
+ * where `home` is 0 while `detail` is 200 is not a corner case: Santa
+ * Rosa's Instagram ads link straight to a vehicle detail page, so a good
+ * ad day can legitimately have zero classified home visits. Sizing bars
+ * off `pctOfFirst` in that shape collapsed every bar to 0% width — home,
+ * catalog, AND detail — while the number next to the detail bar still read
+ * 200. Numbers right, chart looking broken, on exactly the screen this
+ * feature exists to prove the ad spend works.
+ *
+ * Every returned value is in `[0, 100]` by construction (each stage's count
+ * divided by the max of all stages can never exceed 1, and counts are never
+ * negative) — callers do not need to re-clamp. Returns 0 for every stage,
+ * never `NaN`, when the funnel itself is entirely empty (every stage's
+ * count is 0).
+ */
+export function funnelBarWidthsPct(
+  funnel: Record<FunnelStage, number>,
+): Record<FunnelStage, number> {
+  const max = Math.max(...FUNNEL_STAGES.map((stage) => funnel[stage]));
+  const widths = zeroRecord(FUNNEL_STAGES);
+  if (max <= 0) return widths;
+  for (const stage of FUNNEL_STAGES) {
+    widths[stage] = Math.max(0, Math.min(100, Math.round((funnel[stage] / max) * 100)));
+  }
+  return widths;
+}

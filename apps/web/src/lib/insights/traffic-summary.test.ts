@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   summarizeTrafficHistory,
   buildFunnelSteps,
+  funnelBarWidthsPct,
   type TrafficDailyAggregate,
 } from './traffic-summary';
 
@@ -117,5 +118,53 @@ describe('buildFunnelSteps', () => {
     const steps = buildFunnelSteps({ home: 10, catalog: 10, detail: 10, login: 10 });
 
     expect(steps[0]!.pctOfPrevious).toBeNull();
+  });
+});
+
+describe('funnelBarWidthsPct', () => {
+  it('agrees with a home-is-the-max funnel: same numbers pctOfFirst would give', () => {
+    const widths = funnelBarWidthsPct({ home: 400, catalog: 320, detail: 90, login: 4 });
+
+    expect(widths).toEqual({ home: 100, catalog: 80, detail: 23, login: 1 });
+  });
+
+  it('regression: sizes a bar off the funnel MAX, not off `home`, when home is 0', () => {
+    // Santa Rosa's Instagram ads link straight to a vehicle detail page —
+    // a day with zero classified home visits and 200 detail sessions is
+    // the expected shape of a good ad day, not a corner case. Detail must
+    // render a full-width bar here, not collapse to 0% alongside home.
+    const widths = funnelBarWidthsPct({ home: 0, catalog: 0, detail: 200, login: 10 });
+
+    expect(widths).toEqual({ home: 0, catalog: 0, detail: 100, login: 5 });
+  });
+
+  it('sizes every bar relative to whichever stage is largest, even a middle one', () => {
+    const widths = funnelBarWidthsPct({ home: 50, catalog: 10, detail: 80, login: 5 });
+
+    expect(widths).toEqual({ home: 63, catalog: 13, detail: 100, login: 6 });
+  });
+
+  it('returns all zeros — never NaN — for an entirely empty funnel', () => {
+    const widths = funnelBarWidthsPct({ home: 0, catalog: 0, detail: 0, login: 0 });
+
+    expect(widths).toEqual({ home: 0, catalog: 0, detail: 0, login: 0 });
+    for (const stage of ['home', 'catalog', 'detail', 'login'] as const) {
+      expect(Number.isNaN(widths[stage])).toBe(false);
+    }
+  });
+
+  it('every value stays within [0, 100]', () => {
+    const cases = [
+      { home: 400, catalog: 320, detail: 90, login: 4 },
+      { home: 0, catalog: 0, detail: 200, login: 10 },
+      { home: 1, catalog: 1000, detail: 1, login: 1 },
+    ];
+    for (const funnel of cases) {
+      const widths = funnelBarWidthsPct(funnel);
+      for (const stage of ['home', 'catalog', 'detail', 'login'] as const) {
+        expect(widths[stage]).toBeGreaterThanOrEqual(0);
+        expect(widths[stage]).toBeLessThanOrEqual(100);
+      }
+    }
   });
 });
