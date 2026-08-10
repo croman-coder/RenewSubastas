@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from '../lib/admin.js';
 import {
@@ -244,6 +244,51 @@ describe('runAggregateTraffic', () => {
 
     const doc = await adminDb().doc(`insights_traffic_daily/${YESTERDAY}`).get();
     expect(doc.data()!['totalViews']).toBe(999); // aggregate itself was never rewritten
+  });
+
+  it('threads deleteBatchSize (not pageSize) through the already-aggregated cleanup path', async () => {
+    // Same "interrupted prior run" setup as above, but this time the point
+    // is the delete-chunking, not the numbers: pageSize (query limit) is
+    // deliberately LARGER than deleteBatchSize. If the cleanup path reused
+    // pageSize as the delete-chunk size (the bug this guards against), 5
+    // leftover docs would be deleted in exactly 1 batch; with
+    // deleteBatchSize correctly threaded through, they must take 3
+    // (ceil(5/2)). A batch() spy makes that observable directly instead of
+    // only inferring it from a lack of a thrown over-cap error.
+    await adminDb()
+      .doc(`insights_traffic_daily/${YESTERDAY}`)
+      .set({
+        date: YESTERDAY,
+        totalViews: 5,
+        uniqueSessions: 5,
+        byPathKind: { home: 5, catalog: 0, detail: 0, login: 0, other: 0 },
+        bySource: { ig: 0, fb: 0, google: 0, direct: 5, other: 0 },
+        funnel: { home: 5, catalog: 0, detail: 0, login: 0 },
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    const leftoverIds = ['o1', 'o2', 'o3', 'o4', 'o5'];
+    for (const id of leftoverIds) {
+      await seedView({
+        sessionId: id,
+        pathKind: 'home',
+        source: 'direct',
+        atMs: paraguayInstant(YESTERDAY, 10, 0),
+      });
+    }
+
+    const db = adminDb();
+    const batchSpy = vi.spyOn(db, 'batch');
+
+    const result = await runAggregateTraffic(NOW, { pageSize: 5, deleteBatchSize: 2 });
+
+    expect(result.alreadyAggregated).toBe(true);
+    expect(result.deletedCount).toBe(5);
+    expect(batchSpy).toHaveBeenCalledTimes(3); // ceil(5/2), not 1 (ceil(5/5))
+
+    const remaining = await allPageViews();
+    expect(remaining).toHaveLength(0);
+
+    batchSpy.mockRestore();
   });
 
   it('paginates the read and the delete across multiple pages instead of loading a whole day at once', async () => {

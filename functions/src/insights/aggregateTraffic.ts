@@ -151,12 +151,20 @@ async function deleteByRefs(
  * only when an aggregate already exists for the date (see `alreadyAggregated`
  * above) — the numbers are already durable, so this just finishes discarding
  * the raw events that were already counted into them.
+ *
+ * `pageSize` (query limit) and `deleteBatchSize` (delete-chunk size) are
+ * deliberately separate parameters, not one value reused for both: a page
+ * can be up to `pageSize` docs, and Firestore's `WriteBatch` cap is a fixed
+ * 500 regardless of `pageSize`. Collapsing them would work today only
+ * because both default to 500 — raising `pageSize` above 500 while reusing
+ * it as the delete-chunk size would throw on the very first over-cap batch.
  */
 async function deleteRemainingRawEvents(
   db: FirebaseFirestore.Firestore,
   startMs: number,
   endMs: number,
   pageSize: number,
+  deleteBatchSize: number,
 ): Promise<number> {
   const col = db.collection('page_views');
   let deleted = 0;
@@ -171,7 +179,7 @@ async function deleteRemainingRawEvents(
     deleted += await deleteByRefs(
       db,
       snap.docs.map((d) => d.ref),
-      pageSize,
+      deleteBatchSize,
     );
     if (snap.size < pageSize) break;
   }
@@ -226,7 +234,13 @@ export async function runAggregateTraffic(
 
   const existing = await aggRef.get();
   if (existing.exists) {
-    const deletedCount = await deleteRemainingRawEvents(db, startMs, endMs, pageSize);
+    const deletedCount = await deleteRemainingRawEvents(
+      db,
+      startMs,
+      endMs,
+      pageSize,
+      deleteBatchSize,
+    );
     const data = existing.data() as TrafficDailyAggregate;
     return {
       date,
@@ -325,6 +339,22 @@ export const aggregateTraffic = onSchedule(
     schedule: '30 9 * * *',
     timeZone: 'America/Asuncion',
     region: 'us-central1',
+    // Closes the one real concurrency gap in this function: two overlapping
+    // executions for the same date can both pass the `aggRef.exists` check
+    // before either writes, after which one's deletes shrink the row set
+    // out from under the other's still-running read pass — the loser then
+    // persists an undercounted aggregate over the correct one, permanently,
+    // since the raw docs it read are already gone. Cloud Scheduler itself
+    // isn't the likely source (retryCount defaults to 0 and no retryConfig
+    // is set here), but the underlying Pub/Sub delivery is at-least-once
+    // regardless, so a redelivered invocation could still overlap a still-
+    // running one without this. maxInstances: 1 caps this function to one
+    // running instance at a time: a redelivery either queues behind the
+    // in-flight instance (and finds the aggregate already written, taking
+    // the alreadyAggregated no-op/cleanup path) or is retried later by
+    // Pub/Sub — either way, two instances never read the same undeleted
+    // raw docs concurrently.
+    maxInstances: 1,
   },
   async () => {
     const r = await runAggregateTraffic();
