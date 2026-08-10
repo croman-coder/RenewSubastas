@@ -152,6 +152,42 @@ export function classifyPath(pathname: string): PathKind {
 }
 
 // ---------------------------------------------------------------------------
+// extractAuctionId
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the auction id segment from an auction-detail path, or
+ * `undefined` for every other kind of path.
+ *
+ * `classifyPath`'s return type is fixed to `PathKind` — it can say a path is
+ * `'detail'` but has no room to also carry the id. This function is the
+ * second, narrower piece of route-shape knowledge the `logPageView` callable
+ * (a later task) needs to populate the optional `auctionId` field. It
+ * re-derives the route shape from the same private helpers `classifyPath`
+ * uses (`stripQueryAndHash`, `routeSegments`) rather than re-parsing the
+ * pathname a different way, so the two can never disagree about what counts
+ * as a detail page — there's exactly one place in this file that knows the
+ * shape `/{locale}/auctions/{id}`.
+ *
+ * Deliberately returns the SECOND segment, not the last one:
+ * `classifyPath` classifies `/auctions/{id}/anything` as `'detail'` too (it
+ * only ever looks at the first two segments), so a path like
+ * `/es/auctions/abc123/photos` must still yield `'abc123'`, not `'photos'`.
+ *
+ * The returned string is otherwise completely unvalidated — this module
+ * takes no dependency on `ids.ts` (it stays the zero-import, side-effect-free
+ * file described at the top of this file), so it has no opinion on what a
+ * well-formed id looks like. Deciding whether this segment is safe to
+ * persist is the caller's job, done right before the value ever reaches
+ * Firestore.
+ */
+export function extractAuctionId(pathname: string): string | undefined {
+  const bare = stripQueryAndHash(pathname);
+  const [first, second] = routeSegments(bare);
+  return first === 'auctions' ? second : undefined;
+}
+
+// ---------------------------------------------------------------------------
 // classifySource
 // ---------------------------------------------------------------------------
 

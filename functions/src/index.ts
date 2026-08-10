@@ -33,4 +33,5 @@ export { sendAuctionSoldInternal } from './notifications/sendAuctionSoldInternal
 export { sendAuctionSoldOffline } from './notifications/sendAuctionSoldOffline.js';
 export { savePushToken } from './notifications/savePushToken.js';
 export { logAuctionView } from './insights/logAuctionView.js';
+export { logPageView } from './insights/logPageView.js';
 export { dailyUnsoldDigest } from './insights/dailyUnsoldDigest.js';

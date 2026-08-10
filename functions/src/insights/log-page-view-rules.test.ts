@@ -5,6 +5,7 @@ import {
   isBotUserAgent,
   isCredentialBearingPath,
   CredentialBearingPathError,
+  extractAuctionId,
 } from './log-page-view-rules.js';
 
 describe('classifyPath', () => {
@@ -81,6 +82,48 @@ describe('classifyPath', () => {
       expect(err).toBeInstanceOf(CredentialBearingPathError);
       expect((err as Error).message).not.toContain('live-token-123');
     }
+  });
+});
+
+describe('extractAuctionId', () => {
+  // Needed by the logPageView callable (Task 2): a detail-page event should
+  // carry the auction id, but classifyPath's return type is fixed to
+  // PathKind and has no room for it. This is the second, narrower piece of
+  // route-shape knowledge the callable consumes from this module.
+
+  it('extracts the id from a detail page, with or without a locale prefix', () => {
+    expect(extractAuctionId('/es/auctions/abc123')).toBe('abc123');
+    expect(extractAuctionId('/auctions/abc123')).toBe('abc123');
+  });
+
+  it('tolerates a trailing slash', () => {
+    expect(extractAuctionId('/es/auctions/abc123/')).toBe('abc123');
+  });
+
+  it('strips a query string and hash first, like classifyPath does', () => {
+    expect(extractAuctionId('/es/auctions/abc123?utm_source=ig')).toBe('abc123');
+    expect(extractAuctionId('/es/auctions/abc123#section')).toBe('abc123');
+  });
+
+  it('returns undefined for the catalog page (no id segment)', () => {
+    expect(extractAuctionId('/es/auctions')).toBeUndefined();
+    expect(extractAuctionId('/es/auctions/')).toBeUndefined();
+  });
+
+  it('returns undefined for home, login, and other non-auction pages', () => {
+    expect(extractAuctionId('/es')).toBeUndefined();
+    expect(extractAuctionId('/')).toBeUndefined();
+    expect(extractAuctionId('/es/login')).toBeUndefined();
+    expect(extractAuctionId('/es/terminos')).toBeUndefined();
+  });
+
+  it('returns the SECOND segment, not the last, for a nested child of a detail page', () => {
+    // Regression guard for a real mistake this test caught during
+    // implementation: classifyPath treats /auctions/{id}/anything as
+    // 'detail' too (it only inspects the first two segments), so a naive
+    // "grab the last segment" extractor would return 'photos' here instead
+    // of the actual auction id.
+    expect(extractAuctionId('/es/auctions/abc123/photos')).toBe('abc123');
   });
 });
 
