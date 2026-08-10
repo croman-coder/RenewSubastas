@@ -161,9 +161,15 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
               USD {displayPrice.toLocaleString()}
             </p>
           </div>
-          <span className="text-[11px] text-text-muted shrink-0 num-tab">
-            {t('bidCount', { count: auction.bidCount })}
-          </span>
+          {/* Hidden at zero on purpose. "Precio inicial" already says there is
+              no bid yet, so "sin pujas" beside it just restates it — and on a
+              freshly opened lote, where every card reads zero, the repetition
+              reads as a dead catalogue rather than a new one. */}
+          {auction.bidCount > 0 && (
+            <span className="text-[11px] text-text-muted shrink-0 num-tab">
+              {t('bidCount', { count: auction.bidCount })}
+            </span>
+          )}
         </div>
       </div>
     </div>

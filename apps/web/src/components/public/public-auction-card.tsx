@@ -166,9 +166,14 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
                 USD&nbsp;{usd.format(displayPrice)}
               </p>
             </div>
-            <span className="text-[11px] text-text-muted shrink-0 num-tab">
-              {auction.bidCount} {auction.bidCount === 1 ? 'puja' : 'pujas'}
-            </span>
+            {/* Hidden at zero, matching auction-card.tsx: "Precio inicial"
+                already conveys it, and "0 pujas" on every card of a
+                just-opened lote reads as a dead catalogue. */}
+            {auction.bidCount > 0 && (
+              <span className="text-[11px] text-text-muted shrink-0 num-tab">
+                {auction.bidCount} {auction.bidCount === 1 ? 'puja' : 'pujas'}
+              </span>
+            )}
           </div>
         </div>
 
