@@ -81,9 +81,9 @@ export function CookieBanner({ locale }: Props) {
                 Usamos cookies
               </p>
               <p id="cookie-desc" className="mt-0.5 text-sm text-text-muted text-pretty">
-                Las necesarias para mantener tu sesión son imprescindibles. Además, con tu permiso
-                registramos fallas técnicas para poder corregirlas y medimos el resultado de
-                nuestros anuncios.{' '}
+                Las necesarias para mantener tu sesión son imprescindibles. Medimos el resultado de
+                nuestros anuncios en todas las visitas. Y, con tu permiso, registramos además fallas
+                técnicas para poder corregirlas.{' '}
                 <Link
                   href={`/${locale}/cookies` as `/${string}`}
                   className="underline underline-offset-2 hover:text-text-strong transition-colors duration-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"

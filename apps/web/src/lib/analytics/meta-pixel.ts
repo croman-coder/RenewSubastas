@@ -126,61 +126,42 @@ export function bootstrapMetaPixel(): void {
     document.head.appendChild(script);
   }
 
-  // Identify, then withhold — and the order is the opposite of what Meta's
-  // consent-mode docs show, for a measured reason. With `revoke` first,
-  // fbevents.js defers the whole queue: `init` is never processed, no config
-  // is fetched, the pixel is never registered, and Meta's own tooling still
-  // reports "no pixel detected" — which is the entire problem this is meant
-  // to solve. Verified in the browser: the queue drained `revoke` and left
-  // `init` stranded indefinitely.
+  // Measures from the first visit, for everyone. Consent mode used to hold
+  // events here until the banner was accepted; the business chose full
+  // coverage instead, knowing the trade — see the cookie and privacy copy in
+  // lib/legal/company-facts.ts, which was rewritten in the same change to say
+  // this plainly rather than keep promising a gate that no longer exists.
   //
-  // Initialising first registers the pixel (that is what the detector and the
-  // event configurator look for) and costs one config request to Meta
-  // carrying the pixel id and the page's domain. `init` on its own sends no
-  // PageView — Meta's snippet fires that as a separate `track` call, which we
-  // only make after consent. The revoke lands in the same tick, before any
-  // event could be generated.
+  // The banner is NOT decorative: rejecting still turns off Sentry Session
+  // Replay (see applyConsent in lib/legal/cookie-consent.ts). It just no
+  // longer governs advertising measurement.
+  //
+  // `init` before `track` is Meta's own order, and the one that works: an
+  // earlier attempt put `consent revoke` first, and fbevents.js then deferred
+  // the entire queue — `init` never ran, no config was fetched, and Meta's
+  // tooling still reported "no pixel detected". Verified in the browser.
   window.fbq?.('init', META_PIXEL_ID);
-  window.fbq?.('consent', 'revoke');
-}
-
-/**
- * Release the queued events and start measuring.
- *
- * Called only from applyConsent() in lib/legal/cookie-consent.ts, i.e. only
- * once the visitor has accepted. Bootstraps first if the pixel isn't installed
- * yet — accepting on a credential-bearing page is a no-op, and the route
- * tracker picks it up on the next safe navigation.
- *
- * The explicit PageView is needed because the one Meta fires on `init` was
- * suppressed by the revoke above.
- */
-export function grantMetaConsent(): void {
-  if (typeof window === 'undefined' || granted) return;
-  if (isCredentialBearingPath(window.location.pathname)) return;
-  if (!injected) bootstrapMetaPixel();
-  if (!injected) return;
-
-  granted = true;
-  window.fbq?.('consent', 'grant');
   window.fbq?.('track', 'PageView');
+  granted = true;
 }
 
 /**
  * Report a client-side route change.
  *
  * The app is a single-page router, so without this the only PageView Meta
- * would ever see is the one grantMetaConsent() sends — every subsequent
- * navigation would be invisible.
+ * would ever see is the one the bootstrap sends — every subsequent navigation
+ * would be invisible.
  *
- * Gated on `granted`, not on `injected`: after the bootstrap the pixel exists
- * for everyone, so keying off installation would track visitors who declined.
+ * Gated on `injected`, which after the bootstrap is true for everyone. It was
+ * gated on consent while the pixel had a consent mode; that gate is gone.
  *
  * Navigating INTO a credential-bearing page is silent for the same reason the
- * bootstrap refuses to start there: the URL is the secret.
+ * bootstrap refuses to start there: the URL is the secret. This is now the
+ * ONLY thing that stops the pixel from running, so it carries more weight
+ * than it did when consent was also in the way.
  */
 export function trackMetaPageView(): void {
-  if (typeof window === 'undefined' || !granted) return;
+  if (typeof window === 'undefined' || !injected) return;
   if (isCredentialBearingPath(window.location.pathname)) return;
   window.fbq?.('track', 'PageView');
 }

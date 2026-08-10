@@ -1,5 +1,3 @@
-import { grantMetaConsent } from '@/lib/analytics/meta-pixel';
-
 export type CookieConsent = 'accepted' | 'rejected';
 
 /**
@@ -44,10 +42,11 @@ export function writeCookieConsent(value: CookieConsent): void {
  */
 export function applyConsent(): void {
   void enableSentryReplay();
-  // The pixel is already installed by this point (MetaPixelRouteTracker
-  // bootstraps it for everyone with consent withheld). This releases the
-  // queued events — installing and measuring are two separate moments now.
-  grantMetaConsent();
+  // The Meta Pixel is deliberately NOT here any more. It measures from the
+  // first visit for everyone — the business chose advertising coverage over a
+  // consent gate, and both legal texts were rewritten to say so. Session
+  // Replay is what accepting still turns on, which is why this function and
+  // the banner both still exist.
 }
 
 /**
