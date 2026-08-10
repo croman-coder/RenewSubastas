@@ -72,7 +72,7 @@ export function privacySections(c: Company): LegalSection[] {
         'Proveedores de infraestructura y alojamiento en la nube, que almacenan la base de datos y los archivos de la plataforma.',
         'Un proveedor de envío de correo electrónico transaccional, para las notificaciones de la plataforma.',
         'Un servicio de monitoreo de errores, que registra fallas técnicas de la aplicación.',
-        'Meta Platforms: si aceptaste las cookies de medición publicitaria, recibe las páginas que visitás dentro del sitio para medir el resultado de nuestros anuncios. No le enviamos tu nombre, documento, teléfono ni tus pujas. Si las rechazaste, no recibe nada de tu navegación: sólo queda el registro de tu dirección IP por la descarga de su archivo de medición, que se hace en todas las visitas y llega desactivado.',
+        'Meta Platforms: recibe las páginas que visitás dentro del sitio, en todas las visitas, para medir el resultado de nuestros anuncios. No le enviamos tu nombre, documento, teléfono ni tus pujas. Esta medición no depende de tu respuesta al aviso de cookies; si no la querés, bloqueá las cookies de terceros en tu navegador.',
         'Autoridades competentes, cuando exista una obligación legal o un requerimiento judicial.',
       ],
     },
@@ -204,7 +204,7 @@ export function cookieSections(c: Company): LegalSection[] {
         'Cookie de sesión: mantiene tu sesión iniciada mientras usás la plataforma. Es imprescindible para que el sitio funcione y no requiere consentimiento; sin ella no podrías permanecer autenticado.',
         'Preferencia de cookies: guarda la decisión que tomás en el aviso de cookies, para no volver a preguntarte en cada visita.',
         'Monitoreo de errores: cuando lo aceptás, un servicio de terceros registra información técnica ante una falla de la aplicación para poder diagnosticarla. Si lo rechazás, no se activa.',
-        'Medición publicitaria (Meta Pixel): el archivo de medición de Meta Platforms se descarga en todas las visitas, pero arranca con la medición desactivada. Recién cuando aceptás se activa y empieza a registrar las páginas que visitás dentro del sitio, para medir el resultado de nuestros anuncios y mostrarte publicidad más relevante en Facebook e Instagram. Si lo rechazás, no se guarda ninguna cookie de Meta ni se registra tu navegación; lo único que Meta ve es la descarga del archivo, que como cualquier descarga desde un servidor ajeno deja registrada tu dirección IP.',
+        'Medición publicitaria (Meta Pixel): se activa en todas las visitas, sin esperar tu respuesta a este aviso. Registra las páginas que visitás dentro del sitio y guarda una cookie de Meta Platforms, para medir el resultado de nuestros anuncios y mostrarte publicidad más relevante en Facebook e Instagram. Rechazar el aviso no la desactiva. Si no querés que se registre, podés bloquear las cookies de terceros desde la configuración de tu navegador o usar una ventana privada; la plataforma sigue funcionando igual.',
       ],
     },
     {
