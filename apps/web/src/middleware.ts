@@ -38,6 +38,7 @@ const KNOWN_SEGMENTS = new Set([
   'settings',
   // Auth
   'login',
+  'register',
   'auth',
   // Legal
   'terminos',

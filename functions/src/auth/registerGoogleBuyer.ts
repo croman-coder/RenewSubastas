@@ -5,6 +5,7 @@ import type { Role, Audience } from '../_shared/index.js';
 import { adminDb } from '../lib/admin.js';
 import { setUserClaims } from '../lib/claims.js';
 import { writeAuditLog } from '../lib/audit.js';
+import { deriveNameFromDisplayName } from '../lib/name.js';
 
 export interface RegisterGoogleBuyerResult {
   uid: string;
@@ -56,18 +57,16 @@ export async function registerGoogleBuyerHandler(
   // crafted display name like `Ana<img src=x onerror=...>` would otherwise
   // land straight in profile.firstName and from there into every email that
   // greets the buyer by name and every staff-facing panel that lists them.
-  // Strip disallowed characters rather than reject sign-in over an emoji or
-  // stray punctuation in an otherwise-fine name. Clamp both parts to 40
-  // chars (matching createUser's cap) and guarantee a non-empty firstName
-  // (UserProfileSchema requires min(1), and placeBid/emails read these
-  // fields) by falling back to the email local-part, then a generic label.
-  const NAME_CHAR_RX = /[^\p{L}\p{M}'’\- .]/gu;
-  const sanitizeNamePart = (s: string) => s.replace(NAME_CHAR_RX, '').trim();
+  // deriveNameFromDisplayName strips disallowed characters rather than
+  // rejecting sign-in over an emoji or stray punctuation in an otherwise-fine
+  // name, and guarantees a non-empty firstName by falling back to the
+  // email local-part, then a generic label (shared with
+  // registerPasswordBuyer's own token.name fallback path).
   const email = token.email ?? '';
-  const displayName = ((token.name as string | undefined) ?? '').trim();
-  const [rawFirst = '', ...rest] = displayName.split(/\s+/);
-  const firstName = (sanitizeNamePart(rawFirst) || email.split('@')[0] || 'Usuario').slice(0, 40);
-  const lastName = sanitizeNamePart(rest.join(' ')).slice(0, 40);
+  const { firstName, lastName } = deriveNameFromDisplayName(
+    token.name as string | undefined,
+    email,
+  );
 
   await userRef.set({
     uid,
