@@ -20,6 +20,28 @@ interface Props {
 
 const MIN_LEN = 8;
 
+/**
+ * In-flight applyActionCode calls, keyed by oobCode.
+ *
+ * A Firebase action code is single-use, so this effect is unsafe to run twice.
+ * It runs twice in development, where React Strict Mode double-invokes
+ * effects: the `cancelled` flag below stops the second run's setState but not
+ * its network call, and the second call — failing on a code the first one just
+ * consumed — was the one that set the phase. A legitimate first click showed
+ * "Enlace no válido" on an account that had in fact been verified.
+ *
+ * Memoising the *promise* rather than the settled verdict is what makes this
+ * work. Strict Mode's second invocation starts in the same tick as the first,
+ * before any result exists, so a map of outcomes would still be empty and both
+ * calls would go out. Sharing the promise makes the second run await the first
+ * and reach the identical outcome — one network call, one verdict, no race
+ * over who writes the phase.
+ *
+ * Client module scope is per browser tab, and arriving from an email is a full
+ * document load, so this holds at most one entry in practice.
+ */
+const inFlight = new Map<string, Promise<void>>();
+
 export function AuthActionHandler({ locale, mode, oobCode }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [email, setEmail] = useState<string>('');
@@ -49,12 +71,16 @@ export function AuthActionHandler({ locale, mode, oobCode }: Props) {
           if (cancelled) return;
           setEmail(mail);
           setPhase('reset-form');
-        } else if (mode === 'verifyEmail') {
-          await applyActionCode(fb.auth, oobCode);
-          if (cancelled) return;
-          setPhase('verified');
-        } else if (mode === 'recoverEmail') {
-          await applyActionCode(fb.auth, oobCode);
+        } else if (mode === 'verifyEmail' || mode === 'recoverEmail') {
+          // Share one call across both Strict Mode invocations. Deliberately
+          // not cleared on failure: a spent code stays spent, and retrying it
+          // would just reproduce the race this exists to remove.
+          let call = inFlight.get(oobCode);
+          if (!call) {
+            call = applyActionCode(fb.auth, oobCode);
+            inFlight.set(oobCode, call);
+          }
+          await call;
           if (cancelled) return;
           setPhase('verified');
         } else {

@@ -277,43 +277,47 @@ export function AuctionDetailView({
         </aside>
       </div>
 
-      <Separator />
+      {/* Hidden entirely until the first bid. A heading over "Aún no hay
+          pujas." is a section that announces itself and then says it has
+          nothing — on a freshly opened lote that is every vehicle. The bid
+          panel beside it already invites the first bid. */}
+      {bids.length > 0 && (
+        <>
+          <Separator />
 
-      <section>
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
-          {t('bidsTitle')}
-        </h2>
-        {bids.length === 0 ? (
-          <p className="text-text-muted text-sm">{t('noBidsYet')}</p>
-        ) : (
-          <ul className="divide-y divide-text-subtle/15 rounded-xl border border-text-subtle/15 bg-bg-elev/40 overflow-hidden">
-            {bids.map((b, i) => (
-              <li
-                key={b.id}
-                className={
-                  'flex items-center justify-between p-3 text-sm transition-colors hover:bg-bg-deep/40 ' +
-                  (i === 0 ? 'bg-copper/5' : '')
-                }
-              >
-                <span className="flex items-center gap-2">
-                  {i === 0 && <Flame className="w-3.5 h-3.5 text-copper" />}
-                  <span className={i === 0 ? 'text-text-strong font-medium' : 'text-text-strong'}>
-                    {b.buyerSnapshot.firstName} {b.buyerSnapshot.lastInitial}.
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
+              {t('bidsTitle')}
+            </h2>
+            <ul className="divide-y divide-text-subtle/15 rounded-xl border border-text-subtle/15 bg-bg-elev/40 overflow-hidden">
+              {bids.map((b, i) => (
+                <li
+                  key={b.id}
+                  className={
+                    'flex items-center justify-between p-3 text-sm transition-colors hover:bg-bg-deep/40 ' +
+                    (i === 0 ? 'bg-copper/5' : '')
+                  }
+                >
+                  <span className="flex items-center gap-2">
+                    {i === 0 && <Flame className="w-3.5 h-3.5 text-copper" />}
+                    <span className={i === 0 ? 'text-text-strong font-medium' : 'text-text-strong'}>
+                      {b.buyerSnapshot.firstName} {b.buyerSnapshot.lastInitial}.
+                    </span>
                   </span>
-                </span>
-                <span className="num-tab">
-                  <span className={i === 0 ? 'font-semibold text-copper' : ''}>
-                    USD {fmtUsd(b.amount)}
+                  <span className="num-tab">
+                    <span className={i === 0 ? 'font-semibold text-copper' : ''}>
+                      USD {fmtUsd(b.amount)}
+                    </span>
+                    <span className="text-text-muted text-xs ml-2">
+                      {new Date(b.createdAt).toLocaleTimeString(locale)}
+                    </span>
                   </span>
-                  <span className="text-text-muted text-xs ml-2">
-                    {new Date(b.createdAt).toLocaleTimeString(locale)}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
     </div>
   );
 }
