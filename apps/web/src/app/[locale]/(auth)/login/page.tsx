@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { Gavel, ShieldCheck, Sparkles } from 'lucide-react';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { PixelGrid } from '@/components/brand/pixel-grid';
@@ -147,9 +148,19 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
             {/* Registration is open to the public now — accounts are no
                 longer handed out by an admin, so the old "solicitala a tu
                 administrador" line was telling visitors the opposite of what
-                the Google button right above it does. */}
+                the Google button right above it does. Now there are two
+                ways in: Google (above) or email+password (its own route,
+                since that flow has real states — verify, resend — that
+                don't fit in a login-page footer line). */}
             <p className="mt-6 text-center text-xs text-text-muted">
-              ¿No tenés cuenta? Creá una con Google en un paso.
+              ¿No tenés cuenta? Google arriba, o{' '}
+              <Link
+                href={`/${locale}/register` as `/${string}`}
+                className="text-copper hover:underline underline-offset-4"
+              >
+                creála con tu email
+              </Link>
+              .
             </p>
           </div>
         </section>

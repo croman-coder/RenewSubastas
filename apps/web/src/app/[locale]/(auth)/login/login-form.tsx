@@ -5,11 +5,12 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendEmailVerification, signInWithEmailAndPassword, type User } from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { homeFor } from '@/lib/auth/constants';
-import { postSession, safeRedirect } from '@/lib/auth/post-session';
+import { safeRedirect } from '@/lib/auth/post-session';
+import { finalizePasswordAccount } from '@/lib/auth/finalize-password-account';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +37,20 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   const [entering, setEntering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  // Set when sign-in succeeds but the account is a self-registration that
+  // never finished email verification. Kept separate from `error` because
+  // this state renders its own actions (resend, "ya verifiqué"), not just a
+  // message — see the render block below.
+  const [unverifiedUser, setUnverifiedUser] = useState<User | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   // If we landed here because the server bounced a disabled/revoked/expired
   // session, the (httpOnly) __session cookie is still set — only a server
@@ -61,11 +76,49 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   async function onSubmit(data: FormValues) {
     setSubmitting(true);
     setError(null);
+    setUnverifiedUser(null);
+    setResendNotice(null);
     try {
       const cred = await signInWithEmailAndPassword(fb.auth, data.email, data.password);
-      const idToken = await cred.user.getIdToken(true);
-      const result = await postSession(idToken);
+      // Try to provision/sign-in FIRST, and only look at emailVerified if
+      // that fails. An account invited via createUser.ts already has
+      // role/status claims the moment it's created — finalizePasswordAccount
+      // succeeds for it regardless of emailVerified (which stays false
+      // there until redeemPasswordReset.ts's password-set flow), so it
+      // never reaches the branch below at all. That branch is only
+      // reachable for an account with NO claims whatsoever, which
+      // self-registration is the only path that produces. Checking
+      // emailVerified first — the original shape of this gate — assumed
+      // false always meant "unfinished self-registration", which is wrong
+      // for every admin-panel account: createUser.ts creates all of them
+      // with emailVerified:false, so that ordering locked out the entire
+      // existing staff/admin/finanzas base.
+      let result;
+      try {
+        result = await finalizePasswordAccount(cred.user);
+      } catch {
+        // A real failure inside finalizePasswordAccount (rate-limited,
+        // server error, dropped connection) rather than the expected
+        // "not applicable" precondition it already swallows internally —
+        // don't leave a half-signed-in session dangling.
+        setError(t('errors.generic'));
+        await fb.auth.signOut().catch(() => {});
+        setSubmitting(false);
+        return;
+      }
       if (!result.ok) {
+        if (!cred.user.emailVerified) {
+          // Firebase signs this in regardless of verification status. A
+          // self-registered buyer who never clicked the verification link
+          // has no users/{uid} doc and no claims — provisioning above
+          // failed for exactly that reason. Surface it here, where we
+          // actually know why, and offer the resend affordance, instead of
+          // the generic "account_disabled" below (which reads like an
+          // admin disabled the account).
+          setUnverifiedUser(cred.user);
+          setSubmitting(false);
+          return;
+        }
         if (result.error === 'account_disabled') {
           setError(t('errors.accountDisabled'));
         } else if (
@@ -104,17 +157,95 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     }
   }
 
+  async function onResendVerification() {
+    if (!unverifiedUser || resendCooldown > 0) return;
+    setResendNotice(null);
+    try {
+      await sendEmailVerification(unverifiedUser);
+      setResendNotice(t('unverified.resendSuccess'));
+      setResendCooldown(30);
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      setResendNotice(
+        code === 'auth/too-many-requests'
+          ? t('unverified.resendTooMany')
+          : t('unverified.resendFailed'),
+      );
+    }
+  }
+
+  async function onCheckVerified() {
+    if (!unverifiedUser) return;
+    setChecking(true);
+    try {
+      await unverifiedUser.reload();
+      if (!unverifiedUser.emailVerified) {
+        setResendNotice(t('unverified.stillNotVerified'));
+        return;
+      }
+      const result = await finalizePasswordAccount(unverifiedUser);
+      if (!result.ok) {
+        setUnverifiedUser(null);
+        setError(t('unverified.activationFailed'));
+        await fb.auth.signOut();
+        return;
+      }
+      const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
+      setEntering(true);
+      router.replace(`/${locale}${target}`);
+      router.refresh();
+    } catch {
+      // A hard failure (e.g. network drop mid-reload) — leave no half-signed
+      // in state dangling, same as the `!result.ok` branch above and as
+      // onSubmit does for its own equivalent failure.
+      setUnverifiedUser(null);
+      setError(t('errors.generic'));
+      await fb.auth.signOut().catch(() => {});
+    } finally {
+      setChecking(false);
+    }
+  }
+
   return (
     <>
       {entering && <EnteringOverlay />}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {error && (
-          <Alert
-            variant="destructive"
-            className="animate-in fade-in slide-in-from-top-1 duration-300"
-          >
-            <AlertDescription>{error}</AlertDescription>
+        {unverifiedUser ? (
+          <Alert className="animate-in fade-in slide-in-from-top-1 duration-300">
+            <AlertDescription className="space-y-2">
+              <p>{t('unverified.message')}</p>
+              {resendNotice && <p className="text-xs text-text-muted">{resendNotice}</p>}
+              <div className="flex items-center gap-4 text-xs pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => void onCheckVerified()}
+                  disabled={checking}
+                  className="font-semibold text-copper hover:underline underline-offset-4 disabled:opacity-50"
+                >
+                  {checking ? t('unverified.checking') : t('unverified.checkButton')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void onResendVerification()}
+                  disabled={resendCooldown > 0}
+                  className="text-text-muted hover:text-copper hover:underline underline-offset-4 disabled:opacity-50 disabled:hover:no-underline"
+                >
+                  {resendCooldown > 0
+                    ? t('unverified.resendCountdown', { seconds: resendCooldown })
+                    : t('unverified.resendButton')}
+                </button>
+              </div>
+            </AlertDescription>
           </Alert>
+        ) : (
+          error && (
+            <Alert
+              variant="destructive"
+              className="animate-in fade-in slide-in-from-top-1 duration-300"
+            >
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )
         )}
 
         <div className="space-y-1.5">

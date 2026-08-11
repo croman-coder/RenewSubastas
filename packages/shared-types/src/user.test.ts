@@ -20,4 +20,20 @@ describe('UserProfileSchema', () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it('accepts an empty lastName (single-word derived/display name)', () => {
+    // registerGoogleBuyer / registerPasswordBuyer can both legitimately
+    // write '' here (functions/src/lib/name.ts) for a one-word name.
+    const parsed = UserProfileSchema.safeParse({
+      firstName: 'Cher',
+      lastName: '',
+      audience: 'retail',
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('still requires a non-empty firstName', () => {
+    const parsed = UserProfileSchema.safeParse({ firstName: '', lastName: 'Perez' });
+    expect(parsed.success).toBe(false);
+  });
 });

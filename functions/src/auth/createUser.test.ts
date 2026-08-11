@@ -143,4 +143,23 @@ describe('createUser', () => {
     const req = { rawRequest: {} as never, data: {} } as CallableRequest;
     await expect(createUserHandler(req)).rejects.toMatchObject({ code: 'unauthenticated' });
   });
+
+  it('names the cause when the email is already taken in Auth, instead of an opaque internal error', async () => {
+    // Simulates the squatting scenario: some Auth user already holds this
+    // email (self-registered, or a prior invite) by the time an admin tries
+    // to invite "that same" address.
+    await adminAuth().createUser({ email: 'ya.existe@santarosa.com.py' });
+    const req = asAdmin('admin-uid', {
+      role: 'staff',
+      email: 'ya.existe@santarosa.com.py',
+      firstName: 'Nueva',
+      lastName: 'Persona',
+      documentType: 'CI',
+      documentNumber: '1112223',
+    });
+    await expect(createUserHandler(req)).rejects.toMatchObject({
+      code: 'already-exists',
+      message: expect.stringContaining('already-exists'),
+    });
+  });
 });

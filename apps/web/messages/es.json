@@ -35,6 +35,18 @@
         "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador.",
         "googleFailed": "No se pudo continuar con Google. Probá de nuevo.",
         "popupBlocked": "El navegador bloqueó la ventana de Google. Habilitá los pop-ups y reintentá."
+      },
+      "unverified": {
+        "message": "Todavía no verificaste tu correo. Revisá tu bandeja de entrada.",
+        "checkButton": "Ya verifiqué, continuar",
+        "checking": "Comprobando…",
+        "resendButton": "Reenviar correo",
+        "resendCountdown": "Reenviar en {seconds}s",
+        "resendSuccess": "Te reenviamos el correo de verificación.",
+        "resendTooMany": "Esperá un momento antes de pedir otro correo.",
+        "resendFailed": "No pudimos reenviar el correo. Probá de nuevo.",
+        "stillNotVerified": "Todavía no detectamos la verificación. Revisá tu correo.",
+        "activationFailed": "Se verificó tu correo, pero no pudimos activar tu cuenta. Probá de nuevo."
       }
     }
   },

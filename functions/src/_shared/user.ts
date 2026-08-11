@@ -22,7 +22,16 @@ export const AddressSchema = z.object({
 
 export const UserProfileSchema = z.object({
   firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  // Not min(1): a single-word display/derived name (Google sign-in, or
+  // password self-registration falling back to the email local-part when
+  // no name is supplied — see functions/src/lib/name.ts) legitimately has
+  // no last name. registerGoogleBuyer/registerPasswordBuyer can both write
+  // '' here; requiring min(1) would make that a schema violation the
+  // moment it's written, not just a validation message the buyer can act
+  // on in their own settings/profile form (which does still require it —
+  // a deliberate, separate product decision for a *complete* profile, not
+  // something this shared type should second-guess).
+  lastName: z.string(),
   documentType: DocumentTypeSchema.optional(),
   documentNumber: z.string().min(1).optional(),
   phone: z.string().optional(),
