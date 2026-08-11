@@ -230,11 +230,21 @@ export function AuctionDetailView({
   // does not re-implement that, so it only fires when a reserve is present
   // in the form. A buyNowPrice too low with no reserve set is caught by the
   // server's own "...mayor al precio inicial." message instead.
-  // Gated to `status !== 'live'`: the buyNow/reserve fields only render (and
-  // are only sent in the payload) on the scheduled branch below, so a stale
-  // value lingering in state while `live` — where saveEdit only ever sends
-  // endsAt — must never block that unrelated save.
-  const buyNowInvalid = status !== 'live' && isBuyNowBelowReserve(fBuyNow, fReserve);
+  // Compra ya stays editable on a live auction, as long as nobody has bid.
+  //
+  // The other prices genuinely freeze once an auction opens — changing the
+  // starting price or the reserve under people who are already bidding would
+  // be indefensible. Compra ya is not like them: the button only renders while
+  // `bidCount === 0`, and buyNow.ts refuses outright once a bid exists, so the
+  // field is inert the moment it could matter to a bidder. Blocking it before
+  // then just meant staff had to cancel and recreate a live lot to add a price
+  // the system was perfectly willing to accept.
+  const canSetBuyNow = status === 'scheduled' || (status === 'live' && bidCount === 0);
+
+  // Only meaningful while the field is actually on screen — a stale value in
+  // state must never block an unrelated save (e.g. extending the close time
+  // on a live auction that already has bids).
+  const buyNowInvalid = canSetBuyNow && isBuyNowBelowReserve(fBuyNow, fReserve);
 
   // Delete allowed for admin/staff on auctions that carry no winner:
   // scheduled, cancelled, or ended-without-sale, and live only when no
@@ -252,8 +262,18 @@ export function AuctionDetailView({
     try {
       const payloadBase: Record<string, unknown> = { auctionId };
       if (status === 'live') {
-        // Live: only extend end.
+        // Live: extend the close time, plus Compra ya while nobody has bid.
+        // updateAuction requires endsAt on a live auction, so it always rides
+        // along; the server re-validates buyNowPrice against the effective
+        // reserve either way.
         payloadBase['endsAt'] = new Date(fEnd).toISOString();
+        if (canSetBuyNow) {
+          if (fBuyNow.trim() === '') payloadBase['buyNowPrice'] = null;
+          else {
+            const bn = Number(fBuyNow);
+            if (Number.isFinite(bn) && bn > 0) payloadBase['buyNowPrice'] = bn;
+          }
+        }
       } else {
         // Scheduled: full edit.
         if (fStart) payloadBase['startsAt'] = new Date(fStart).toISOString();
@@ -367,7 +387,9 @@ export function AuctionDetailView({
             <h2 className="text-base font-medium text-text-strong">Editar subasta</h2>
             <p className="text-xs text-text-muted">
               {status === 'live'
-                ? 'En vivo: solo podés extender la hora de cierre. Los precios quedan congelados con pujas abiertas.'
+                ? canSetBuyNow
+                  ? 'En vivo sin pujas: podés extender el cierre y poner o quitar el precio de Compra ya. El resto de los precios ya están fijos.'
+                  : 'En vivo con pujas: solo podés extender la hora de cierre. Los precios quedan congelados.'
                 : 'Programada: podés ajustar precios, incremento y la ventana de fechas.'}
             </p>
           </div>
@@ -433,27 +455,30 @@ export function AuctionDetailView({
                     venta.
                   </p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="f-buynow">Precio Compra ya (USD, opcional)</Label>
-                  <Input
-                    id="f-buynow"
-                    type="number"
-                    min={1}
-                    step="0.01"
-                    placeholder="Vacío = sin Compra ya"
-                    value={fBuyNow}
-                    onChange={(e) => setFBuyNow(e.target.value)}
-                  />
-                  <p className="text-[11px] text-text-muted">
-                    Visible para los compradores · opcional · debe superar el precio objetivo
-                  </p>
-                  {buyNowInvalid && (
-                    <p className="text-[11px] text-danger">
-                      Debe ser mayor a la reserva (USD {fReserve}).
-                    </p>
-                  )}
-                </div>
               </>
+            )}
+            {canSetBuyNow && (
+              <div className="space-y-1.5">
+                <Label htmlFor="f-buynow">Precio Compra ya (USD, opcional)</Label>
+                <Input
+                  id="f-buynow"
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  placeholder="Vacío = sin Compra ya"
+                  value={fBuyNow}
+                  onChange={(e) => setFBuyNow(e.target.value)}
+                />
+                <p className="text-[11px] text-text-muted">
+                  Visible para los compradores · opcional · debe superar el precio objetivo
+                  {status === 'live' && ' · el botón desaparece con la primera puja'}
+                </p>
+                {buyNowInvalid && (
+                  <p className="text-[11px] text-danger">
+                    Debe ser mayor a la reserva (USD {fReserve}).
+                  </p>
+                )}
+              </div>
             )}
           </div>
           <div className="flex gap-2">
