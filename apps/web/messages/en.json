@@ -417,9 +417,10 @@
       "createNew": "Create user",
       "filters": {
         "search": "Search by name, email or document",
-        "role": "Role",
+        "kind": "Account type",
         "status": "Status",
-        "all": "All"
+        "all": "All",
+        "count": "Showing {shown} of {total, plural, one {# user} other {# users}}"
       },
       "columns": {
         "name": "Name",

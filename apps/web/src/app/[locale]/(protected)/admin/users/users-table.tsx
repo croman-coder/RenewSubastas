@@ -21,12 +21,14 @@ import {
 } from '@/components/ui/select';
 import { UserRowActions } from './user-row-actions';
 import type { UserListItem } from '@/lib/admin/list-users';
+import type { UsersKind } from '@/lib/admin/users-filter';
 
 // Translates the (role, audience) pair into the operator-facing label so
 // the table shows "Retail" / "Wholesale" instead of the technical "buyer".
 function kindLabel(role: UserListItem['role'], audience: UserListItem['audience']): string {
   if (role === 'admin') return 'Admin';
   if (role === 'staff') return 'Staff';
+  if (role === 'finanzas') return 'Finanzas';
   return audience === 'wholesale' ? 'Wholesale' : 'Retail';
 }
 
@@ -34,11 +36,20 @@ interface Props {
   locale: string;
   items: UserListItem[];
   nextCursor: string | null;
-  currentRole: 'admin' | 'staff' | 'buyer' | null;
+  /** Full filtered-set count (see ListUsersResult.totalCount) — never just `items.length`. */
+  totalCount: number;
+  currentKind: UsersKind | null;
   currentStatus: 'active' | 'disabled' | null;
 }
 
-export function UsersTable({ locale, items, nextCursor, currentRole, currentStatus }: Props) {
+export function UsersTable({
+  locale,
+  items,
+  nextCursor,
+  totalCount,
+  currentKind,
+  currentStatus,
+}: Props) {
   const t = useTranslations('admin.users');
   const router = useRouter();
   const sp = useSearchParams();
@@ -66,19 +77,22 @@ export function UsersTable({ locale, items, nextCursor, currentRole, currentStat
           <Button>{t('createNew')}</Button>
         </Link>
       </header>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select
-          value={currentRole ?? 'all'}
-          onValueChange={(v) => setParam('role', v === 'all' ? null : v)}
+          value={currentKind ?? 'all'}
+          onValueChange={(v) => setParam('kind', v === 'all' ? null : v)}
         >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={t('filters.role')} />
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder={t('filters.kind')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('filters.all')}</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="staff">Staff</SelectItem>
-            <SelectItem value="buyer">Buyers (retail + wholesale)</SelectItem>
+            <SelectItem value="finanzas">Finanzas</SelectItem>
+            <SelectItem value="buyer">Compradores (todos)</SelectItem>
+            <SelectItem value="retail">Retail</SelectItem>
+            <SelectItem value="wholesale">Wholesale</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -94,6 +108,9 @@ export function UsersTable({ locale, items, nextCursor, currentRole, currentStat
             <SelectItem value="disabled">{t('status.disabled')}</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-sm text-text-muted num-tab">
+          {t('filters.count', { shown: items.length, total: totalCount })}
+        </p>
       </div>
       <div className="border border-text-subtle/20 rounded">
         <Table>
