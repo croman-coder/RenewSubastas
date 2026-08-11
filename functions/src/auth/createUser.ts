@@ -88,13 +88,34 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
   }
 
   const tempPassword = randomBytes(16).toString('base64url') + 'Aa1!';
-  const authUser = await adminAuth().createUser({
-    email: input.email,
-    password: tempPassword,
-    displayName: `${input.firstName} ${input.lastName}`,
-    emailVerified: false,
-    disabled: false,
-  });
+  let authUser;
+  try {
+    authUser = await adminAuth().createUser({
+      email: input.email,
+      password: tempPassword,
+      displayName: `${input.firstName} ${input.lastName}`,
+      emailVerified: false,
+      disabled: false,
+    });
+  } catch (err) {
+    // Uncaught, this becomes Firebase Functions' generic, deliberately-opaque
+    // HttpsError('internal', 'INTERNAL') — the admin sees no indication of
+    // why. That's also a targeted-DoS vector on staff onboarding: an
+    // attacker can pre-register any address at the corporate domain via the
+    // public self-registration form (no auth, no App Check on the account
+    // check itself — see registerPasswordBuyer's design), and an admin
+    // later trying to invite that same real person via createUser hits this
+    // exact error with no way to tell what happened. Naming the cause here
+    // at least turns "opaque internal error" into an actionable message —
+    // it doesn't undo the squatting. The message intentionally matches the
+    // existing 'already-exists' / 'email-already' substring check in
+    // create-user-form.tsx, so this surfaces as the admin UI's own
+    // `errors.duplicate` toast with zero client changes.
+    if ((err as { code?: string }).code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'auth/email-already-exists');
+    }
+    throw err;
+  }
 
   // Audience only applies to buyers; default to retail when missing.
   const audience = input.role === 'buyer' ? (input.audience ?? 'retail') : null;

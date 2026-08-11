@@ -40,7 +40,18 @@ export async function redeemPasswordResetHandler(
   }
 
   try {
-    await adminAuth().updateUser(consumed.uid, { password: parsed.data.password });
+    // Receiving and clicking the emailed link (welcome or reset) IS proof of
+    // inbox control — the exact same reasoning Firebase's own oobCode
+    // verification flow rests on. We don't use that flow (see the TTL note
+    // above), so this is where the equivalent guarantee has to be recorded.
+    // Without it, every invited account (createUser.ts always creates with
+    // emailVerified:false) stays permanently unverified even after setting
+    // a real password, which login-form.tsx's unverified-self-registration
+    // gate would otherwise misread as "never finished signing up".
+    await adminAuth().updateUser(consumed.uid, {
+      password: parsed.data.password,
+      emailVerified: true,
+    });
   } catch {
     throw new HttpsError('internal', 'No se pudo actualizar la contraseña.');
   }

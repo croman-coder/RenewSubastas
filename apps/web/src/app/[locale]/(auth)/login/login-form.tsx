@@ -80,19 +80,45 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     setResendNotice(null);
     try {
       const cred = await signInWithEmailAndPassword(fb.auth, data.email, data.password);
-      // Firebase signs this in regardless of verification status. A
-      // self-registered buyer who never clicked the verification link has
-      // no users/{uid} doc and no claims — postSession would reject them
-      // with the generic "account_disabled", which reads like an admin
-      // disabled the account. Catch it here instead, where we actually know
-      // why, and offer the resend affordance.
-      if (!cred.user.emailVerified) {
-        setUnverifiedUser(cred.user);
+      // Try to provision/sign-in FIRST, and only look at emailVerified if
+      // that fails. An account invited via createUser.ts already has
+      // role/status claims the moment it's created — finalizePasswordAccount
+      // succeeds for it regardless of emailVerified (which stays false
+      // there until redeemPasswordReset.ts's password-set flow), so it
+      // never reaches the branch below at all. That branch is only
+      // reachable for an account with NO claims whatsoever, which
+      // self-registration is the only path that produces. Checking
+      // emailVerified first — the original shape of this gate — assumed
+      // false always meant "unfinished self-registration", which is wrong
+      // for every admin-panel account: createUser.ts creates all of them
+      // with emailVerified:false, so that ordering locked out the entire
+      // existing staff/admin/finanzas base.
+      let result;
+      try {
+        result = await finalizePasswordAccount(cred.user);
+      } catch {
+        // A real failure inside finalizePasswordAccount (rate-limited,
+        // server error, dropped connection) rather than the expected
+        // "not applicable" precondition it already swallows internally —
+        // don't leave a half-signed-in session dangling.
+        setError(t('errors.generic'));
+        await fb.auth.signOut().catch(() => {});
         setSubmitting(false);
         return;
       }
-      const result = await finalizePasswordAccount(cred.user);
       if (!result.ok) {
+        if (!cred.user.emailVerified) {
+          // Firebase signs this in regardless of verification status. A
+          // self-registered buyer who never clicked the verification link
+          // has no users/{uid} doc and no claims — provisioning above
+          // failed for exactly that reason. Surface it here, where we
+          // actually know why, and offer the resend affordance, instead of
+          // the generic "account_disabled" below (which reads like an
+          // admin disabled the account).
+          setUnverifiedUser(cred.user);
+          setSubmitting(false);
+          return;
+        }
         if (result.error === 'account_disabled') {
           setError(t('errors.accountDisabled'));
         } else if (
@@ -136,14 +162,14 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     setResendNotice(null);
     try {
       await sendEmailVerification(unverifiedUser);
-      setResendNotice('Te reenviamos el correo de verificación.');
+      setResendNotice(t('unverified.resendSuccess'));
       setResendCooldown(30);
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
       setResendNotice(
         code === 'auth/too-many-requests'
-          ? 'Esperá un momento antes de pedir otro correo.'
-          : 'No pudimos reenviar el correo. Probá de nuevo.',
+          ? t('unverified.resendTooMany')
+          : t('unverified.resendFailed'),
       );
     }
   }
@@ -154,19 +180,27 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     try {
       await unverifiedUser.reload();
       if (!unverifiedUser.emailVerified) {
-        setResendNotice('Todavía no detectamos la verificación. Revisá tu correo.');
+        setResendNotice(t('unverified.stillNotVerified'));
         return;
       }
       const result = await finalizePasswordAccount(unverifiedUser);
       if (!result.ok) {
         setUnverifiedUser(null);
-        setError('Se verificó tu correo, pero no pudimos activar tu cuenta. Probá de nuevo.');
+        setError(t('unverified.activationFailed'));
+        await fb.auth.signOut();
         return;
       }
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
       setEntering(true);
       router.replace(`/${locale}${target}`);
       router.refresh();
+    } catch {
+      // A hard failure (e.g. network drop mid-reload) — leave no half-signed
+      // in state dangling, same as the `!result.ok` branch above and as
+      // onSubmit does for its own equivalent failure.
+      setUnverifiedUser(null);
+      setError(t('errors.generic'));
+      await fb.auth.signOut().catch(() => {});
     } finally {
       setChecking(false);
     }
@@ -179,7 +213,7 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         {unverifiedUser ? (
           <Alert className="animate-in fade-in slide-in-from-top-1 duration-300">
             <AlertDescription className="space-y-2">
-              <p>Todavía no verificaste tu correo. Revisá tu bandeja de entrada.</p>
+              <p>{t('unverified.message')}</p>
               {resendNotice && <p className="text-xs text-text-muted">{resendNotice}</p>}
               <div className="flex items-center gap-4 text-xs pt-0.5">
                 <button
@@ -188,7 +222,7 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
                   disabled={checking}
                   className="font-semibold text-copper hover:underline underline-offset-4 disabled:opacity-50"
                 >
-                  {checking ? 'Comprobando…' : 'Ya verifiqué, continuar'}
+                  {checking ? t('unverified.checking') : t('unverified.checkButton')}
                 </button>
                 <button
                   type="button"
@@ -196,7 +230,9 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
                   disabled={resendCooldown > 0}
                   className="text-text-muted hover:text-copper hover:underline underline-offset-4 disabled:opacity-50 disabled:hover:no-underline"
                 >
-                  {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : 'Reenviar correo'}
+                  {resendCooldown > 0
+                    ? t('unverified.resendCountdown', { seconds: resendCooldown })
+                    : t('unverified.resendButton')}
                 </button>
               </div>
             </AlertDescription>

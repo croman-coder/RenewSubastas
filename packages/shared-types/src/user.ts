@@ -26,7 +26,11 @@ export const AddressSchema = z.object({
 
 export const UserProfileSchema = z.object({
   firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  // Not min(1): a single-word display/derived name (Google sign-in, or
+  // password self-registration falling back to the email local-part when
+  // no name is supplied) legitimately has no last name. The mirrored copy
+  // in functions/src/_shared/user.ts carries the full rationale.
+  lastName: z.string(),
   documentType: DocumentTypeSchema.optional(),
   documentNumber: z.string().min(1).optional(),
   phone: z.string().optional(),

@@ -35,6 +35,18 @@
         "noRole": "Your account has no role assigned. Contact the administrator.",
         "googleFailed": "Couldn't continue with Google. Please try again.",
         "popupBlocked": "The browser blocked the Google popup. Allow pop-ups and retry."
+      },
+      "unverified": {
+        "message": "You haven't verified your email yet. Check your inbox.",
+        "checkButton": "I verified it, continue",
+        "checking": "Checking…",
+        "resendButton": "Resend email",
+        "resendCountdown": "Resend in {seconds}s",
+        "resendSuccess": "We resent the verification email.",
+        "resendTooMany": "Wait a moment before requesting another email.",
+        "resendFailed": "Couldn't resend the email. Please try again.",
+        "stillNotVerified": "We still don't see the verification. Check your email.",
+        "activationFailed": "Your email was verified, but we couldn't activate your account. Please try again."
       }
     }
   },

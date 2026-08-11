@@ -68,6 +68,13 @@ type Phase = 'form' | 'pending-verification' | 'entering';
 
 const RESEND_COOLDOWN_S = 30;
 const POLL_INTERVAL_MS = 4000;
+// Ceiling on *finalize* attempts specifically (verified=true but
+// registerPasswordBuyer/postSession keeps failing — rate-limited, a real
+// server error), not on how long we wait for the visitor to click the
+// link at all (that has no natural ceiling and costs nothing but a cheap
+// reload() per tick). Without this, a persistently failing callable would
+// retry every 4s indefinitely for as long as the tab stays open.
+const MAX_FINALIZE_ATTEMPTS = 5;
 
 /**
  * Public self-registration with email + password. Mirrors
@@ -94,6 +101,12 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
   // asking. `checking` state itself still drives the UI (button
   // spinner/disabled) via the normal render cycle.
   const checkingRef = useRef(false);
+  // Counts finalize (post-verification) failures specifically — see
+  // MAX_FINALIZE_ATTEMPTS. A ref, not state: read from inside the poll
+  // interval's closure, which has the same staleness concern as `checking`
+  // above, and doesn't need to drive any render on its own (the derived
+  // "gave up" message is set via `error` when the ceiling is hit).
+  const finalizeAttemptsRef = useRef(0);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
 
@@ -118,6 +131,10 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
   useEffect(() => {
     if (phase !== 'pending-verification' || !pending) return;
     const id = setInterval(() => {
+      if (finalizeAttemptsRef.current >= MAX_FINALIZE_ATTEMPTS) {
+        clearInterval(id);
+        return;
+      }
       void checkVerified(true);
     }, POLL_INTERVAL_MS);
     return () => clearInterval(id);
@@ -137,6 +154,7 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
         displayName: `${data.firstName} ${data.lastName}`.trim(),
       }).catch(() => {});
       await sendEmailVerification(cred.user);
+      finalizeAttemptsRef.current = 0;
       setPending({ user: cred.user, firstName: data.firstName, lastName: data.lastName });
       setPhase('pending-verification');
     } catch (e) {
@@ -167,13 +185,23 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
       }
       setResendNotice(null);
       setPhase('entering');
-      const result = await finalizePasswordAccount(pending.user, {
-        firstName: pending.firstName,
-        lastName: pending.lastName,
-      });
-      if (!result.ok) {
+      let result;
+      try {
+        result = await finalizePasswordAccount(pending.user, {
+          firstName: pending.firstName,
+          lastName: pending.lastName,
+        });
+      } catch {
+        result = null;
+      }
+      if (!result || !result.ok) {
+        finalizeAttemptsRef.current += 1;
         setPhase('pending-verification');
-        setError('Se verificó tu correo, pero no pudimos activar tu cuenta. Probá de nuevo.');
+        setError(
+          finalizeAttemptsRef.current >= MAX_FINALIZE_ATTEMPTS
+            ? 'No pudimos activar tu cuenta después de varios intentos. Escribinos para ayudarte a entrar.'
+            : 'Se verificó tu correo, pero no pudimos activar tu cuenta. Probá de nuevo.',
+        );
         return;
       }
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
@@ -204,6 +232,7 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
 
   async function onStartOver() {
     await signOut(fb.auth).catch(() => {});
+    finalizeAttemptsRef.current = 0;
     setPending(null);
     setError(null);
     setResendNotice(null);

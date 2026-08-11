@@ -21,13 +21,23 @@ export function sanitizeNamePart(s: string, maxLen = 40): string {
  * Falls back to the email local-part, then a generic label, so firstName is
  * never empty (UserProfileSchema requires min(1), and placeBid/emails read
  * this field).
+ *
+ * The fallback goes through `sanitizeNamePart` too, not just the primary
+ * value — local-parts run up to 64 chars (RFC 5321) and can contain
+ * `+._-` and digits, none of which NAME_RX (createUser's admin form / the
+ * buyer self-edit form / the password registration form) allows. An
+ * unclamped, unsanitized fallback here would silently write a profile
+ * value those forms' own `max(40)` + `NAME_RX` refuse to save, so the
+ * buyer can't touch their own profile again without first fixing a field
+ * they never typed into.
  */
 export function deriveNameFromDisplayName(
   displayName: string | undefined,
   email: string,
 ): { firstName: string; lastName: string } {
   const [rawFirst = '', ...rest] = (displayName ?? '').trim().split(/\s+/);
-  const firstName = sanitizeNamePart(rawFirst) || email.split('@')[0] || 'Usuario';
+  const firstName =
+    sanitizeNamePart(rawFirst) || sanitizeNamePart(email.split('@')[0] ?? '') || 'Usuario';
   const lastName = sanitizeNamePart(rest.join(' '));
   return { firstName, lastName };
 }

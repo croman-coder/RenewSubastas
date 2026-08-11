@@ -22,10 +22,14 @@ import { postSession, type PostSessionResult } from './post-session';
  *     real role, so calling it unconditionally on every login is cheap and
  *     safe — same reasoning as the Google button's unconditional call.
  *
- * registerPasswordBuyer failing here is expected and swallowed: an
- * unverified email or a non-password provider makes the callable a
- * deliberate no-op (see its own precondition check), and the existing
- * token's claims — if any — still apply below.
+ * registerPasswordBuyer failing with `failed-precondition` here is expected
+ * and swallowed: an unverified email or a non-password provider makes the
+ * callable a deliberate no-op (see its own precondition check), and the
+ * existing token's claims — if any — still apply below. Anything else
+ * (rate-limited, a real server error, a dropped connection) is NOT
+ * swallowed — it's rethrown so the caller's own error handling shows it
+ * instead of silently proceeding to postSession as if nothing happened,
+ * which would misreport a real failure as the generic "account_disabled".
  *
  * Forces a token refresh BEFORE calling the callable, not just after.
  * `email_verified` is a claim baked into the ID token/JWT at mint time.
@@ -46,7 +50,11 @@ export async function finalizePasswordAccount(
   await user.getIdToken(true);
   try {
     await httpsCallable(fb.functions, 'registerPasswordBuyer')(explicitName);
-  } catch {
+  } catch (err) {
+    const code = (err as { code?: string }).code ?? '';
+    if (code !== 'functions/failed-precondition' && code !== 'failed-precondition') {
+      throw err;
+    }
     // Not applicable — see doc comment above.
   }
   // Refresh again to pick up the custom claims registerPasswordBuyer just
