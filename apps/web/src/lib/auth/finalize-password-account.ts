@@ -43,13 +43,31 @@ import { postSession, type PostSessionResult } from './post-session';
  * truth, now verified. Confirmed against the emulator: omitting this
  * produces exactly that failure on the first check attempt.
  */
+export type FinalizeResult = PostSessionResult & {
+  /**
+   * True only when registerPasswordBuyer created the account on this call —
+   * the signal the Meta Pixel's CompleteRegistration fires from. False for
+   * every ordinary sign-in, and false too when the callable no-ops, which is
+   * why it defaults to false in the swallowed-precondition branch below.
+   */
+  isNewAccount: boolean;
+};
+
 export async function finalizePasswordAccount(
   user: User,
   explicitName?: { firstName: string; lastName: string },
-): Promise<PostSessionResult> {
+): Promise<FinalizeResult> {
   await user.getIdToken(true);
+  let isNewAccount = false;
   try {
-    await httpsCallable(fb.functions, 'registerPasswordBuyer')(explicitName);
+    const res = await httpsCallable<
+      { firstName: string; lastName: string } | undefined,
+      { isNew?: boolean }
+    >(
+      fb.functions,
+      'registerPasswordBuyer',
+    )(explicitName);
+    isNewAccount = res.data?.isNew === true;
   } catch (err) {
     const code = (err as { code?: string }).code ?? '';
     if (code !== 'functions/failed-precondition' && code !== 'failed-precondition') {
@@ -61,5 +79,5 @@ export async function finalizePasswordAccount(
   // set (role/status/audience) — the pre-call refresh above only guaranteed
   // a current email_verified claim, not these.
   const idToken = await user.getIdToken(true);
-  return postSession(idToken);
+  return { ...(await postSession(idToken)), isNewAccount };
 }

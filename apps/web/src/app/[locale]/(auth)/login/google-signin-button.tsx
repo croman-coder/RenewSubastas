@@ -8,6 +8,7 @@ import { httpsCallable } from 'firebase/functions';
 import { Loader2 } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { postSession, safeRedirect } from '@/lib/auth/post-session';
+import { trackCompleteRegistration } from '@/lib/analytics/meta-events';
 import { homeFor } from '@/lib/auth/constants';
 import { Button } from '@/components/ui/button';
 
@@ -45,7 +46,10 @@ export function GoogleSignInButton({ from, locale }: { from?: string; locale: st
       const cred = await signInWithPopup(fb.auth, new GoogleAuthProvider());
       // Provision (or resolve) the account server-side; forces buyer/retail
       // for new users, no-ops for existing ones.
-      await httpsCallable(fb.functions, 'registerGoogleBuyer')();
+      const provisioned = await httpsCallable<void, { isNew?: boolean }>(
+        fb.functions,
+        'registerGoogleBuyer',
+      )();
       // Force-refresh so the JWT carries the freshly-set custom claims.
       const idToken = await cred.user.getIdToken(true);
       const result = await postSession(idToken);
@@ -58,6 +62,11 @@ export function GoogleSignInButton({ from, locale }: { from?: string; locale: st
         await signOut(fb.auth).catch(() => {});
         return;
       }
+      // This one button is both "sign in" and "sign up", and both land on the
+      // same page — so only the callable's own answer can tell them apart.
+      // Reported after postSession succeeded: an account that exists but
+      // couldn't open a session is not a completed registration.
+      if (provisioned.data?.isNew === true) trackCompleteRegistration('google', cred.user.uid);
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
       router.replace(`/${locale}${target}`);
       router.refresh();

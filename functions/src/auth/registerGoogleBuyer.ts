@@ -11,6 +11,18 @@ export interface RegisterGoogleBuyerResult {
   uid: string;
   role: Role;
   audience: Audience | null;
+  /**
+   * True only when THIS call created the account.
+   *
+   * The client cannot work this out on its own: signing in and signing up
+   * both end on the same page, and Firebase's own `isNewUser` describes the
+   * Auth record, not our user document — a buyer whose Auth account exists
+   * but whose provisioning failed halfway would be reported as returning.
+   * Only the `snap.exists` check below knows the truth, and the Meta Pixel's
+   * CompleteRegistration (the event the ad campaign optimises against) is
+   * fired from this flag alone.
+   */
+  isNew: boolean;
 }
 
 /**
@@ -47,7 +59,7 @@ export async function registerGoogleBuyerHandler(
       ((data['profile'] as Record<string, unknown> | undefined)?.['audience'] as
         | Audience
         | undefined) ?? null;
-    return { uid, role, audience };
+    return { uid, role, audience, isNew: false };
   }
 
   // New self-registration: force buyer + retail + active, no document yet.
@@ -113,7 +125,7 @@ export async function registerGoogleBuyerHandler(
     console.error('[registerGoogleBuyer] audit log failed', err);
   });
 
-  return { uid, role: 'buyer', audience: 'retail' };
+  return { uid, role: 'buyer', audience: 'retail', isNew: true };
 }
 
 export const registerGoogleBuyer = onCall(

@@ -38,7 +38,7 @@ describe('registerPasswordBuyer', () => {
   it('creates a buyer+retail+active user doc + claims for a new password user', async () => {
     await adminAuth().createUser({ uid: 'p1', email: 'ana@example.com' });
     const res = await registerPasswordBuyerHandler(asPasswordUser('p1'));
-    expect(res).toMatchObject({ uid: 'p1', role: 'buyer', audience: 'retail' });
+    expect(res).toMatchObject({ uid: 'p1', role: 'buyer', audience: 'retail', isNew: true });
 
     const d = (await adminDb().doc('users/p1').get()).data()!;
     expect(d['role']).toBe('buyer');
@@ -73,8 +73,25 @@ describe('registerPasswordBuyer', () => {
       asPasswordUser('s1', { firstName: 'Staff', lastName: 'One' }, 'staff@santarosa.com.py'),
     );
     expect(res.role).toBe('staff');
+    expect(res.isNew).toBe(false);
     const d = (await adminDb().doc('users/s1').get()).data()!;
     expect(d['role']).toBe('staff');
+  });
+
+  it('reports isNew only on the call that actually provisions the account', async () => {
+    // This callable runs on EVERY password sign-in, not only from the
+    // registration form. CompleteRegistration is the event the ad campaign
+    // optimises against, so every sign-in after the first must report false
+    // or the campaign learns from a number that grows with logins.
+    await adminAuth().createUser({ uid: 'p9', email: 'repeat@example.com' });
+    const first = await registerPasswordBuyerHandler(
+      asPasswordUser('p9', { firstName: 'Ana', lastName: 'Gomez' }, 'repeat@example.com'),
+    );
+    expect(first.isNew).toBe(true);
+    const second = await registerPasswordBuyerHandler(
+      asPasswordUser('p9', { firstName: 'Ana', lastName: 'Gomez' }, 'repeat@example.com'),
+    );
+    expect(second.isNew).toBe(false);
   });
 
   it('ignores client-supplied role/audience/status (no privilege injection)', async () => {

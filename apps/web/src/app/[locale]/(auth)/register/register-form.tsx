@@ -17,6 +17,7 @@ import { fb } from '@/lib/firebase/client';
 import { homeFor } from '@/lib/auth/constants';
 import { safeRedirect } from '@/lib/auth/post-session';
 import { finalizePasswordAccount } from '@/lib/auth/finalize-password-account';
+import { trackCompleteRegistration } from '@/lib/analytics/meta-events';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -204,6 +205,10 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
         );
         return;
       }
+      // Reported here rather than at form submit: the account does not exist
+      // until the callable above says it created one. Firing on submit would
+      // count everyone who typed an email and never clicked the link.
+      if (result.isNewAccount) trackCompleteRegistration('email', pending.user.uid);
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
       router.replace(`/${locale}${target}`);
       router.refresh();

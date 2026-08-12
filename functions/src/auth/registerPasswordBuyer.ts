@@ -12,6 +12,18 @@ export interface RegisterPasswordBuyerResult {
   uid: string;
   role: Role;
   audience: Audience | null;
+  /**
+   * True only when THIS call created the account — see the identical flag on
+   * registerGoogleBuyer for why the client can't decide this itself.
+   *
+   * Note this callable runs on EVERY password sign-in, not only from the
+   * registration form (finalize-password-account.ts explains why), so the
+   * flag is false for the overwhelming majority of calls. It turns true
+   * exactly once per buyer: on whichever call finally provisions them,
+   * whether that is the registration tab or a later login by someone who
+   * verified their email and never came back.
+   */
+  isNew: boolean;
 }
 
 // Same allowed charset as createUser's admin form / the buyer self-edit
@@ -154,7 +166,7 @@ export async function registerPasswordBuyerHandler(
       ((data['profile'] as Record<string, unknown> | undefined)?.['audience'] as
         | Audience
         | undefined) ?? null;
-    return { uid, role, audience };
+    return { uid, role, audience, isNew: false };
   }
 
   // Set claims directly so the client's forced token refresh right after this
@@ -177,7 +189,7 @@ export async function registerPasswordBuyerHandler(
     console.error('[registerPasswordBuyer] audit log failed', err);
   });
 
-  return { uid, role: 'buyer', audience: 'retail' };
+  return { uid, role: 'buyer', audience: 'retail', isNew: true };
 }
 
 export const registerPasswordBuyer = onCall(

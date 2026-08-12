@@ -11,6 +11,7 @@ import { fb } from '@/lib/firebase/client';
 import { homeFor } from '@/lib/auth/constants';
 import { safeRedirect } from '@/lib/auth/post-session';
 import { finalizePasswordAccount } from '@/lib/auth/finalize-password-account';
+import { trackCompleteRegistration } from '@/lib/analytics/meta-events';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -136,6 +137,11 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         await fb.auth.signOut();
         return;
       }
+      // Almost always false on this path — this is the sign-in form. It
+      // turns true for the buyer who verified their email but never returned
+      // to the registration tab: their account is provisioned right here, so
+      // this login IS the alta, and it is the only moment it can be reported.
+      if (result.isNewAccount) trackCompleteRegistration('email', cred.user.uid);
       const { role, audience } = result;
       const target = safeRedirect(from) ?? homeFor(role, audience ?? undefined);
       setEntering(true);
@@ -190,6 +196,7 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
         await fb.auth.signOut();
         return;
       }
+      if (result.isNewAccount) trackCompleteRegistration('email', unverifiedUser.uid);
       const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
       setEntering(true);
       router.replace(`/${locale}${target}`);

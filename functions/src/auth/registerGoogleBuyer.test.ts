@@ -35,7 +35,7 @@ describe('registerGoogleBuyer', () => {
   it('creates a buyer+retail+active user doc + claims for a new Google user', async () => {
     await adminAuth().createUser({ uid: 'g1', email: 'ana@gmail.com' });
     const res = await registerGoogleBuyerHandler(asGoogleUser('g1'));
-    expect(res).toMatchObject({ uid: 'g1', role: 'buyer', audience: 'retail' });
+    expect(res).toMatchObject({ uid: 'g1', role: 'buyer', audience: 'retail', isNew: true });
 
     const d = (await adminDb().doc('users/g1').get()).data()!;
     expect(d['role']).toBe('buyer');
@@ -64,8 +64,23 @@ describe('registerGoogleBuyer', () => {
       asGoogleUser('s1', 'Staff One', 'staff@santarosa.com.py'),
     );
     expect(res.role).toBe('staff');
+    expect(res.isNew).toBe(false);
     const d = (await adminDb().doc('users/s1').get()).data()!;
     expect(d['role']).toBe('staff');
+  });
+
+  it('reports isNew only on the call that actually creates the account', async () => {
+    // CompleteRegistration is the event the ad campaign optimises against, so
+    // a returning buyer signing in again must never look like a new sign-up.
+    await adminAuth().createUser({ uid: 'g2', email: 'repeat@gmail.com' });
+    const first = await registerGoogleBuyerHandler(
+      asGoogleUser('g2', 'Ana Gomez', 'repeat@gmail.com'),
+    );
+    expect(first.isNew).toBe(true);
+    const second = await registerGoogleBuyerHandler(
+      asGoogleUser('g2', 'Ana Gomez', 'repeat@gmail.com'),
+    );
+    expect(second.isNew).toBe(false);
   });
 
   it('ignores client-supplied role/audience (no privilege injection)', async () => {

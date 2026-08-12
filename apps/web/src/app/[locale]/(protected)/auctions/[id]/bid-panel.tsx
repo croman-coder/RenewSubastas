@@ -1,5 +1,5 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
@@ -22,6 +22,7 @@ import { SoldBanner } from '@/components/auctions/sold-banner';
 import { didBuyerWinAuction } from '@/lib/auctions/win-state';
 import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+import { trackAddToCart, trackPurchase } from '@/lib/analytics/meta-events';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
 // typo or abuse; we surface the validation client-side too so the user gets
@@ -117,6 +118,21 @@ export function BidPanel({
   // case nothing that reads it is rendered.
   const buyNowPriceLabel = buyNowPrice !== null ? buyNowPrice.toLocaleString('es-PY') : '';
 
+  // Meta's Purchase for the other way a unit is taken: the auction ran to the
+  // end and this buyer was adjudicated it. Unlike buy-now there is no moment
+  // to hang it on — the close happens in a scheduled function, quite possibly
+  // while nobody has the page open — so the first render that sees `iWon` is
+  // the earliest the browser can know, and trackPurchase's once-guard is what
+  // stops every later reload from reporting the same sale again.
+  //
+  // `iWon` needs outcome === 'sold' AND winnerUid === me (see win-state.ts),
+  // so leading a live auction, or a unit sold in the showroom to someone
+  // else, never reaches this.
+  useEffect(() => {
+    if (!iWon) return;
+    trackPurchase({ auctionId, make, model, year, value: currentBid }, myUid);
+  }, [iWon, auctionId, make, model, year, currentBid, myUid]);
+
   // The buy-now callable closes the auction outright — no amount to stage,
   // just a confirmation. Kept separate from submitBid: different callable,
   // different success copy, and a different (yes/no, not amount) dialog.
@@ -134,6 +150,12 @@ export function BidPanel({
       // the call if the stored buyNowPrice has since changed, so a buyer
       // never gets charged a price they didn't see. See buyNow.ts.
       await httpsCallable(fb.functions, 'buyNow')({ auctionId, expectedPrice: buyNowPrice });
+      // Reported only after the callable resolved: the server rejects a
+      // buy-now whose price moved, or one that raced a first bid, and neither
+      // is a sale. buyNow writes currentBid = buyNowPrice, so the win banner
+      // that appears after the refresh below would report the same figure —
+      // trackPurchase's once-guard is what keeps that from counting twice.
+      trackPurchase({ auctionId, make, model, year, value: buyNowPrice }, myUid);
       toast.success('¡Compra confirmada! Revisá tu correo para abonar la seña.');
       router.refresh();
     } catch (e) {
@@ -161,6 +183,12 @@ export function BidPanel({
     setBusy(true);
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
+      // Meta's AddToCart means "made an offer on this unit". Fired here, on
+      // the resolved call, and never on the click: placeBid rejects bids that
+      // are too low, too late, rate-limited, or from an incomplete profile,
+      // and counting those would teach the campaign to find people who fail
+      // to bid.
+      trackAddToCart({ auctionId, make, model, year, value: amount });
       toast.success(t('success', { amount: fmtUsd(amount) }));
       // No router.refresh() here: the auction detail subscribes to the
       // auction doc via onSnapshot, so the new price, bid count and end time

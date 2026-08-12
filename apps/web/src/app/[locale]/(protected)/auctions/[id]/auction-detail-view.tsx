@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { collection, doc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Clock, Flame } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Separator } from '@/components/ui/separator';
 import { BlurNumber } from '@/components/brand/blur-number';
+import { trackViewContent } from '@/lib/analytics/meta-events';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
 import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { BidPanel } from './bid-panel';
@@ -74,6 +75,26 @@ export function AuctionDetailView({
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Meta's ViewContent: this buyer opened this vehicle's page. One per view,
+  // not one per render — the ref is what makes that true under React's Strict
+  // Mode, which deliberately runs every effect twice in development.
+  //
+  // The price sent is the LISTED one, not the live bid: it is the figure that
+  // identifies the vehicle in Meta's reports, and it must not drift every
+  // time somebody else bids.
+  const viewedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (viewedRef.current === initial.id) return;
+    viewedRef.current = initial.id;
+    trackViewContent({
+      auctionId: initial.id,
+      make: initial.make,
+      model: initial.model,
+      year: initial.year,
+      value: initial.startingPrice,
+    });
+  }, [initial.id, initial.make, initial.model, initial.year, initial.startingPrice]);
 
   useEffect(() => {
     const unsubAuction = onSnapshot(doc(fb.db, 'auctions', initial.id), (s) => {
