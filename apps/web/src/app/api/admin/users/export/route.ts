@@ -90,7 +90,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             pageLabel: (page, pageCount) => `Página ${page} de ${pageCount}`,
           });
 
-    return new NextResponse(body, {
+    // `body` es un Buffer de Node y BodyInit no lo acepta: desde TypeScript
+    // 5.7 `BufferSource` exige `ArrayBufferView<ArrayBuffer>`, y el `.buffer`
+    // de un Buffer está tipado como `ArrayBufferLike` (podría ser un
+    // SharedArrayBuffer). Una vista sobre la misma memoria arrastra ese tipo y
+    // el compilador la rechaza igual, así que se copia a un Uint8Array propio,
+    // que sí queda respaldado por un ArrayBuffer común.
+    //
+    // Copiar en vez de castear es a propósito: el cast taparía el día en que
+    // buildXlsx/buildPdfTable devuelvan otra cosa, y el costo es una copia de
+    // unos pocos cientos de kilobytes en una descarga manual.
+    const bytes = new Uint8Array(body.byteLength);
+    bytes.set(body);
+
+    return new NextResponse(bytes, {
       headers: {
         'Content-Type': CONTENT_TYPES[format],
         // The filename is pure ASCII (usuarios-YYYY-MM-DD.ext), so the plain
