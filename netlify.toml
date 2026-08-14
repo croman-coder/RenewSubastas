@@ -4,41 +4,34 @@
   command = "pnpm install --frozen-lockfile && pnpm --filter @carbid/shared-types build && pnpm --filter @carbid/web build"
   publish = "apps/web/.next"
 
-  # Skip the build when nothing that reaches the browser changed.
+  # NO agregar aquí una regla `ignore` sin resolver antes por qué falló la
+  # anterior.
   #
-  # This is a monorepo: `functions/`, `firestore.rules`, `firestore.indexes.json`
-  # and `docs/` all live beside the site but are deployed by the Firebase CLI, not
-  # by Netlify. Without this, a commit touching only an index definition still ran
-  # the full Next build and published a byte-identical site — real money for no
-  # change. Production deploys were 76% of this account's credit burn.
+  # El 12 de agosto se puso una para no gastar créditos: este es un monorepo y
+  # un commit que sólo toca `functions/` o `docs/` no cambia nada de lo que ve
+  # el navegador, pero igual disparaba un build completo. La idea era sana —los
+  # deploys de producción eran el 76% del consumo de la cuenta— y la ejecución
+  # salió cara.
   #
-  # Semantics are inverted on purpose: exit 0 means "ignore this commit", exit 1
-  # means "build it". `git diff --quiet` exits 0 when the listed paths are
-  # unchanged, which is exactly the skip condition, so no negation is needed.
+  # Qué pasó: Netlify cancela el build cuando el comando sale con código 0. La
+  # regla comparaba `$CACHED_COMMIT_REF` con `$COMMIT_REF`, y con la variable
+  # vacía el comando degeneraba en comparar el commit contra el árbol de
+  # trabajo, que en un contenedor de build son lo mismo. Salía 0 y cancelaba. Y
+  # un build cancelado no deja caché, así que el siguiente arrancaba igual de
+  # vacío: se realimentaba solo.
   #
-  # The list is deliberately over-inclusive. A build that wasn't needed costs
-  # credits; a build that was needed and got skipped ships a stale site, which is
-  # far worse. When in doubt, add the path.
+  # Resultado: tres commits sin publicar entre el 12 y el 14 de agosto, el
+  # último el exportador de usuarios a Excel/PDF, y producción clavada en
+  # 5e36fa0 durante dos días sin una sola alerta, porque un deploy salteado se
+  # ve igual que uno sano desde afuera. Una versión con guardas explícitas para
+  # la variable vacía también terminó cancelando, y el log del build no es
+  # accesible por API para saber por qué.
   #
-  # The guards on CACHED_COMMIT_REF are the whole reason this line is not a
-  # bare `git diff`. An earlier version assumed that an unset CACHED_COMMIT_REF
-  # would make the command fail, and therefore build. It does the opposite:
-  # with the variable empty the command collapses to
-  # `git diff --quiet $COMMIT_REF -- <paths>`, which compares the checked-out
-  # commit against the working tree. In a build container those are identical
-  # by construction, so it exits 0 and Netlify cancels the build.
-  #
-  # And it does not self-correct: a cancelled build produces no cache, so the
-  # next build starts with CACHED_COMMIT_REF empty again and cancels too. Three
-  # commits in a row were silently dropped that way between 12 and 14 August —
-  # including a colleague's user-export feature, which never reached production
-  # and gave no failure notice, because a skipped deploy looks like a healthy
-  # one from the outside.
-  #
-  # So: build unless we can prove nothing relevant changed. Missing variable,
-  # ref absent from the shallow clone, or any diff in the listed paths — all
-  # exit non-zero and build. Only a clean, fully resolved comparison skips.
-  ignore = 'test -n "$CACHED_COMMIT_REF" && git cat-file -e "$CACHED_COMMIT_REF^{commit}" 2>/dev/null && git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- apps packages package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json netlify.toml'
+  # Con ese antecedente, el ahorro no paga el riesgo: un build de más cuesta
+  # unos créditos, uno de menos deja producción vieja sin avisar. Si algún día
+  # se reintenta, que sea contra una rama de prueba y comprobando en el log del
+  # deploy qué vale `CACHED_COMMIT_REF`, no razonando sobre lo que debería
+  # valer.
 
 [build.environment]
   NODE_VERSION = "20"
