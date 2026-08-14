@@ -456,6 +456,12 @@
       },
       "empty": "No users match the current filters.",
       "loadMore": "Load more",
+      "export": {
+        "xlsx": "Export Excel",
+        "pdf": "Export PDF",
+        "pending": "Generating…",
+        "error": "Could not generate the file."
+      },
       "create": {
         "title": "Create user",
         "subtitle": "Admin/staff users must use an @santarosa.com.py email.",

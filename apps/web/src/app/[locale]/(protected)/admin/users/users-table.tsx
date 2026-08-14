@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UserRowActions } from './user-row-actions';
+import { UsersExportButtons } from './users-export-buttons';
 import type { UserListItem } from '@/lib/admin/list-users';
 import type { UsersKind } from '@/lib/admin/users-filter';
 
@@ -111,6 +112,11 @@ export function UsersTable({
         <p className="text-sm text-text-muted num-tab">
           {t('filters.count', { shown: items.length, total: totalCount })}
         </p>
+        {/* Sits with the filters, not with "Crear usuario": what gets exported
+            is whatever the filters select, all of it — not just this page. */}
+        <div className="ml-auto">
+          <UsersExportButtons />
+        </div>
       </div>
       <div className="border border-text-subtle/20 rounded">
         <Table>

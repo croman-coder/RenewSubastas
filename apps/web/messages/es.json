@@ -456,6 +456,12 @@
       },
       "empty": "No hay usuarios que coincidan con los filtros.",
       "loadMore": "Cargar más",
+      "export": {
+        "xlsx": "Exportar Excel",
+        "pdf": "Exportar PDF",
+        "pending": "Generando…",
+        "error": "No se pudo generar el archivo."
+      },
       "create": {
         "title": "Crear usuario",
         "subtitle": "Los usuarios admin/staff deben usar email de @santarosa.com.py.",
