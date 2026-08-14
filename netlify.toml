@@ -20,9 +20,25 @@
   # credits; a build that was needed and got skipped ships a stale site, which is
   # far worse. When in doubt, add the path.
   #
-  # If CACHED_COMMIT_REF is unset (first build after enabling this, or a cleared
-  # cache) the command fails and Netlify builds — the safe direction.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps packages package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json netlify.toml"
+  # The guards on CACHED_COMMIT_REF are the whole reason this line is not a
+  # bare `git diff`. An earlier version assumed that an unset CACHED_COMMIT_REF
+  # would make the command fail, and therefore build. It does the opposite:
+  # with the variable empty the command collapses to
+  # `git diff --quiet $COMMIT_REF -- <paths>`, which compares the checked-out
+  # commit against the working tree. In a build container those are identical
+  # by construction, so it exits 0 and Netlify cancels the build.
+  #
+  # And it does not self-correct: a cancelled build produces no cache, so the
+  # next build starts with CACHED_COMMIT_REF empty again and cancels too. Three
+  # commits in a row were silently dropped that way between 12 and 14 August —
+  # including a colleague's user-export feature, which never reached production
+  # and gave no failure notice, because a skipped deploy looks like a healthy
+  # one from the outside.
+  #
+  # So: build unless we can prove nothing relevant changed. Missing variable,
+  # ref absent from the shallow clone, or any diff in the listed paths — all
+  # exit non-zero and build. Only a clean, fully resolved comparison skips.
+  ignore = 'test -n "$CACHED_COMMIT_REF" && git cat-file -e "$CACHED_COMMIT_REF^{commit}" 2>/dev/null && git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- apps packages package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json netlify.toml'
 
 [build.environment]
   NODE_VERSION = "20"
