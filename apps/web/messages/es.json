@@ -9,7 +9,8 @@
     "theme": "Tema",
     "themeLight": "Claro",
     "themeDark": "Oscuro",
-    "themeSystem": "Sistema"
+    "themeSystem": "Sistema",
+    "signOutFailed": "No pudimos cerrar tu sesión. Revisá tu conexión e intentá de nuevo."
   },
   "home": {
     "title": "Bienvenido a Renew Subastas",
@@ -131,7 +132,9 @@
       "confirmButton": "Eliminar cuenta definitivamente",
       "deleting": "Eliminando…",
       "staffNotAllowed": "Las cuentas de staff y administrador no pueden auto-eliminarse. Contacta a un administrador.",
-      "errors": { "generic": "No se pudo eliminar la cuenta." }
+      "errors": {
+        "generic": "No se pudo eliminar la cuenta."
+      }
     }
   },
   "staff": {
@@ -144,7 +147,10 @@
     "auctions": {
       "title": "Mis subastas",
       "createNew": "Crear subasta",
-      "filters": { "status": "Estado", "all": "Todas" },
+      "filters": {
+        "status": "Estado",
+        "all": "Todas"
+      },
       "columns": {
         "vehicle": "Vehículo",
         "currentBid": "Puja actual",
@@ -171,7 +177,9 @@
         "endsAt": "Fin",
         "submit": "Crear subasta",
         "submitting": "Creando…",
-        "errors": { "generic": "No se pudo crear la subasta." }
+        "errors": {
+          "generic": "No se pudo crear la subasta."
+        }
       },
       "detail": {
         "back": "Mis subastas",
@@ -185,7 +193,10 @@
     "vehicles": {
       "title": "Mis vehículos",
       "createNew": "Nuevo vehículo",
-      "filters": { "status": "Estado", "all": "Todos" },
+      "filters": {
+        "status": "Estado",
+        "all": "Todos"
+      },
       "columns": {
         "vehicle": "Vehículo",
         "year": "Año",
@@ -378,7 +389,10 @@
     },
     "audit": {
       "title": "Auditoría",
-      "filters": { "action": "Acción", "all": "Todas" },
+      "filters": {
+        "action": "Acción",
+        "all": "Todas"
+      },
       "columns": {
         "createdAt": "Fecha",
         "actor": "Actor",
@@ -394,7 +408,9 @@
       "save": "Guardar",
       "saving": "Guardando…",
       "saved": "Guardado",
-      "errors": { "generic": "No se pudo guardar." },
+      "errors": {
+        "generic": "No se pudo guardar."
+      },
       "currency": {
         "title": "Moneda",
         "primary": "Moneda primaria",
@@ -496,7 +512,9 @@
         "hardDeletePrompt": "Vas a borrar PERMANENTEMENTE a {email}. Se libera el email para que pueda registrarse otra persona y NO se puede deshacer.\n\nEscribí el email exacto para confirmar:",
         "hardDeleteMismatch": "El email no coincide. Cancelado.",
         "hardDeleteSuccess": "Usuario eliminado definitivamente.",
-        "errors": { "generic": "Error al ejecutar la acción." }
+        "errors": {
+          "generic": "Error al ejecutar la acción."
+        }
       }
     }
   }

@@ -62,6 +62,7 @@ export async function AppShell({ locale, children }: Props) {
         {...(user.audience ? { audience: user.audience } : {})}
         navItems={navItems}
         signOutLabel={tCommon('signOut')}
+        signOutFailedLabel={tCommon('signOutFailed')}
         settingsLabel={tCommon('settings')}
       />
       {/* Push opt-in lives only on the buyer surface. Admin/staff

@@ -9,7 +9,8 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "signOutFailed": "We couldn't sign you out. Check your connection and try again."
   },
   "home": {
     "title": "Welcome to Renew Subastas",
@@ -131,7 +132,9 @@
       "confirmButton": "Permanently delete account",
       "deleting": "Deleting…",
       "staffNotAllowed": "Staff and administrator accounts cannot self-delete. Contact an administrator.",
-      "errors": { "generic": "Could not delete the account." }
+      "errors": {
+        "generic": "Could not delete the account."
+      }
     }
   },
   "staff": {
@@ -144,7 +147,10 @@
     "auctions": {
       "title": "My auctions",
       "createNew": "Create auction",
-      "filters": { "status": "Status", "all": "All" },
+      "filters": {
+        "status": "Status",
+        "all": "All"
+      },
       "columns": {
         "vehicle": "Vehicle",
         "currentBid": "Current bid",
@@ -171,7 +177,9 @@
         "endsAt": "End",
         "submit": "Create auction",
         "submitting": "Creating…",
-        "errors": { "generic": "Could not create the auction." }
+        "errors": {
+          "generic": "Could not create the auction."
+        }
       },
       "detail": {
         "back": "My auctions",
@@ -185,7 +193,10 @@
     "vehicles": {
       "title": "My vehicles",
       "createNew": "New vehicle",
-      "filters": { "status": "Status", "all": "All" },
+      "filters": {
+        "status": "Status",
+        "all": "All"
+      },
       "columns": {
         "vehicle": "Vehicle",
         "year": "Year",
@@ -378,7 +389,10 @@
     },
     "audit": {
       "title": "Audit log",
-      "filters": { "action": "Action", "all": "All" },
+      "filters": {
+        "action": "Action",
+        "all": "All"
+      },
       "columns": {
         "createdAt": "Date",
         "actor": "Actor",
@@ -394,7 +408,9 @@
       "save": "Save",
       "saving": "Saving…",
       "saved": "Saved",
-      "errors": { "generic": "Could not save." },
+      "errors": {
+        "generic": "Could not save."
+      },
       "currency": {
         "title": "Currency",
         "primary": "Primary currency",
@@ -496,7 +512,9 @@
         "hardDeletePrompt": "You are PERMANENTLY deleting {email}. The email will be freed for someone else to register and this CANNOT be undone.\n\nType the email exactly to confirm:",
         "hardDeleteMismatch": "Email did not match. Cancelled.",
         "hardDeleteSuccess": "User permanently deleted.",
-        "errors": { "generic": "Error executing the action." }
+        "errors": {
+          "generic": "Error executing the action."
+        }
       }
     }
   }

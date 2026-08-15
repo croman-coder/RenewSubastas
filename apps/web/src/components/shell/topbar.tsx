@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { Menu, X, LogOut, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { fb } from '@/lib/firebase/client';
+import { clearServerSession } from '@/lib/auth/clear-server-session';
 import { SidebarNav } from './sidebar-nav';
 import { NotificationBell } from './notification-bell';
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
@@ -49,6 +51,7 @@ interface Props {
   audience?: 'retail' | 'wholesale';
   navItems: NavItem[];
   signOutLabel: string;
+  signOutFailedLabel: string;
   settingsLabel: string;
 }
 
@@ -61,9 +64,11 @@ export function Topbar({
   audience,
   navItems,
   signOutLabel,
+  signOutFailedLabel,
   settingsLabel,
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
   const initial = (firstName || email).slice(0, 1).toUpperCase();
   // Handed to the drawer so it can return focus here when it closes.
@@ -72,9 +77,36 @@ export function Topbar({
   // re-steal focus into the drawer) on unrelated Topbar re-renders.
   const closeMobileMenu = useCallback(() => setMobileOpen(false), []);
 
+  /**
+   * Cierra la sesión, o no hace nada y lo dice.
+   *
+   * El orden importa y antes estaba al revés de lo seguro. La cookie httpOnly
+   * es lo que decide si el servidor te considera adentro; la sesión de
+   * Firebase en el navegador sólo firma las llamadas a los callables. Si se
+   * borra primero la de Firebase y después falla el DELETE, queda alguien con
+   * la cookie viva convencido de que salió — en un celular prestado eso es un
+   * problema, no una molestia.
+   *
+   * Así que primero la cookie. Si esa llamada no completa —y en iPhone con
+   * señal mala no completa: `TypeError: Load failed` es lo que reporta
+   * WebKit— no se toca nada más y se avisa. El estado queda idéntico y se
+   * puede reintentar, en vez de fingir una salida a medias.
+   *
+   * `busy` evita el doble toque en móvil, igual que en revoke-sessions-button
+   * y delete-account-dialog, que ya seguían este patrón.
+   */
   async function handleSignOut() {
-    await fetch('/api/session', { method: 'DELETE' });
-    await signOut(fb.auth);
+    if (signingOut) return;
+    setSigningOut(true);
+    if (!(await clearServerSession())) {
+      toast.error(signOutFailedLabel);
+      setSigningOut(false);
+      return;
+    }
+    // La cookie ya no está: a partir de acá la salida es un hecho. Que la
+    // limpieza local falle no puede dejar a nadie atrapado en una pantalla,
+    // así que se sigue igual hacia el login.
+    await signOut(fb.auth).catch(() => {});
     router.replace(`/${locale}/login`);
     router.refresh();
   }
@@ -165,6 +197,7 @@ export function Topbar({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleSignOut}
+                disabled={signingOut}
                 className="cursor-pointer text-danger focus:text-danger"
               >
                 <LogOut className="w-4 h-4 mr-2" />
