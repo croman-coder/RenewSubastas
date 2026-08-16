@@ -264,9 +264,9 @@ async function main() {
       bidIncrement: 1000,
       status: 'live',
       bids: [
-        { userIdx: 2, amount: 26000 },
-        { userIdx: 3, amount: 27000 },
-        { userIdx: 2, amount: 28000 },
+        { userIdx: 2, amount: 27000 },
+        { userIdx: 3, amount: 28000 },
+        { userIdx: 2, amount: 29000 },
       ],
     },
     {
@@ -279,7 +279,7 @@ async function main() {
       bidIncrement: 500,
       status: 'ended',
       bids: [
-        { userIdx: 3, amount: 11000 },
+        { userIdx: 3, amount: 11500 },
         { userIdx: 2, amount: 12500 },
       ],
       outcome: 'sold',
@@ -295,7 +295,7 @@ async function main() {
       bidIncrement: 250,
       reservePrice: 20000,
       status: 'ended',
-      bids: [{ userIdx: 3, amount: 8000 }],
+      bids: [{ userIdx: 3, amount: 8250 }],
       outcome: 'reserve_not_met',
     },
   ];

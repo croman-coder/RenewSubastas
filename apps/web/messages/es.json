@@ -35,7 +35,8 @@
         "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
         "noRole": "Tu cuenta no tiene un rol asignado. Contacta al administrador.",
         "googleFailed": "No se pudo continuar con Google. Probá de nuevo.",
-        "popupBlocked": "El navegador bloqueó la ventana de Google. Habilitá los pop-ups y reintentá."
+        "popupBlocked": "El navegador bloqueó la ventana de Google. Habilitá los pop-ups y reintentá.",
+        "temporary": "No pudimos verificar tu sesión en este momento. Tu cuenta sigue activa: probá de nuevo en unos segundos."
       },
       "unverified": {
         "message": "Todavía no verificaste tu correo. Revisá tu bandeja de entrada.",

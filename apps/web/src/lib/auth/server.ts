@@ -6,6 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { adminAuth } from '@/lib/firebase/admin';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { SESSION_COOKIE_NAME, homeFor, type Role } from './constants';
+import { classifySessionFailure } from './session-failure';
 
 export interface CurrentUser {
   uid: string;
@@ -72,9 +73,17 @@ export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser>
     // the disabled/no_role redirects above aren't swallowed and re-routed as
     // a generic expiry.
     if (err && typeof err === 'object' && 'digest' in err) throw err;
-    // verifySessionCookie failed: the cookie is expired or revoked. Signal the
-    // login page (which clears the stale __session cookie on mount) so the user
-    // isn't caught in a redirect loop.
+    // Sin verificar no se entra — eso no cambia. Lo que cambia es qué se hace
+    // con la cookie. `?error=expired` hace que la pantalla de login la borre,
+    // así que ese motivo queda reservado para cuando Firebase afirmó que la
+    // credencial no sirve. Si sólo falló la consulta —la verificación
+    // pregunta a Google en cada render y a veces esa llamada no llega— la
+    // cookie se deja intacta y basta con reintentar para volver a entrar sin
+    // escribir la contraseña de nuevo. Ver session-failure.ts.
+    if (classifySessionFailure(err) === 'temporary') {
+      console.error('[getCurrentUser] no se pudo verificar la sesión', err);
+      redirect(`/${locale}/login?error=temporary`);
+    }
     redirect(`/${locale}/login?error=expired`);
   }
 });

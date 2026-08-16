@@ -35,7 +35,8 @@
         "sessionExpired": "Your session has expired. Please sign in again.",
         "noRole": "Your account has no role assigned. Contact the administrator.",
         "googleFailed": "Couldn't continue with Google. Please try again.",
-        "popupBlocked": "The browser blocked the Google popup. Allow pop-ups and retry."
+        "popupBlocked": "The browser blocked the Google popup. Allow pop-ups and retry.",
+        "temporary": "We couldn't verify your session right now. Your account is still active — try again in a few seconds."
       },
       "unverified": {
         "message": "You haven't verified your email yet. Check your inbox.",

@@ -22,6 +22,7 @@ import { SoldBanner } from '@/components/auctions/sold-banner';
 import { didBuyerWinAuction } from '@/lib/auctions/win-state';
 import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+import { minimumBid } from '@/lib/auctions/minimum-bid';
 import { trackAddToCart, trackPurchase } from '@/lib/analytics/meta-events';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
@@ -81,7 +82,7 @@ export function BidPanel({
   const t = useTranslations('buyer.auctions.detail.bidPanel');
   const router = useRouter();
   const locale = (useParams().locale as string) ?? 'es';
-  const minRequired = toCents(currentBid > 0 ? currentBid + bidIncrement : startingPrice);
+  const minRequired = minimumBid({ currentBid, startingPrice, bidIncrement });
   const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
   // Amount staged for confirmation; null when the confirm dialog is closed.

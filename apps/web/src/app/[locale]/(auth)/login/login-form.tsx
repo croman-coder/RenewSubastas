@@ -59,6 +59,16 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   // user isn't stuck in a redirect loop and a fresh login can proceed cleanly.
   useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('error');
+    // `temporary` llega cuando el servidor no pudo verificar la sesión, no
+    // cuando la sesión dejó de valer. Ahí no se borra nada: la cookie sigue
+    // siendo buena y en el próximo intento la persona entra sin volver a
+    // escribir la contraseña. Borrarla —que es lo que pasaba cuando todo
+    // desembocaba en `expired`— convertía un tropiezo de red en un cierre de
+    // sesión real. Ver session-failure.ts.
+    if (reason === 'temporary') {
+      setError(t('errors.temporary'));
+      return;
+    }
     if (reason === 'disabled' || reason === 'expired' || reason === 'no_role') {
       void fetch('/api/session', { method: 'DELETE' }).catch(() => {});
       void fb.auth.signOut().catch(() => {});

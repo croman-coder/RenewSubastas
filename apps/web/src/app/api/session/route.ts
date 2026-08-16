@@ -101,10 +101,22 @@ export async function POST(req: NextRequest) {
       maxAge: SESSION_TTL_MS / 1000,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      // `strict` instead of `lax`: a session cookie should never be
-      // attached to top-level navigations from external sites. The
-      // login flow always runs same-origin so we lose nothing.
-      sameSite: 'strict',
+      // `lax`, no `strict`. La versión anterior decía que con `strict` no se
+      // perdía nada porque el login corre siempre en el mismo origen. Eso es
+      // cierto para el login y falso para todo lo demás: `strict` retiene la
+      // cookie en cualquier navegación de nivel superior que venga de otro
+      // sitio, y así llega la mayoría del tráfico de este sitio —enlaces de
+      // WhatsApp, anuncios de Instagram y Facebook, resultados de Google—.
+      // Quien tenía sesión abierta y entraba por un enlace aterrizaba en el
+      // login, y en los navegadores embebidos de esas apps hasta actualizar
+      // rehace la navegación original, así que también sacaba.
+      //
+      // `lax` manda la cookie en navegaciones GET de nivel superior y la
+      // sigue reteniendo en POST, iframes y peticiones en segundo plano
+      // cruzadas, que es donde importa para CSRF. Y el POST de esta misma
+      // ruta ya está protegido aparte por sameOrigin() de arriba, que es una
+      // comprobación más fuerte que cualquier atributo de cookie.
+      sameSite: 'lax',
       path: '/',
     });
     return res;
@@ -127,7 +139,9 @@ export async function DELETE() {
     maxAge: 0,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    // Tiene que coincidir con los atributos del POST o el navegador guarda la
+    // orden de borrado como una cookie distinta y la original sobrevive.
+    sameSite: 'lax',
     path: '/',
   });
   return res;

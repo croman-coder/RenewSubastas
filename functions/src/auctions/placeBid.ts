@@ -162,7 +162,18 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     const currentBid = (a['currentBid'] as number) ?? 0;
     const startingPrice = (a['startingPrice'] as number) ?? 0;
     const bidIncrement = (a['bidIncrement'] as number) ?? 0;
-    const minRequired = currentBid > 0 ? currentBid + bidIncrement : startingPrice;
+    // El precio base se trata como una oferta puesta que hay que superar, no
+    // como un monto que se pueda igualar. Antes la primera puja podía ser
+    // exactamente el precio inicial, así que la subasta arrancaba sin que
+    // nadie ofreciera nada por encima de lo pedido; a partir de la segunda
+    // puja sí regía el incremento. Ahora la regla es una sola en los dos
+    // casos: hay que subir un incremento sobre lo que haya arriba, sea el
+    // precio base o la puja vigente.
+    //
+    // Espejo en apps/web/src/lib/auctions/minimum-bid.ts, que alimenta los
+    // botones de puja rápida y el mínimo del campo manual. Si cambia una,
+    // cambia la otra: acá se rechaza, allá se evita el viaje de ida y vuelta.
+    const minRequired = (currentBid > 0 ? currentBid : startingPrice) + bidIncrement;
     if (amount < minRequired) {
       throw new HttpsError('failed-precondition', `Bid must be at least ${minRequired}`);
     }

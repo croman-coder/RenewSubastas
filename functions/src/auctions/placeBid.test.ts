@@ -150,6 +150,31 @@ describe('placeBid', () => {
     ).rejects.toMatchObject({ code: 'failed-precondition' });
   });
 
+  it('rejects a first bid exactly equal to the starting price', async () => {
+    // El precio base es lo que se pide, no una oferta válida. Igualarlo dejaba
+    // la subasta abierta sin que nadie hubiera ofrecido nada por encima.
+    await seedBuyer('buyer-1');
+    const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 500 });
+    await expect(
+      placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+  });
+
+  it('rejects a first bid above the base but short of a full increment', async () => {
+    await seedBuyer('buyer-1');
+    const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 500 });
+    await expect(
+      placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5100 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+  });
+
+  it('accepts a first bid one increment above the starting price', async () => {
+    await seedBuyer('buyer-1');
+    const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 500 });
+    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
+    expect(result.newCurrentBid).toBe(5500);
+  });
+
   it('rejects when amount below currentBid + increment', async () => {
     await seedBuyer('buyer-1');
     const auctionId = await seedAuction({
@@ -177,18 +202,18 @@ describe('placeBid', () => {
   it('places valid bid; updates auction; writes bid doc', async () => {
     await seedBuyer('buyer-1', 'Juan', 'Perez');
     const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 500 });
-    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
-    expect(result.newCurrentBid).toBe(5000);
+    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
+    expect(result.newCurrentBid).toBe(5500);
 
     const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
-    expect(aDoc.data()?.['currentBid']).toBe(5000);
+    expect(aDoc.data()?.['currentBid']).toBe(5500);
     expect(aDoc.data()?.['currentBidderUid']).toBe('buyer-1');
     expect(aDoc.data()?.['bidCount']).toBe(1);
 
     const bidsSnap = await adminDb().collection(`auctions/${auctionId}/bids`).get();
     expect(bidsSnap.size).toBe(1);
     const bid = bidsSnap.docs[0]!.data();
-    expect(bid['amount']).toBe(5000);
+    expect(bid['amount']).toBe(5500);
     expect(bid['status']).toBe('winning');
     expect(bid['buyerSnapshot'].firstName).toBe('Juan');
     expect(bid['buyerSnapshot'].lastInitial).toBe('P');
@@ -201,7 +226,7 @@ describe('placeBid', () => {
     const beforeEnds = (await adminDb().doc(`auctions/${auctionId}`).get()).data()![
       'endsAt'
     ] as Timestamp;
-    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
+    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
     // Must have extended beyond the original endsAt
     expect(result.endsAtMs).toBeGreaterThan(beforeEnds.toMillis());
     // And to roughly now + 60s
@@ -216,7 +241,7 @@ describe('placeBid', () => {
     const endsInMs = 30_000;
     const auctionId = await seedAuction({ endsInMs }); // no hardEndsAtMs -> field absent
     const beforeEndsMs = Date.now() + endsInMs;
-    await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
+    await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
 
     const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
     const hardEndsAtMs = (aDoc.data()!['hardEndsAt'] as Timestamp).toMillis();
@@ -232,7 +257,7 @@ describe('placeBid', () => {
     // further out — far less than a full 60s anti-snipe extension would give.
     const hardEndsAtMs = Date.now() + 10_000;
     const auctionId = await seedAuction({ endsInMs: 5_000, hardEndsAtMs });
-    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5000 }));
+    const result = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
 
     expect(result.endsAtMs).toBe(hardEndsAtMs);
     const aDoc = await adminDb().doc(`auctions/${auctionId}`).get();
@@ -260,8 +285,8 @@ describe('placeBid', () => {
     await seedBuyer('buyer-a');
     await seedBuyer('buyer-b');
     const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 500 });
-    await placeBidHandler(asBuyer('buyer-a', { auctionId, amount: 5000 }));
-    await placeBidHandler(asBuyer('buyer-b', { auctionId, amount: 5500 }));
+    await placeBidHandler(asBuyer('buyer-a', { auctionId, amount: 5500 }));
+    await placeBidHandler(asBuyer('buyer-b', { auctionId, amount: 6000 }));
     const bidsSnap = await adminDb()
       .collection(`auctions/${auctionId}/bids`)
       .orderBy('amount', 'asc')
