@@ -10,7 +10,18 @@ service cloud.firestore {
     function isBuyer()    { return isSignedIn() && isActive() && role() == 'buyer'; }
     // Buyer-only catalog segment ('retail' | 'wholesale'). Defaults to 'retail'
     // for legacy buyers whose claim hasn't been refreshed yet.
-    function audience()   { return request.auth.token.audience != null ? request.auth.token.audience : 'retail'; }
+    //
+    // `.get(clave, default)` y NO `token.audience != null`. Esa comparación
+    // parecía defensiva y no lo era: en las reglas, leer una propiedad que no
+    // existe en el token no devuelve null, **aborta la evaluación con error**,
+    // y una regla que aborta deniega. O sea que el comprador antiguo al que
+    // este default decía proteger era exactamente el que quedaba afuera: sin
+    // el claim, no podía leer NI UNA subasta ni un vehículo — catálogo vacío,
+    // sin ningún error que lo explicara.
+    //
+    // Lo encontró el pentest de src/security/firestore-rules.pentest.test.ts;
+    // la prueba que lo cubre sigue ahí para que no vuelva.
+    function audience()   { return request.auth.token.get('audience', 'retail'); }
     // True when the document's audience matches the calling buyer's audience.
     // A missing audience field (legacy data) is treated as 'retail' — NOT as
     // "visible to everyone"; `docAudience == null` must resolve to a value

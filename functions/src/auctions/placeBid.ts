@@ -4,6 +4,14 @@ import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+/**
+ * Piso que la PRIMERA puja tiene que superar sobre el precio base, en USD.
+ *
+ * Regla comercial, no técnica: una unidad no se adjudica pegada al precio
+ * publicado. Si el incremento de la subasta es mayor que esto, manda el
+ * incremento. Cambiar acá y en apps/web/src/lib/auctions/minimum-bid.ts.
+ */
+const MIN_FIRST_BID_OVER_BASE_USD = 500;
 
 // Hard ceiling for any single bid amount, in USD. Above this, the platform
 // stops being a vehicle auction and starts being a typo / DoS vector. Can be
@@ -162,18 +170,27 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
     const currentBid = (a['currentBid'] as number) ?? 0;
     const startingPrice = (a['startingPrice'] as number) ?? 0;
     const bidIncrement = (a['bidIncrement'] as number) ?? 0;
-    // El precio base se trata como una oferta puesta que hay que superar, no
-    // como un monto que se pueda igualar. Antes la primera puja podía ser
-    // exactamente el precio inicial, así que la subasta arrancaba sin que
-    // nadie ofreciera nada por encima de lo pedido; a partir de la segunda
-    // puja sí regía el incremento. Ahora la regla es una sola en los dos
-    // casos: hay que subir un incremento sobre lo que haya arriba, sea el
-    // precio base o la puja vigente.
+    // Dos reglas distintas según haya o no pujas.
+    //
+    // Sin pujas: la primera oferta tiene que despegarse del precio base por
+    // lo pedido por comercial —USD 500— o por el incremento de la subasta, lo
+    // que sea mayor. El piso de 500 existe para que una unidad no se adjudique
+    // pegada al precio publicado; el incremento sigue mandando cuando es más
+    // grande, porque una subasta con pasos de 500 no debería aceptar saltos de
+    // 500. Antes la primera puja podía igualar el precio base, así que se
+    // podía ganar sin ofrecer un guaraní por encima de lo pedido.
+    //
+    // Con pujas: manda el incremento sobre la puja vigente, como siempre. El
+    // piso de 500 no hace falta acá — la primera puja ya lo garantizó y todas
+    // las siguientes son estrictamente mayores.
     //
     // Espejo en apps/web/src/lib/auctions/minimum-bid.ts, que alimenta los
     // botones de puja rápida y el mínimo del campo manual. Si cambia una,
     // cambia la otra: acá se rechaza, allá se evita el viaje de ida y vuelta.
-    const minRequired = (currentBid > 0 ? currentBid : startingPrice) + bidIncrement;
+    const minRequired =
+      currentBid > 0
+        ? currentBid + bidIncrement
+        : startingPrice + Math.max(bidIncrement, MIN_FIRST_BID_OVER_BASE_USD);
     if (amount < minRequired) {
       throw new HttpsError('failed-precondition', `Bid must be at least ${minRequired}`);
     }
@@ -242,6 +259,23 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
 }
 
 export const placeBid = onCall(
-  { region: 'us-central1', enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false' },
+  {
+    region: 'us-central1',
+    enforceAppCheck: process.env['ENFORCE_APP_CHECK'] !== 'false',
+    // Tope de instancias, que acá no es para ahorrar sino para no empeorar la
+    // contención. Cada puja abre una transacción sobre el documento de la
+    // subasta, y Firestore sostiene del orden de una escritura por segundo por
+    // documento. Sin tope, una ráfaga sobre una unidad codiciada levanta
+    // decenas de instancias que compiten por ese mismo doc: los reintentos se
+    // multiplican, la latencia sube y terminan abortando más pujas que si
+    // hubiera menos manos en el mismo plato.
+    //
+    // 20 no es un número apretado: las funciones de 2ª generación atienden
+    // hasta 80 pedidos concurrentes por instancia, así que esto deja lugar a
+    // ~1600 pujas en vuelo. El límite real siempre va a ser Firestore, no
+    // esto. Sirve además de red contra un gasto descontrolado si alguien
+    // automatiza pujas.
+    maxInstances: 20,
+  },
   placeBidHandler,
 );

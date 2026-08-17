@@ -175,6 +175,29 @@ describe('placeBid', () => {
     expect(result.newCurrentBid).toBe(5500);
   });
 
+  it('enforces the USD 500 floor over the base when the increment is smaller', async () => {
+    // Regla comercial: una unidad no se adjudica pegada al precio publicado.
+    // Con incremento de 100, base + 100 ya no alcanza.
+    await seedBuyer('buyer-1');
+    const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 100 });
+    await expect(
+      placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5100 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+    const ok = await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
+    expect(ok.newCurrentBid).toBe(5500);
+  });
+
+  it('does not re-apply the 500 floor once bidding is under way', async () => {
+    // El piso lo garantizó la primera puja; de ahí en más manda el incremento,
+    // o cada paso costaría 500 y encarecería la mecánica entera.
+    await seedBuyer('buyer-1');
+    await seedBuyer('buyer-2');
+    const auctionId = await seedAuction({ startingPrice: 5000, bidIncrement: 100 });
+    await placeBidHandler(asBuyer('buyer-1', { auctionId, amount: 5500 }));
+    const ok = await placeBidHandler(asBuyer('buyer-2', { auctionId, amount: 5600 }));
+    expect(ok.newCurrentBid).toBe(5600);
+  });
+
   it('rejects when amount below currentBid + increment', async () => {
     await seedBuyer('buyer-1');
     const auctionId = await seedAuction({
