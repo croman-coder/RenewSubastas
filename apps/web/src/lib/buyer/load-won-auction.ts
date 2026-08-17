@@ -2,6 +2,7 @@ import 'server-only';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { loadAppConfigSnapshot } from '@/lib/admin/load-app-config';
+import { resolveFinalPrice } from './final-price';
 
 export interface WonAuctionDetail {
   auctionId: string;
@@ -61,7 +62,7 @@ export async function loadWonAuction(
     model: (v['model'] as string) ?? '',
     year: (v['year'] as number) ?? 0,
     thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
-    finalPrice: (a['finalPrice'] as number) ?? 0,
+    finalPrice: resolveFinalPrice(a),
     paymentStatus:
       (a['paymentStatus'] as 'pending_payment' | 'paid' | 'forfeited' | undefined) ?? null,
     paymentDeadlineMs:

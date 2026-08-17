@@ -1,6 +1,7 @@
 import 'server-only';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { resolveFinalPrice } from './final-price';
 
 export interface MyWonAuction {
   auctionId: string;
@@ -55,7 +56,7 @@ export async function listMyWon(uid: string): Promise<MyWonAuction[]> {
       model: (v['model'] as string) ?? '',
       year: (v['year'] as number) ?? 0,
       thumbnailUrl: (v['thumbnailUrl'] as string | undefined) ?? null,
-      finalPrice: (a['finalPrice'] as number) ?? 0,
+      finalPrice: resolveFinalPrice(a),
       endedAtMs: ms,
       sellerUid,
       sellerName: `${sellerProfile['firstName'] ?? ''} ${sellerProfile['lastName'] ?? ''}`.trim(),

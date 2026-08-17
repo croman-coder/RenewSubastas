@@ -6,6 +6,8 @@ import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { CheckCircle2, FileUp, Loader2, Paperclip } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
+import { proofExtension, resolveProofContentType } from '@/lib/buyer/proof-file';
+import { describeProofUploadError } from '@/lib/buyer/proof-upload-error';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -15,7 +17,12 @@ interface Props {
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
-const ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf';
+// `image/*` en vez de una lista cerrada de tipos. Los selectores de archivos
+// de Android filtran por este atributo, y con la lista cerrada las fotos que
+// el sistema no clasifica —las que guarda WhatsApp, las descargas sin
+// cabecera— aparecían en gris, imposibles de elegir. Se agregan también las
+// extensiones sueltas porque algunos selectores miran el nombre y no el tipo.
+const ACCEPT = 'image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif';
 
 /**
  * Lets the winning buyer attach their transfer receipt (image or PDF)
@@ -29,6 +36,9 @@ const ACCEPT = 'image/png,image/jpeg,image/webp,application/pdf';
 export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  // Se guarda junto al archivo porque es el tipo YA resuelto, no el que
+  // informó el navegador: es el que la regla del bucket va a mirar.
+  const [contentType, setContentType] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(!!existingProofUrl);
 
@@ -39,12 +49,17 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
       toast.error('El archivo supera los 10 MB.');
       return;
     }
-    const okType = f.type.startsWith('image/') || f.type === 'application/pdf';
-    if (!okType) {
-      toast.error('Subí una imagen (JPG/PNG) o un PDF.');
+    // Antes esto miraba sólo `f.type`, que en celular llega vacío a cada rato:
+    // el archivo quedaba rechazado con un "subí una imagen o un PDF" delante
+    // de alguien que acababa de elegir justamente eso. Ahora se resuelve
+    // también por la extensión — ver proof-file.ts.
+    const type = resolveProofContentType(f);
+    if (!type) {
+      toast.error('Subí una foto (JPG, PNG, HEIC) o un PDF.');
       return;
     }
     setFile(f);
+    setContentType(type);
   }
 
   async function submit() {
@@ -54,17 +69,31 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
       toast.error('Sesión expirada. Volvé a entrar.');
       return;
     }
+    // Se recalcula por si acaso: `contentType` sale del mismo archivo, pero
+    // dejar que `submit` dependa de dos piezas de estado que podrían
+    // desincronizarse es pedirlo.
+    const type = contentType ?? resolveProofContentType(file);
+    if (!type) {
+      toast.error('Subí una foto (JPG, PNG, HEIC) o un PDF.');
+      return;
+    }
     setBusy(true);
     try {
-      const ext = file.name.split('.').pop() ?? (file.type === 'application/pdf' ? 'pdf' : 'jpg');
-      const path = `payment-proofs/${auctionId}/${uid}/${Date.now()}.${ext}`;
-      await uploadBytes(storageRef(fb.storage, path), file, { contentType: file.type });
+      const path = `payment-proofs/${auctionId}/${uid}/${Date.now()}.${proofExtension(type)}`;
+      // El tipo va explícito. Si se manda el del navegador y viene vacío,
+      // Storage guarda application/octet-stream y la regla del bucket —que
+      // exige image/* o application/pdf— rechaza con storage/unauthorized.
+      await uploadBytes(storageRef(fb.storage, path), file, { contentType: type });
       await httpsCallable(fb.functions, 'submitPaymentProof')({ auctionId, storagePath: path });
       setDone(true);
       toast.success('Comprobante enviado. Santa Rosa lo va a revisar.');
       router.refresh();
     } catch (e) {
-      toast.error((e as Error).message ?? 'No se pudo enviar el comprobante.');
+      // El mensaje crudo de Firebase es inglés técnico con el código pegado
+      // al final; acá se traduce a algo que diga qué hacer. Ver
+      // proof-upload-error.ts.
+      console.error('[payment-proof] subida fallida', e);
+      toast.error(describeProofUploadError(e));
     } finally {
       setBusy(false);
     }
