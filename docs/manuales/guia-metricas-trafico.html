@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de métricas de tráfico — Renew Subastas</title>
+<meta name="hz:slide-selector" content=".slide">
+<meta name="hz:canvas-width" content="1920">
+<meta name="hz:canvas-height" content="1080">
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-base: #070707;
+  --bg-elev: #0f0f0f;
+  --bg-deep: #1b1b1b;
+  --ink: #f8f8f8;
+  --body: #cfcfcf;
+  --muted: #a4a4a4;
+  --subtle: #636363;
+  --success: #51b67a;
+  --success-dim: #2c4536;
+  --warning: #eba941;
+  --warning-dim: #4a3c22;
+  --danger: #e85854;
+  --danger-dim: #4a2726;
+  --line: rgba(248,248,248,0.11);
+  --line-soft: rgba(248,248,248,0.06);
+  --card: rgba(248,248,248,0.035);
+  --card-strong: rgba(248,248,248,0.06);
+  --glow: rgba(248,248,248,0.10);
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html, body {
+  background: var(--bg-base);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@page { size: 1920px 1080px; margin: 0; }
+
+.slide {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-base);
+  color: var(--ink);
+  font-family: var(--font-body);
+  page-break-after: always;
+  break-after: page;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.slide:last-child { page-break-after: auto; break-after: auto; }
+
+/* ---------- background textures (monochrome only) ---------- */
+.glow-tr { position:absolute; top:-380px; right:-380px; width:1000px; height:1000px; border-radius:50%;
+  background: radial-gradient(circle, var(--glow) 0%, rgba(248,248,248,0) 68%); pointer-events:none; }
+.glow-bl { position:absolute; bottom:-420px; left:-420px; width:1000px; height:1000px; border-radius:50%;
+  background: radial-gradient(circle, rgba(248,248,248,0.07) 0%, rgba(248,248,248,0) 68%); pointer-events:none; }
+.grid-dots { position:absolute; inset:0; opacity:0.5;
+  background-image: radial-gradient(rgba(248,248,248,0.07) 1.5px, transparent 1.5px);
+  background-size: 34px 34px; pointer-events:none; }
+
+/* ---------- chrome: header / footer ---------- */
+.slide-header { position:absolute; top:58px; left:120px; right:120px; height:46px;
+  display:flex; align-items:center; justify-content:space-between; }
+.slide-header-line { position:absolute; top:118px; left:120px; right:120px; height:1px; background:var(--line); }
+.slide-body { position:absolute; top:160px; left:120px; right:120px; bottom:98px; }
+.slide-footer { position:absolute; bottom:42px; left:120px; right:120px; height:28px;
+  display:flex; align-items:center; justify-content:space-between; }
+
+.kicker { font-family:var(--font-body); font-weight:700; font-size:20px; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--muted); }
+.kicker.on-ink { color: var(--ink); }
+.kicker-strong { color: var(--ink); }
+.footer-word { font-family: var(--font-display); font-weight:600; font-size:19px; color:var(--subtle); letter-spacing:0.02em; }
+.footer-word b { color:var(--muted); font-weight:600; }
+.pagenum { font-family: var(--font-body); font-weight:600; font-size:19px; color:var(--subtle); font-variant-numeric: tabular-nums; }
+
+/* ---------- typography roles ---------- */
+.display { font-family:var(--font-display); font-weight:700; font-size:126px; line-height:1.04;
+  color:var(--ink); letter-spacing:-0.02em; }
+.h1 { font-family:var(--font-display); font-weight:700; font-size:66px; line-height:1.14;
+  color:var(--ink); letter-spacing:-0.01em; }
+.h1-lg { font-family:var(--font-display); font-weight:700; font-size:80px; line-height:1.1;
+  color:var(--ink); letter-spacing:-0.015em; }
+.h2 { font-family:var(--font-display); font-weight:600; font-size:40px; line-height:1.25; color:var(--ink); }
+.h3 { font-family:var(--font-display); font-weight:600; font-size:29px; line-height:1.3; color:var(--ink); }
+.lead { font-family:var(--font-body); font-weight:500; font-size:34px; line-height:1.5; color:var(--ink); }
+.body-xl { font-family:var(--font-body); font-weight:400; font-size:30px; line-height:1.6; color:var(--body); }
+.body-txt { font-family:var(--font-body); font-weight:400; font-size:25px; line-height:1.62; color:var(--body); }
+.body-sm { font-family:var(--font-body); font-weight:400; font-size:21px; line-height:1.55; color:var(--muted); }
+.caption { font-family:var(--font-body); font-weight:700; font-size:17px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted); }
+.quote-text { font-family:var(--font-display); font-weight:600; font-size:42px; line-height:1.38; color:var(--ink); }
+.num { font-variant-numeric: tabular-nums; }
+strong, b { font-weight:700; color:var(--ink); }
+em { font-family: var(--font-body); font-style: italic; color: var(--ink); }
+.on-ink { color: var(--ink); }
+.c-success { color: var(--success); }
+.c-warning { color: var(--warning); }
+.c-danger { color: var(--danger); }
+.c-muted { color: var(--muted); }
+
+/* ---------- layout helpers ---------- */
+.stack { display:flex; flex-direction:column; }
+.row { display:flex; flex-direction:row; }
+.gap-8  { gap:8px; } .gap-12 { gap:12px; } .gap-16 { gap:16px; } .gap-20 { gap:20px; }
+.gap-24 { gap:24px; } .gap-32 { gap:32px; } .gap-40 { gap:40px; } .gap-48 { gap:48px; } .gap-56{gap:56px;}
+.items-center { align-items:center; } .items-start{align-items:flex-start;} .items-end{align-items:flex-end;}
+.justify-between { justify-content:space-between; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; }
+.grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; }
+.w-full { width:100%; }
+.flex-1 { flex:1; }
+.rel { position:relative; }
+
+/* ---------- cards & surfaces ---------- */
+.card { background:var(--card); border:1px solid var(--line); border-radius:20px; }
+.card-strong { background:var(--card-strong); border:1px solid var(--line); border-radius:20px; }
+.card-flat { background:var(--bg-elev); border:1px solid var(--line); border-radius:20px; }
+.divider { height:1px; background:var(--line); width:100%; }
+.divider-v { width:1px; background:var(--line); align-self:stretch; }
+
+.pill { display:inline-flex; align-items:center; gap:10px; padding:9px 20px; border-radius:999px;
+  font-family:var(--font-body); font-weight:700; font-size:19px; letter-spacing:0.02em; }
+.pill-success { background: rgba(81,182,122,0.14); color:var(--success); border:1px solid rgba(81,182,122,0.3); }
+.pill-warning { background: rgba(235,169,65,0.14); color:var(--warning); border:1px solid rgba(235,169,65,0.32); }
+.pill-danger  { background: rgba(232,88,84,0.14); color:var(--danger); border:1px solid rgba(232,88,84,0.32); }
+.pill-neutral { background: var(--card-strong); color:var(--ink); border:1px solid var(--line); }
+
+.tag { display:inline-block; padding:6px 14px; border-radius:8px; font-family:var(--font-body);
+  font-weight:700; font-size:17px; letter-spacing:0.06em; text-transform:uppercase; }
+.tag-success { background:rgba(81,182,122,0.15); color:var(--success); }
+.tag-warning { background:rgba(235,169,65,0.15); color:var(--warning); }
+.tag-danger  { background:rgba(232,88,84,0.15); color:var(--danger); }
+.tag-neutral { background:var(--card-strong); color:var(--muted); }
+
+/* ---------- icon badges ---------- */
+.icon-badge { width:76px; height:76px; border-radius:20px; background:var(--card-strong);
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.icon-badge svg { width:38px; height:38px; }
+.icon-badge.sm { width:56px; height:56px; border-radius:14px; }
+.icon-badge.sm svg { width:28px; height:28px; }
+.icon-badge.success { background:rgba(81,182,122,0.13); border-color:rgba(81,182,122,0.32); color:var(--success); }
+.icon-badge.warning { background:rgba(235,169,65,0.13); border-color:rgba(235,169,65,0.32); color:var(--warning); }
+.icon-badge.danger  { background:rgba(232,88,84,0.13); border-color:rgba(232,88,84,0.32); color:var(--danger); }
+.icon-badge.ink     { background:rgba(248,248,248,0.12); border-color:rgba(248,248,248,0.3); color:var(--ink); }
+
+/* ---------- numbered steps ---------- */
+.step-row { display:flex; flex-direction:row; gap:32px; align-items:flex-start; }
+.step-num { width:64px; height:64px; min-width:64px; border-radius:50%; background:var(--card-strong);
+  border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:700; font-size:28px; color:var(--ink); }
+.step-num.filled { background:var(--ink); color:var(--bg-base); border-color:var(--ink); }
+.step-line { width:1.5px; flex:1; background:var(--line); margin:4px auto; min-height:20px; }
+.step-col { display:flex; flex-direction:column; align-items:center; }
+
+/* ---------- tables ---------- */
+table.tviz { border-collapse:collapse; width:100%; }
+table.tviz th { font-family:var(--font-body); font-weight:700; font-size:19px; letter-spacing:0.05em;
+  text-transform:uppercase; color:var(--muted); text-align:left; padding:0 22px 18px 22px; border-bottom:1px solid var(--line); }
+table.tviz td { font-family:var(--font-body); font-size:23px; color:var(--body); padding:22px; vertical-align:top;
+  border-bottom:1px solid var(--line-soft); }
+table.tviz tr:last-child td { border-bottom:none; }
+table.tviz td.hl { color:var(--ink); font-weight:700; }
+table.tviz td:first-child, table.tviz th:first-child { padding-left:0; }
+
+/* ---------- quote block ---------- */
+.quote-block { position:relative; border-left:5px solid var(--ink); padding: 8px 0 8px 44px; }
+.quote-mark { position:absolute; left:-12px; top:-38px; font-family:var(--font-display); font-size:120px;
+  color:var(--line); font-weight:700; line-height:1; }
+
+/* ---------- checklist ---------- */
+.check-item { display:flex; flex-direction:row; align-items:flex-start; gap:20px; }
+.check-dot { width:34px; height:34px; min-width:34px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; margin-top:2px; }
+
+/* ---------- SVG arrows / connectors ---------- */
+.conn-arrow { stroke:var(--muted); stroke-width:3; fill:none; }
+.conn-arrow-ink { stroke:var(--ink); stroke-width:3; fill:none; }
+
+/* ---------- misc ---------- */
+.wordmark { font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; }
+.wordmark .re { color:var(--ink); }
+.wordmark .new { color:var(--subtle); }
+.hairline-box { border:1px solid var(--line); border-radius:20px; }
+.mono-pill { font-family:var(--font-body); font-weight:600; background:var(--card-strong);
+  border:1px solid var(--line); border-radius:10px; padding:4px 12px; color:var(--ink); font-size: 0.9em;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone; line-height:1.7; }
+
+</style>
+<style>
+table { border-collapse: collapse; width: 100%; }
+th { text-align:left; font-family: var(--font-body); font-weight:700; font-size:21px; letter-spacing:0.06em;
+     text-transform:uppercase; color:var(--muted); padding:18px 24px; border-bottom:1px solid var(--line); }
+td { font-family: var(--font-body); font-size:25px; line-height:1.5; color:var(--body);
+     padding:22px 24px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.9em;
+       background:var(--card-strong); border:1px solid var(--line); border-radius:6px; padding:3px 9px; color:var(--ink); }
+.step-num { width:52px; height:52px; border-radius:50%; background:var(--card-strong); border:1px solid var(--line);
+           display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
+           font-weight:700; font-size:24px; color:var(--ink); flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <div class="glow-tr"></div><div class="glow-bl"></div><div class="grid-dots"></div>
+  <div class="slide-body stack justify-between">
+    <div class="stack gap-24">
+      <div class="kicker">PANEL DE INSIGHTS · STAFF</div>
+      <div class="display">Visitas,<br>sesiones<br>y orígenes</div>
+    </div>
+    <div class="stack gap-20">
+      <div class="divider"></div>
+      <div class="lead" style="max-width:1250px">Qué mide cada número del panel de tráfico, sobre qué período, y qué significan <strong>Directo</strong> y <strong>Otro</strong>.</div>
+      <div class="body-sm">Para el equipo de subastas · Agosto 2026</div>
+    </div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">LO PRIMERO</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-40">
+  <div class="h1">Tres palabras distintas</div>
+  <div class="body-xl">Ninguna de las tres es exactamente “cuánta gente entró”.</div>
+  <div class="grid-3 gap-32">
+    <div class="card" style="padding:44px">
+      <div class="tag tag-neutral">VISITA</div>
+      <div class="h2" style="margin:20px 0 14px">Una pantalla abierta</div>
+      <div class="body-txt">Cada vez que alguien abre una página. Si mira 5 autos, son <strong>5 visitas</strong>.</div>
+    </div>
+    <div class="card" style="padding:44px">
+      <div class="tag tag-neutral">SESIÓN</div>
+      <div class="h2" style="margin:20px 0 14px">Una pestaña</div>
+      <div class="body-txt">Se crea al abrir la pestaña y <strong>muere al cerrarla</strong>. Mirar 5 autos en la misma pestaña es <strong>1 sesión</strong>.</div>
+    </div>
+    <div class="card" style="padding:44px;border-color:rgba(235,169,65,0.32)">
+      <div class="tag tag-warning">PERSONA</div>
+      <div class="h2" style="margin:20px 0 14px">Un ser humano</div>
+      <div class="body-txt"><strong class="c-warning">No se mide.</strong> Y es a propósito — se explica más adelante.</div>
+    </div>
+  </div>
+  <div class="card-strong" style="padding:32px 40px">
+    <div class="lead">Regla que siempre se cumple: <strong>Visitas ≥ Sesiones</strong>. 300 visitas y 80 sesiones significa que cada pestaña miró unas 4 pantallas.</div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">2 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">UN EJEMPLO</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-32">
+  <div class="h1">María, un martes</div>
+  <div class="body-xl">Ve un anuncio en Instagram a la mañana.</div>
+  <div class="stack gap-16">
+    <div class="row items-center gap-24 card" style="padding:26px 36px"><div class="step-num">1</div><div class="body-txt flex-1">Toca el anuncio y se abre la home</div><div class="pill pill-neutral">1 visita · sesión nueva</div></div>
+    <div class="row items-center gap-24 card" style="padding:26px 36px"><div class="step-num">2</div><div class="body-txt flex-1">Entra al catálogo</div><div class="pill pill-neutral">2 visitas · misma sesión</div></div>
+    <div class="row items-center gap-24 card" style="padding:26px 36px"><div class="step-num">3</div><div class="body-txt flex-1">Abre 3 autos</div><div class="pill pill-neutral">5 visitas · misma sesión</div></div>
+    <div class="row items-center gap-24 card" style="padding:26px 36px"><div class="step-num">4</div><div class="body-txt flex-1">Cierra la pestaña y se va a almorzar</div><div class="pill pill-warning">la sesión muere acá</div></div>
+    <div class="row items-center gap-24 card" style="padding:26px 36px"><div class="step-num">5</div><div class="body-txt flex-1">A la tarde vuelve y escribe la dirección</div><div class="pill pill-neutral">6 visitas · 2ª sesión</div></div>
+  </div>
+  <div class="card-strong" style="padding:34px 40px">
+    <div class="lead">Total del martes por María: <strong>6 visitas · 2 sesiones · 1 persona</strong>.<br>El panel va a decir 6 y 2. <strong class="c-warning">Nunca va a decir 1.</strong></div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">3 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">PERÍODOS</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-36">
+  <div class="h1">Qué período muestra cada número</div>
+  <table style="width:100%">
+    <thead><tr><th>Bloque del panel</th><th>Período</th><th>Cuándo se actualiza</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Visitas hoy</strong> · <strong>Sesiones hoy</strong></td><td>El día de hoy, hora Paraguay</td><td class="c-success"><strong>En vivo</strong> — sube mientras mirás</td></tr>
+      <tr><td>Días anteriores, orígenes, embudos</td><td>Hasta los últimos 30 días cerrados</td><td>Se calcula <strong>a las 9:30 AM</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="grid-2 gap-32">
+    <div class="card" style="padding:40px;border-color:rgba(235,169,65,0.32)">
+      <div class="h3 c-warning">“Hoy” siempre está incompleto</div>
+      <div class="body-txt" style="margin-top:16px">A las 10 de la mañana muestra lo que pasó hasta las 10. <strong>No lo compares con un día entero.</strong></div>
+    </div>
+    <div class="card" style="padding:40px;border-color:rgba(235,169,65,0.32)">
+      <div class="h3 c-warning">Ayer aparece después de las 9:30</div>
+      <div class="body-txt" style="margin-top:16px">Si entrás a las 8 AM buscando el resumen de ayer, todavía no está calculado.</div>
+    </div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">4 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">LA LIMITACIÓN IMPORTANTE</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-32">
+  <div class="h1">Por qué “sesiones” no es “personas”</div>
+  <div class="body-xl">La sesión vive en la pestaña y muere con ella. Entonces:</div>
+  <div class="grid-3 gap-24">
+    <div class="card" style="padding:36px"><div class="body-txt">La misma persona que <strong>vuelve mañana</strong> cuenta como sesión nueva</div></div>
+    <div class="card" style="padding:36px"><div class="body-txt">La misma persona en <strong>celular y compu</strong> cuenta como dos</div></div>
+    <div class="card" style="padding:36px"><div class="body-txt">Dos <strong>pestañas abiertas</strong> a la vez cuentan como dos</div></div>
+  </div>
+  <div class="card-strong" style="padding:36px 44px">
+    <div class="h3">Es una decisión, no una falla</div>
+    <div class="body-txt" style="margin-top:14px">Para reconocerte de un día al otro habría que ponerte una cookie de seguimiento, y eso obliga a pedir consentimiento. Si midiéramos sólo a quien acepta el cartel de cookies, perderíamos justo parte del tráfico de anuncios — que es el que interesa medir.</div>
+  </div>
+  <div class="card" style="padding:36px 44px;border-color:rgba(81,182,122,0.3)">
+    <div class="lead"><strong class="c-success">Cómo usarlo:</strong> las sesiones sirven para <strong>comparar</strong> (¿esta semana entró más que la anterior?), no como padrón de personas. La tendencia es confiable; el número absoluto es una cota alta.</div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">5 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">LOS DOS EMBUDOS</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-36">
+  <div class="h1">Por qué hay dos embudos separados</div>
+  <div class="grid-2 gap-32">
+    <div class="card" style="padding:44px">
+      <div class="tag tag-neutral">ANÓNIMOS</div>
+      <div class="h2" style="margin:20px 0 16px">Inicio → Login</div>
+      <div class="body-txt">Gente <strong>sin cuenta</strong>. Sólo puede ver la home y el login.</div>
+    </div>
+    <div class="card" style="padding:44px">
+      <div class="tag tag-neutral">CON SESIÓN</div>
+      <div class="h2" style="margin:20px 0 16px">Catálogo → Ficha</div>
+      <div class="body-txt">Compradores <strong>ya logueados</strong>. El catálogo y las fichas piden cuenta iniciada.</div>
+    </div>
+  </div>
+  <div class="card-strong" style="padding:36px 44px">
+    <div class="h3">Son públicos distintos</div>
+    <div class="body-txt" style="margin-top:14px">Mezclarlos daría un embudo mentiroso: el catálogo nunca podría “convertir” desde la home, porque para verlo primero hay que iniciar sesión.</div>
+  </div>
+  <div class="card" style="padding:34px 44px;border-color:rgba(235,169,65,0.32)">
+    <div class="lead">Los dos cuentan <strong>sesiones distintas</strong>, no visitas. Una sesión que abrió 8 autos suma <strong>1</strong> en Ficha, no 8.</div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">6 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">ORÍGENES</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-32">
+  <div class="h1">De dónde vino cada visita</div>
+  <div class="body-xl">El sistema mira dos cosas, en este orden: la <strong>etiqueta de campaña</strong> del enlace, y si no tiene, el <strong>sitio anterior</strong>.</div>
+  <table style="width:100%">
+    <thead><tr><th>Origen</th><th>Qué cae ahí</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Instagram</strong></td><td>Enlaces etiquetados <code>ig</code>/<code>instagram</code>, o clics desde instagram.com</td></tr>
+      <tr><td><strong>Facebook</strong></td><td>Enlaces etiquetados <code>fb</code>/<code>facebook</code>, o clics desde facebook.com</td></tr>
+      <tr><td><strong>Google</strong></td><td>Enlaces etiquetados <code>google</code>, o clics desde google.com</td></tr>
+      <tr><td><strong class="c-warning">Directo</strong></td><td>Ni etiqueta ni sitio anterior</td></tr>
+      <tr><td><strong class="c-warning">Otro</strong></td><td>Había un origen, pero no es ninguno de los tres</td></tr>
+    </tbody>
+  </table>
+  <div class="card" style="padding:30px 40px"><div class="body-txt">Son <strong>cinco categorías y nada más</strong>. Todo lo que llega entra en una de ellas.</div></div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">7 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">DIRECTO</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-32">
+  <div class="h1">Directo — “llegó sin dejar rastro”</div>
+  <div class="body-xl">Cae acá cuando la visita <strong>no trae etiqueta de campaña ni sitio anterior</strong>.</div>
+  <div class="grid-2 gap-24">
+    <div class="card" style="padding:34px"><div class="body-txt">Escribió la dirección a mano, o entró desde <strong>favoritos</strong></div></div>
+    <div class="card" style="padding:34px;border-color:rgba(81,182,122,0.3)"><div class="body-txt"><strong class="c-success">Tocó un enlace en WhatsApp</strong> — el caso más frecuente acá</div></div>
+    <div class="card" style="padding:34px"><div class="body-txt">Abrió el enlace desde un <strong>mensaje directo</strong> de Instagram</div></div>
+    <div class="card" style="padding:34px"><div class="body-txt">Escaneó un <strong>QR</strong> de un cartel o folleto</div></div>
+  </div>
+  <div class="card-strong" style="padding:36px 44px;border-color:rgba(235,169,65,0.32)">
+    <div class="h3 c-warning">Directo NO quiere decir “ya nos conocía”</div>
+    <div class="body-txt" style="margin-top:14px">WhatsApp, los mensajes directos y los QR no le avisan al sitio de dónde vino, así que todo eso aterriza acá. <strong>Si difunden por WhatsApp, buena parte de ese trabajo está contado en Directo.</strong></div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">8 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">OTRO</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-32">
+  <div class="h1">Otro — “vino de algún lado, pero no de los tres grandes”</div>
+  <div class="body-xl">Cae acá cuando <strong>sí había un origen</strong> pero no es Instagram, Facebook ni Google.</div>
+  <div class="grid-2 gap-24">
+    <div class="card" style="padding:34px"><div class="body-txt">Un clic desde <strong>otra página web</strong> — un portal, un blog, un listado</div></div>
+    <div class="card" style="padding:34px"><div class="body-txt">Un <strong>buscador que no es Google</strong> (Bing, DuckDuckGo)</div></div>
+    <div class="card" style="padding:34px"><div class="body-txt">Una campaña con <strong>otra etiqueta</strong>: <code>utm_source=tiktok</code></div></div>
+    <div class="card" style="padding:34px;border-color:rgba(232,88,84,0.32)"><div class="body-txt">Una etiqueta <strong class="c-danger">mal escrita</strong>: <code>Instagram-stories</code> no entra en Instagram</div></div>
+  </div>
+  <div class="card-strong" style="padding:36px 44px;border-color:rgba(232,88,84,0.32)">
+    <div class="h3 c-danger">Si “Otro” crece mucho, algo hay que mirar</div>
+    <div class="body-txt" style="margin-top:14px">Casi siempre es una campaña etiquetada con un nombre que el sistema no reconoce. Se arregla usando exactamente <code>ig</code>, <code>fb</code> o <code>google</code> en el enlace.</div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">9 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">CÓMO LEERLO</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-28">
+  <div class="h1">Cómo usarlo para decidir</div>
+  <div class="stack gap-20">
+    <div class="card" style="padding:34px 40px"><div class="h3">¿Rindió la campaña?</div><div class="body-txt" style="margin-top:10px">Mirá <strong>Instagram/Facebook</strong> en Orígenes contra los días previos. Si subieron las sesiones de esa fuente, llegó gente.</div></div>
+    <div class="card" style="padding:34px 40px"><div class="h3">¿Entran pero no se registran?</div><div class="body-txt" style="margin-top:10px">Embudo de <strong>Anónimos</strong>: si Inicio es alto y Login bajo, el problema está en la home, no en el anuncio.</div></div>
+    <div class="card" style="padding:34px 40px"><div class="h3">¿Miran autos pero no pujan?</div><div class="body-txt" style="margin-top:10px">Embudo <strong>Con sesión</strong>: muchas Fichas y pocas pujas es tema de precio o confianza, no de tráfico.</div></div>
+    <div class="card" style="padding:34px 40px;border-color:rgba(81,182,122,0.3)"><div class="h3 c-success">¿Directo muy alto?</div><div class="body-txt" style="margin-top:10px">Probablemente sea WhatsApp. Para separarlo, mandá el enlace con <code>?utm_source=whatsapp</code> y deja de mezclarse.</div></div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">10 / 11</div>
+  </div>
+</section>
+<section class="slide">
+  <div class="glow-tr"></div><div class="grid-dots"></div>
+  <div class="slide-header">
+    <div class="kicker">LÍMITES</div>
+    <div class="kicker kicker-strong">RENEW SUBASTAS</div>
+  </div>
+  <div class="slide-header-line"></div>
+  <div class="slide-body">
+<div class="stack gap-36">
+  <div class="h1">Lo que este panel <span class="c-danger">no</span> mide</div>
+  <div class="body-xl">Para que nadie le pida algo que no puede dar.</div>
+  <div class="grid-2 gap-24">
+    <div class="card" style="padding:38px"><div class="h3">No dice quién entró</div><div class="body-txt" style="margin-top:12px">Es anónimo por diseño: no guarda nombre, correo, ni IP.</div></div>
+    <div class="card" style="padding:38px"><div class="h3">No sigue a la misma persona entre días</div><div class="body-txt" style="margin-top:12px">Cada día es un conteo nuevo.</div></div>
+    <div class="card" style="padding:38px"><div class="h3">No dice qué auto miró cada quien</div><div class="body-txt" style="margin-top:12px">Sólo cuántas fichas se abrieron en total.</div></div>
+    <div class="card" style="padding:38px;border-color:rgba(81,182,122,0.3)"><div class="h3 c-success">Sí filtra robots</div><div class="body-txt" style="margin-top:12px">Se descartan antes de contar: los números son de gente real.</div></div>
+  </div>
+</div></div>
+  <div class="slide-footer">
+    <div class="footer-word">Guía de métricas · <b>Tráfico del sitio</b></div>
+    <div class="pagenum">11 / 11</div>
+  </div>
+</section>
+</body>
+</html>
