@@ -6,41 +6,25 @@ import {
   type TrafficDailyAggregate,
   type TrafficHistorySummary,
 } from './traffic-summary';
+import { paraguayDateKey, paraguayDayRangeMs } from './paraguay-day';
 
 /**
- * Paraguay is UTC-3 year-round — daylight saving time was abolished in 2024.
- * A THIRD explicit copy of this fact: `functions/src/insights/
- * aggregateTraffic.ts` (which defines what "yesterday" means for the
- * scheduler that rolls up `insights_traffic_daily`) and `apps/web/src/lib/
- * format/date.ts` (display formatting) each already carry their own, for the
- * cross-workspace reason documented on `PARAGUAY_UTC_OFFSET_HOURS` in
- * `aggregateTraffic.ts`. Needed here as millisecond arithmetic rather than
- * `Intl.DateTimeFormat`'s `timeZone` option (what `date.ts` uses) because
- * this value feeds a Firestore `Timestamp` range filter, not a rendered
- * string — and it MUST agree exactly with `aggregateTraffic.ts`'s notion of
- * "today", or a page view near local midnight could be silently dropped
- * from both "today's live count" and the next day's rollup, or double
- * counted in both.
+ * Paraguay-local day arithmetic lives in `./paraguay-day.ts` — pure, unit
+ * tested, and shared with `load-period-comparison.ts`. This file used to
+ * carry its own private copy of the UTC-3 offset and the two helpers below;
+ * it doesn't any more, so there is one definition of "a Paraguay day" for
+ * all of `apps/web`'s traffic loaders instead of one per loader.
+ *
+ * It MUST agree exactly with `functions/src/insights/aggregateTraffic.ts`'s
+ * notion of a day (the cross-workspace reason the fact is stated in both
+ * places is documented there), or a page view near local midnight could be
+ * silently dropped from both "today's live count" and the next day's
+ * rollup, or double counted in both.
  */
-const PARAGUAY_UTC_OFFSET_HOURS = -3;
 
 /** UTC epoch-ms for 00:00 of the Paraguay-local calendar day containing `nowMs`. */
 function paraguayTodayStartMs(nowMs: number): number {
-  const local = new Date(nowMs + PARAGUAY_UTC_OFFSET_HOURS * 3600_000);
-  return (
-    Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), 0, 0, 0) -
-    PARAGUAY_UTC_OFFSET_HOURS * 3600_000
-  );
-}
-
-/** `YYYY-MM-DD` for the Paraguay-local date `nowMs` falls in. Display only —
- *  never used to build a Firestore query. */
-function paraguayDateKey(nowMs: number): string {
-  const local = new Date(nowMs + PARAGUAY_UTC_OFFSET_HOURS * 3600_000);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return paraguayDayRangeMs(paraguayDateKey(nowMs)).startMs;
 }
 
 /** Live, still-accumulating snapshot of the current Paraguay-local day. */

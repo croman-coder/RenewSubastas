@@ -3,14 +3,31 @@ import { AlertTriangle, Eye, Gavel, TrendingDown } from 'lucide-react';
 import { requireRole } from '@/lib/auth/server';
 import { loadInsights } from '@/lib/insights/load-insights';
 import { loadTrafficInsights } from '@/lib/insights/load-traffic';
+import { loadPeriodComparison } from '@/lib/insights/load-period-comparison';
+import { paraguayDateKey } from '@/lib/insights/paraguay-day';
+import { parsePeriodParams, type PeriodSearchParams } from '@/lib/insights/period-compare';
 import { VEHICLE_STATUS_LABEL, fmtUsd } from '@/lib/insights/format';
 import { TrafficPanel } from './_components/traffic-panel';
+import { PeriodComparator } from './_components/period-comparator';
 
 export const dynamic = 'force-dynamic';
 
-export default async function InsightsPage({ params: { locale } }: { params: { locale: string } }) {
+interface PageProps {
+  params: { locale: string };
+  searchParams?: PeriodSearchParams;
+}
+
+export default async function InsightsPage({ params: { locale }, searchParams }: PageProps) {
   await requireRole(locale, ['admin', 'staff']);
-  const [rows, traffic] = await Promise.all([loadInsights(), loadTrafficInsights()]);
+  // "Today" for the presets is the Paraguay-local date, not the server's UTC
+  // one — this page renders on a UTC host, so between 21:00 and 24:00 local
+  // the two disagree and every preset would be shifted a day forward.
+  const periods = parsePeriodParams(searchParams, paraguayDateKey(Date.now()));
+  const [rows, traffic, comparison] = await Promise.all([
+    loadInsights(),
+    loadTrafficInsights(),
+    loadPeriodComparison(periods.a, periods.b),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -27,6 +44,8 @@ export default async function InsightsPage({ params: { locale } }: { params: { l
       </header>
 
       <TrafficPanel insights={traffic} />
+
+      <PeriodComparator locale={locale} comparison={comparison} preset={periods.preset} />
 
       <h2 className="text-sm font-semibold text-text-strong tracking-tight">Por vehículo</h2>
 
