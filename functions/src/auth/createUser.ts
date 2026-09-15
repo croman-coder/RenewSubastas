@@ -39,6 +39,11 @@ const InputSchema = z.object({
 export interface CreateUserResult {
   uid: string;
   resetLink: string;
+  /** True only when Resend accepted the welcome email. */
+  emailed: boolean;
+  emailStatus: 'sent' | 'failed' | 'skipped';
+  emailReason: string | null;
+  emailTo: string;
 }
 
 /**
@@ -193,15 +198,26 @@ export async function createUserHandler(req: CallableRequest): Promise<CreateUse
     ),
   );
 
-  await sendEmail({
+  // sendEmail never throws; it reports. Return the real outcome so the admin
+  // form can say "correo enviado" or "no salió, mandale el link vos" instead
+  // of assuming. Same bug class as generatePasswordReset (see changePassword.ts).
+  const welcome = await sendEmail({
     to: input.email,
     subject: '¡Bienvenido a Renew Subastas! Creá tu contraseña',
     html: welcomeHtml,
-  }).catch((err) => {
-    console.error('[createUser] welcome email failed', err);
   });
+  if (welcome.status !== 'sent') {
+    console.error('[createUser] welcome email not sent', { to: input.email, ...welcome });
+  }
 
-  return { uid: authUser.uid, resetLink };
+  return {
+    uid: authUser.uid,
+    resetLink,
+    emailed: welcome.status === 'sent',
+    emailStatus: welcome.status,
+    emailReason: welcome.status === 'sent' ? null : (welcome.reason ?? null),
+    emailTo: input.email,
+  };
 }
 
 export const createUser = onCall(

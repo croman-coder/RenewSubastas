@@ -5,8 +5,18 @@ import { useRouter } from 'next/navigation';
 import { httpsCallable } from 'firebase/functions';
 import { doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Check, ClipboardCopy, Inbox, KeyRound, Trash2, type LucideIcon } from 'lucide-react';
+import {
+  Check,
+  ClipboardCopy,
+  Inbox,
+  KeyRound,
+  MailCheck,
+  MailWarning,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
+import { describeEmailOutcome, type EmailOutcome } from '@/lib/admin/email-outcome';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { PasswordResetRequestItem } from '@/lib/admin/list-password-reset-requests';
@@ -58,22 +68,25 @@ function RequestRow({
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
   const [resetLink, setResetLink] = useState<string | null>(null);
+  const [emailOutcome, setEmailOutcome] = useState<EmailOutcome | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function generateLink() {
     if (generating) return;
     setGenerating(true);
     try {
-      const res = await httpsCallable<{ uid: string }, { resetLink: string; emailed: boolean }>(
+      const res = await httpsCallable<{ uid: string }, { resetLink: string } & EmailOutcome>(
         fb.functions,
         'generatePasswordReset',
       )({ uid: req.uid });
       setResetLink(res.data.resetLink);
-      toast.success(
-        res.data.emailed
-          ? 'Link enviado por email al usuario. También podés copiarlo abajo.'
-          : 'Link generado (email no enviado). Copialo y enviáselo manualmente.',
-      );
+      setEmailOutcome(res.data);
+      const outcome = describeEmailOutcome(res.data);
+      // The toast is the immediate signal; the same verdict stays on screen
+      // under the link (see below) because a toast is gone in seconds and
+      // "¿le llegó?" gets asked a minute later.
+      if (outcome.ok) toast.success('Link generado y enviado por correo.');
+      else toast.error('Link generado, pero el correo NO salió. Mandáselo vos.');
     } catch (err) {
       toast.error((err as Error).message ?? 'No se pudo generar el link.');
     } finally {
@@ -198,6 +211,23 @@ function RequestRow({
           <code className="block text-[11px] font-mono text-text-strong break-all leading-snug select-all">
             {resetLink}
           </code>
+          {emailOutcome && (
+            <p
+              className={
+                'mt-2 flex items-start gap-1.5 text-xs ' +
+                (emailOutcome.emailed
+                  ? 'text-emerald-700 dark:text-emerald-300'
+                  : 'text-amber-700 dark:text-amber-300')
+              }
+            >
+              {emailOutcome.emailed ? (
+                <MailCheck className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden />
+              ) : (
+                <MailWarning className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden />
+              )}
+              <span>{describeEmailOutcome(emailOutcome).text}</span>
+            </p>
+          )}
         </div>
       )}
     </li>

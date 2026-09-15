@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserPlus,
 } from 'lucide-react';
+import { describeEmailOutcome, type EmailOutcome } from '@/lib/admin/email-outcome';
 import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,7 @@ export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [resetLink, setResetLink] = useState<string | null>(null);
+  const [emailOutcome, setEmailOutcome] = useState<EmailOutcome | null>(null);
   const {
     register,
     handleSubmit,
@@ -142,13 +144,22 @@ export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     setResetLink(null);
+    setEmailOutcome(null);
     try {
       const payload = payloadFromKind(values);
-      const result = await httpsCallable<CreateUserPayload, { uid: string; resetLink: string }>(
+      const result = await httpsCallable<
+        CreateUserPayload,
+        { uid: string; resetLink: string } & Partial<EmailOutcome>
+      >(
         fb.functions,
         'createUser',
       )(payload);
       setResetLink(result.data.resetLink);
+      // Older function builds don't return the email fields; treat that as
+      // unknown rather than claiming the mail went out.
+      if (typeof result.data.emailed === 'boolean' && result.data.emailTo) {
+        setEmailOutcome(result.data as EmailOutcome);
+      }
       toast.success(t('success'));
     } catch (e) {
       const msg = (e as Error).message ?? '';
@@ -325,9 +336,17 @@ export function CreateUserForm({ locale, creatorRole = 'admin' }: FormProps) {
                   <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
                     Usuario creado
                   </p>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-200/80 mt-0.5">
-                    Se envió un email de bienvenida. Si no llega, copiá este link y mandalo
-                    manualmente.
+                  <p
+                    className={
+                      'text-xs mt-0.5 ' +
+                      (emailOutcome && !emailOutcome.emailed
+                        ? 'text-amber-700 dark:text-amber-300 font-medium'
+                        : 'text-emerald-700 dark:text-emerald-200/80')
+                    }
+                  >
+                    {emailOutcome
+                      ? describeEmailOutcome(emailOutcome).text
+                      : 'Copiá este link y mandáselo por un canal seguro.'}
                   </p>
                 </div>
                 <code className="block text-[11px] font-mono text-text-strong bg-bg-deep/60 border border-text-subtle/15 rounded-lg p-2.5 break-all leading-snug select-all">

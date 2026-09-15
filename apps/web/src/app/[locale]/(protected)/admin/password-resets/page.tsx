@@ -28,8 +28,9 @@ export default async function PasswordResetsPage({ params: { locale }, searchPar
           </h1>
         </div>
         <p className="text-sm text-text-muted">
-          Buyers que olvidaron su contraseña. Verificá su identidad antes de generar el link y
-          enviarlo por canal seguro (WhatsApp, llamada).
+          Buyers que olvidaron su contraseña. Verificá su identidad antes de generar el link. Al
+          generarlo se le envía por correo; si no le llega, copialo y mandáselo por un canal seguro
+          (WhatsApp, llamada).
         </p>
       </header>
 
