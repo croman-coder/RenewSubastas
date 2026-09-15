@@ -52,12 +52,18 @@ const fmtUsd = (n: number) =>
  * Storage, and emails the admin a full dossier — buyer identity +
  * contact, vehicle, amounts — with the receipt attached (PDF or image).
  *
- * Security: storage.rules now ALSO checks the caller is the auction's
- * winnerUid before allowing the write (via firestore.get()), so this is
- * defense-in-depth rather than the sole gate. We refuse if uid !==
- * auction.winnerUid, and we refuse paths that don't live under this
- * auction's AND this caller's own uid segment (so a buyer can't attach
- * someone else's upload, or one from a different auction). Rate-limited
+ * Security: THIS handler is the only place the winner check happens.
+ * storage.rules deliberately does NOT re-check winnerUid — the version
+ * that did (a firestore.get() from the Storage rule, deployed 2026-08-05)
+ * needs an IAM role this project doesn't grant, so it failed closed and
+ * blocked every upload for twelve days; see the comment block in
+ * storage.rules for the role required to bring it back. What the rule DOES
+ * guarantee is that a buyer can only write under their own `{uid}` path
+ * segment. So: rules bind the path to the uploader, and this handler binds
+ * the uploader to the winner. We refuse if uid !== auction.winnerUid, and
+ * we refuse paths that don't live under this auction's AND this caller's
+ * own uid segment (so a buyer can't attach someone else's upload, or one
+ * from a different auction). Rate-limited
  * per auction (5 / 10min) since every call costs a Storage download + an
  * email with attachment, and the object's actual size/contentType are
  * verified against Storage metadata before it's trusted as a receipt.

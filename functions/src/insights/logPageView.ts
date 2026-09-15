@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import type { CallableRequest } from 'firebase-functions/v2/https';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { DocId } from '../lib/ids.js';
@@ -162,7 +162,17 @@ export async function logPageViewHandler(req: CallableRequest): Promise<LogPageV
     }
 
     // All reads above this line, all writes below it.
-    tx.set(rlRef, { timestamps: [...recent, now] });
+    // `expiresAt` existe para la política TTL de Firestore sobre `rate_limits`
+    // (ver docs/seguridad/informe-pruebas-2026-09-15.md, OPS-1). Sin ella
+    // estos contadores nunca se borran: hay uno por sesión anónima,
+    // y en producción ya eran miles de documentos de un solo campo que
+    // ningún código vuelve a leer pasados 60 segundos. 24 h es un margen
+    // holgado sobre la ventana de 60 s — el TTL borra "en algún momento
+    // después", no al segundo, y acá la precisión no importa.
+    tx.set(rlRef, {
+      timestamps: [...recent, now],
+      expiresAt: Timestamp.fromMillis(now + 24 * 3600_000),
+    });
     tx.set(pageViewRef, {
       pathKind,
       source,

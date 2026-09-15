@@ -1,0 +1,56 @@
+# Servicio de espejo en SRPY186. Se suma al stack de /home/santarosa/stack/infra
+# (donde vive srpy-postgres) o se levanta aparte con la red de ese stack.
+#
+# Antes de levantarlo hacen falta tres cosas, en este orden:
+#
+#   1. Una service account de SÓLO LECTURA en el proyecto carbid-staging, con
+#      exactamente estos roles y ninguno más:
+#        roles/datastore.viewer          (leer Firestore)
+#        roles/storage.objectViewer      (leer el bucket)
+#        roles/firebaseauth.viewer       (listar usuarios de Auth)
+#      Su clave JSON va a /home/santarosa/stack/infra/secrets/renew-mirror-sa.json
+#      con permisos 600. NUNCA la clave del owner: el espejo no tiene que poder
+#      escribir en producción, ni por bug ni por compromiso del servidor.
+#
+#   2. La base y el usuario en srpy-postgres:
+#        create user renew_mirror password '<generar>';
+#        create database renewsubastas_mirror owner renew_mirror;
+#
+#   3. El archivo .env de al lado con MIRROR_DATABASE_URL apuntando a esa base.
+#
+# La imagen se construye desde la raíz del repo (ver Dockerfile).
+services:
+  renew-mirror:
+    build:
+      context: ../..
+      dockerfile: apps/mirror/Dockerfile
+    image: renew-mirror:latest
+    container_name: renew-mirror
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/renew-mirror-sa.json
+      MIRROR_PROJECT_ID: carbid-staging
+      MIRROR_STORAGE_BUCKET: carbid-staging.firebasestorage.app
+      MIRROR_STORAGE_DIR: /data/storage
+      MIRROR_HEALTH_PORT: '8787'
+      MIRROR_RECONCILE_HOURS: '6'
+      MIRROR_AUTH_MINUTES: '30'
+      MIRROR_STORAGE_MINUTES: '60'
+    volumes:
+      - ./secrets/renew-mirror-sa.json:/secrets/renew-mirror-sa.json:ro
+      - renew-mirror-storage:/data/storage
+    ports:
+      - '127.0.0.1:8787:8787'
+    networks:
+      - infra_default
+    logging:
+      driver: json-file
+      options: { max-size: '20m', max-file: '5' }
+
+volumes:
+  renew-mirror-storage:
+
+networks:
+  infra_default:
+    external: true

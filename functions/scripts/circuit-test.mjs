@@ -16,6 +16,21 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 
+// ESTE SCRIPT ESCRIBE EN PRODUCCIÓN. Usa la service account real y un
+// comprador real, crea un vehículo y una subasta viva, y dispara el correo
+// de "ganaste". Es el único script de la carpeta que no apunta al emulador,
+// y hasta la auditoría del 2026-09-15 no tenía ninguna guarda: bastaba
+// `node scripts/circuit-test.mjs setup` para meter una subasta de prueba en
+// el catálogo que ven los clientes. Hay que decir explícitamente que se sabe.
+if (process.env['I_KNOW_THIS_WRITES_TO_PRODUCTION'] !== '1') {
+  console.error(
+    'REFUSING TO RUN: circuit-test.mjs escribe en PRODUCCIÓN (carbid-staging = prod).\n' +
+      'Para las pruebas de flujo usá scripts/e2e-flow.ts contra los emuladores.\n' +
+      'Si de verdad querés correr esto contra producción: I_KNOW_THIS_WRITES_TO_PRODUCTION=1',
+  );
+  process.exit(2);
+}
+
 const sa = JSON.parse(readFileSync('/home/croman/keys/carbid-staging-sa.json', 'utf8'));
 initializeApp({ credential: cert(sa) });
 const db = getFirestore();
@@ -119,9 +134,18 @@ async function check() {
   console.log('Outcome:', a?.outcome, '(expect: sold)', ok(a?.outcome === 'sold'));
   console.log('winnerUid:', a?.winnerUid, ok(a?.winnerUid === TEST_BUYER_UID));
   console.log('finalPrice:', a?.finalPrice, ok(a?.finalPrice === 6000));
-  console.log('paymentStatus:', a?.paymentStatus, '(expect: pending_payment)', ok(a?.paymentStatus === 'pending_payment'));
+  console.log(
+    'paymentStatus:',
+    a?.paymentStatus,
+    '(expect: pending_payment)',
+    ok(a?.paymentStatus === 'pending_payment'),
+  );
   console.log('paymentDeadline set:', !!a?.paymentDeadline, ok(!!a?.paymentDeadline));
-  console.log('paymentDepositUsd:', a?.paymentDepositUsd, ok(typeof a?.paymentDepositUsd === 'number'));
+  console.log(
+    'paymentDepositUsd:',
+    a?.paymentDepositUsd,
+    ok(typeof a?.paymentDepositUsd === 'number'),
+  );
   console.log('Vehicle status:', v?.status, '(expect: sold)', ok(v?.status === 'sold'));
 
   console.log('\n--- Email + notification ---');
@@ -144,8 +168,14 @@ async function cleanup() {
   // delete bids subcollection
   const bids = await db.collection(`auctions/${auctionId}/bids`).get();
   for (const b of bids.docs) await b.ref.delete();
-  await db.doc(`auctions/${auctionId}`).delete().catch(() => {});
-  await db.doc(`vehicles/${vehicleId}`).delete().catch(() => {});
+  await db
+    .doc(`auctions/${auctionId}`)
+    .delete()
+    .catch(() => {});
+  await db
+    .doc(`vehicles/${vehicleId}`)
+    .delete()
+    .catch(() => {});
   console.log('Cleaned up test auction + vehicle:', auctionId, vehicleId);
 }
 

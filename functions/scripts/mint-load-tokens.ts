@@ -49,7 +49,12 @@ async function main() {
       await adminAuth().createUser({ uid, email, emailVerified: true });
     }
     // placeBid exige un doc de usuario con perfil completo, o rechaza con
-    // "profile incomplete"; se siembra el mínimo que ese chequeo requiere.
+    // "profile_incomplete"; se siembra el mínimo que ese chequeo requiere.
+    // Los campos son EXACTAMENTE `documentType` + `documentNumber`
+    // (placeBid.ts, "Buyers self-registered via Google enter without a
+    // document"). La primera versión sembraba `documentId`, que no existe en
+    // el esquema, y el 100% de las pujas de la prueba de carga moría con
+    // profile_incomplete antes de tocar la transacción — midiendo nada.
     await adminDb()
       .doc(`users/${uid}`)
       .set(
@@ -63,7 +68,8 @@ async function main() {
             firstName: `Carga${i}`,
             lastName: 'Test',
             phone: '0981123456',
-            documentId: '1234567',
+            documentType: 'CI',
+            documentNumber: '1234567',
             audience: 'retail',
           },
           createdBy: 'seed:load',

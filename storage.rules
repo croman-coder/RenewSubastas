@@ -62,10 +62,20 @@ service firebase.storage {
       allow read: if request.auth != null
                   && request.auth.token.status == 'active'
                   && request.auth.token.role in ['staff', 'admin', 'finanzas'];
+      // `resource == null` hace explícito el "create-only" en vez de dejarlo
+      // a cargo de cómo la plataforma clasifique una re-subida sobre una ruta
+      // ocupada. El emulador la evalúa como `create` (con `resource` poblado),
+      // así que sin esta condición un comprador podía pisar un comprobante ya
+      // enviado — lo encontró src/security/storage-rules.pentest.test.ts. En
+      // producción la doc dice que es `update` y caería en el `false` de abajo;
+      // con esto queda denegado en los dos mundos y no depende de ninguno.
+      // El flujo legítimo no se ve afectado: el cliente sube siempre a una
+      // ruta nueva con timestamp, nunca sobre una existente.
       allow create: if request.auth != null
                     && request.auth.token.status == 'active'
                     && request.auth.token.role == 'buyer'
                     && request.auth.uid == uid
+                    && resource == null
                     && request.resource.size < 10 * 1024 * 1024
                     && (
                       request.resource.contentType.matches('image/.*')
