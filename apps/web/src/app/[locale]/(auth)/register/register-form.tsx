@@ -6,6 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
+  FIREBASE_PASSWORD_POLICY_ERROR,
+  PASSWORD_HINT_ES,
+  PasswordSchema,
+} from '@carbid/shared-types';
+import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   signOut,
@@ -29,11 +34,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 const NAME_RX = /^[\p{L}\p{M}'’\- .]+$/u;
 const NAME_MSG = 'Solo letras, espacios, apóstrofes y guiones';
 
-// Firebase's own floor is 6 characters — too weak for an account that can
-// commit to buying a vehicle. This is enforced here for feedback only; see
-// registerPasswordBuyer.ts's doc comment for what the server can (and can't)
-// actually enforce, since the password itself never reaches our backend.
-const PASSWORD_MIN_LEN = 10;
+// The password rule lives in @carbid/shared-types (PasswordSchema) and is
+// mirrored by the Firebase project password policy — see the comment there
+// for why the three places must agree. Enforced here for feedback; Firebase
+// enforces it for real on createUserWithEmailAndPassword.
 
 const Schema = z
   .object({
@@ -50,12 +54,7 @@ const Schema = z
       .max(40, 'Máximo 40 caracteres')
       .regex(NAME_RX, NAME_MSG),
     email: z.string().trim().email('Email inválido'),
-    password: z
-      .string()
-      .min(PASSWORD_MIN_LEN, `Mínimo ${PASSWORD_MIN_LEN} caracteres`)
-      .max(128, 'Demasiado larga')
-      .refine((v) => /[a-zA-Z]/.test(v), 'Incluí al menos una letra')
-      .refine((v) => /[0-9]/.test(v), 'Incluí al menos un número'),
+    password: PasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -164,8 +163,10 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
         setError('Ese correo ya tiene una cuenta. Iniciá sesión en vez de crear una nueva.');
       } else if (code === 'auth/invalid-email') {
         setError('Email inválido.');
-      } else if (code === 'auth/weak-password') {
-        setError(`La contraseña debe tener al menos ${PASSWORD_MIN_LEN} caracteres.`);
+      } else if (code === 'auth/weak-password' || code === FIREBASE_PASSWORD_POLICY_ERROR) {
+        // The project password policy said no. Same rule the form checks, so
+        // this only fires when someone bypassed the form's validation.
+        setError(PASSWORD_HINT_ES);
       } else {
         setError('No pudimos crear tu cuenta. Probá de nuevo en unos minutos.');
       }
@@ -437,9 +438,7 @@ export function RegisterForm({ from, locale }: { from?: string; locale: string }
           {errors.password ? (
             <p className="text-xs text-danger pl-1">{errors.password.message}</p>
           ) : (
-            <p className="text-xs text-text-muted pl-1">
-              Mínimo {PASSWORD_MIN_LEN} caracteres, con letras y números.
-            </p>
+            <p className="text-xs text-text-muted pl-1">{PASSWORD_HINT_ES}</p>
           )}
         </div>
 

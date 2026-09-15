@@ -71,10 +71,20 @@ describe('redeemPasswordReset', () => {
     ).rejects.toMatchObject({ code: 'not-found' });
   });
 
-  it('rejects a password shorter than 8 characters', async () => {
-    await expect(
-      redeemPasswordResetHandler(asRequest({ token: 'x'.repeat(20), password: 'short' })),
-    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  it('rejects passwords that break the shared rule (10+, lowercase, digit)', async () => {
+    // The Admin SDK ignores the Firebase project password policy, so this
+    // handler is the only gate on the reset-by-token flow. Each case breaks
+    // exactly one rule; none may reach token consumption.
+    for (const password of [
+      'short', // too short
+      'abcdefg1', // 8 chars — what this flow used to accept
+      'ABCDEFGHIJ1', // no lowercase
+      'abcdefghijk', // no digit
+    ]) {
+      await expect(
+        redeemPasswordResetHandler(asRequest({ token: 'x'.repeat(20), password })),
+      ).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
   });
 
   it('rejects redeeming the same token twice', async () => {

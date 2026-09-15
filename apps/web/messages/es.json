@@ -100,7 +100,7 @@
       "errors": {
         "wrongCurrent": "La contraseña actual es incorrecta.",
         "passwordsDontMatch": "Las contraseñas no coinciden.",
-        "tooShort": "Mínimo 8 caracteres.",
+        "tooShort": "Mínimo 10 caracteres, con al menos una letra minúscula y un número.",
         "generic": "No se pudo cambiar la contraseña."
       }
     },

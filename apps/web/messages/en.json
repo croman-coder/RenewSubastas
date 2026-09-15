@@ -100,7 +100,7 @@
       "errors": {
         "wrongCurrent": "Current password is incorrect.",
         "passwordsDontMatch": "Passwords do not match.",
-        "tooShort": "Minimum 8 characters.",
+        "tooShort": "At least 10 characters, with a lowercase letter and a number.",
         "generic": "Could not change the password."
       }
     },

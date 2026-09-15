@@ -4,6 +4,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
+import {
+  FIREBASE_PASSWORD_POLICY_ERROR,
+  PASSWORD_HINT_ES,
+  PasswordSchema,
+} from '@carbid/shared-types';
 import { toast } from 'sonner';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { fb } from '@/lib/firebase/client';
@@ -12,11 +17,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// Same rule as registration and the reset-by-token flow (PasswordSchema in
+// @carbid/shared-types), mirrored by the Firebase project password policy.
+// This form used to accept 8 characters with no other requirement while
+// registration demanded 10 with a letter and a digit — a user could weaken
+// their password by "changing" it.
 const Schema = z
   .object({
     currentPassword: z.string().min(1),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string().min(8),
+    newPassword: PasswordSchema,
+    confirmPassword: z.string(),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {
     path: ['confirmPassword'],
@@ -51,6 +61,8 @@ export function ChangePasswordForm() {
       const code = (e as { code?: string }).code;
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
         toast.error(t('errors.wrongCurrent'));
+      } else if (code === 'auth/weak-password' || code === FIREBASE_PASSWORD_POLICY_ERROR) {
+        toast.error(PASSWORD_HINT_ES);
       } else {
         toast.error(t('errors.generic'));
       }
@@ -68,7 +80,11 @@ export function ChangePasswordForm() {
       <div className="space-y-2">
         <Label htmlFor="newPassword">{t('newPassword')}</Label>
         <Input id="newPassword" type="password" {...register('newPassword')} />
-        {errors.newPassword && <p className="text-sm text-danger">{t('errors.tooShort')}</p>}
+        {errors.newPassword ? (
+          <p className="text-sm text-danger">{errors.newPassword.message}</p>
+        ) : (
+          <p className="text-xs text-text-muted">{PASSWORD_HINT_ES}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>

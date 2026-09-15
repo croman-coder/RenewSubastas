@@ -5,9 +5,23 @@ import { adminAuth } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { consumePasswordSetToken } from './reset-tokens.js';
 
+// Password rule: 10+ characters, one lowercase letter, one digit — the same
+// rule as PasswordSchema in @carbid/shared-types and the Firebase project
+// password policy. This is a deliberate EXPLICIT copy, not a drift: functions
+// is a separate pnpm workspace and cannot import that package (same
+// constraint documented in _shared/). It matters more here than anywhere:
+// this handler sets the password through the Admin SDK, and the Admin SDK is
+// NOT subject to the Firebase project policy, so without this check the
+// reset-by-token flow would be the one door where an 8-character password
+// still gets in. Before 2026-09-15 it accepted exactly that.
+export const PASSWORD_MIN_LEN = 10;
+export const PASSWORD_RULE_MESSAGE =
+  'La contraseña debe tener al menos 10 caracteres, con una letra minúscula y un número.';
+const PasswordSchema = z.string().min(PASSWORD_MIN_LEN).max(4096).regex(/[a-z]/).regex(/[0-9]/);
+
 const InputSchema = z.object({
   token: z.string().min(16).max(256),
-  password: z.string().min(8).max(256),
+  password: PasswordSchema,
 });
 
 export interface RedeemPasswordResetResult {
@@ -23,7 +37,7 @@ export async function redeemPasswordResetHandler(
 ): Promise<RedeemPasswordResetResult> {
   const parsed = InputSchema.safeParse(req.data);
   if (!parsed.success) {
-    throw new HttpsError('invalid-argument', 'La contraseña debe tener al menos 8 caracteres.');
+    throw new HttpsError('invalid-argument', PASSWORD_RULE_MESSAGE);
   }
 
   let consumed;

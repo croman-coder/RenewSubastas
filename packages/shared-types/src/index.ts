@@ -1,4 +1,5 @@
 export * from './validators/paraguay.js';
+export * from './validators/password.js';
 export * from './user.js';
 export * from './vehicle.js';
 export * from './auction.js';

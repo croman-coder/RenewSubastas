@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { httpsCallable } from 'firebase/functions';
+import { PASSWORD_HINT_ES, PASSWORD_ISSUE_MESSAGE_ES, passwordIssues } from '@carbid/shared-types';
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, XCircle } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const MIN_LEN = 8;
+// Same rule as registration and change-password (@carbid/shared-types), and
+// the server re-checks it in redeemPasswordReset — this is the one flow where
+// the password is set via the Admin SDK, which the Firebase project policy
+// does not cover, so the callable's own check is the real gate.
 
 export function SetPasswordForm({ locale, token }: { locale: string; token: string }) {
   const [pw, setPw] = useState('');
@@ -23,8 +27,9 @@ export function SetPasswordForm({ locale, token }: { locale: string; token: stri
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (pw.length < MIN_LEN) {
-      setError(`La contraseña debe tener al menos ${MIN_LEN} caracteres.`);
+    const issue = passwordIssues(pw)[0];
+    if (issue) {
+      setError(PASSWORD_ISSUE_MESSAGE_ES[issue] + '.');
       return;
     }
     if (pw !== pw2) {
@@ -137,7 +142,7 @@ export function SetPasswordForm({ locale, token }: { locale: string; token: stri
               )}
             </button>
           </div>
-          <p className="text-xs text-text-muted pl-1">Mínimo {MIN_LEN} caracteres.</p>
+          <p className="text-xs text-text-muted pl-1">{PASSWORD_HINT_ES}</p>
         </div>
 
         <div className="space-y-1.5">
