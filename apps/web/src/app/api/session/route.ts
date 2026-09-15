@@ -2,6 +2,8 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS } from '@/lib/auth/constants';
+import { mfaGate } from '@/lib/auth/mfa-gate';
+import { loadMfaRequiredRoles } from '@/lib/auth/mfa-policy';
 
 export const runtime = 'nodejs';
 
@@ -81,6 +83,23 @@ export async function POST(req: NextRequest) {
   try {
     if ((decoded as { status?: string }).status !== 'active') {
       return NextResponse.json({ error: 'account_disabled' }, { status: 403 });
+    }
+
+    // Second factor for internal roles. This is THE enforcement point: a
+    // session cookie is the only thing that opens staff/admin/finanzas
+    // pages, and it is only minted here. Which roles are required lives in
+    // app_config/global (empty = nobody) so it can be switched without a
+    // deploy — see mfa-gate.ts for the rule and why Firebase can't do this
+    // per role on its own. `enrolled` tells the client which way to send
+    // the user: to enrolment, or back through sign-in with their code.
+    const role = (decoded as { role?: string }).role ?? null;
+    const secondFactor = (decoded as { firebase?: { sign_in_second_factor?: string } }).firebase
+      ?.sign_in_second_factor;
+    const requiredRoles = await loadMfaRequiredRoles();
+    if (mfaGate({ role, secondFactor, requiredRoles }) === 'mfa_required') {
+      const account = await adminAuth().getUser(decoded.uid);
+      const enrolled = (account.multiFactor?.enrolledFactors?.length ?? 0) > 0;
+      return NextResponse.json({ error: 'mfa_required', enrolled }, { status: 403 });
     }
     const sessionCookie = await adminAuth().createSessionCookie(idToken, {
       expiresIn: SESSION_TTL_MS,

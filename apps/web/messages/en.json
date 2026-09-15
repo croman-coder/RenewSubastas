@@ -97,6 +97,17 @@
       "revokeSessions": "Sign out of all devices",
       "revoking": "Signing out…",
       "revoked": "All your sessions have been signed out.",
+      "mfa": {
+        "title": "Two-step verification",
+        "description": "On top of your password, a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password). Required for the internal team.",
+        "enable": "Turn on two-step verification",
+        "remove": "Remove",
+        "confirmRemove": "Remove two-step verification? If your role requires it, you will have to set it up again at your next sign-in.",
+        "removed": "Two-step verification removed.",
+        "enrolledOn": "Turned on {date}",
+        "factorFallback": "Authenticator app",
+        "noClientSession": "Sign in again to manage two-step verification."
+      },
       "errors": {
         "wrongCurrent": "Current password is incorrect.",
         "passwordsDontMatch": "Passwords do not match.",

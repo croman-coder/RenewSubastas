@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PageProps {
   params: { locale: string };
-  searchParams?: { from?: string; error?: string };
+  searchParams?: { from?: string; error?: string; mfa?: string };
 }
 
 const ERROR_KEY: Record<string, string> = {
@@ -20,6 +20,10 @@ const ERROR_KEY: Record<string, string> = {
 export default function LoginPage({ params: { locale }, searchParams }: PageProps) {
   const t = useTranslations('auth.login');
   const errorKey = searchParams?.error ? ERROR_KEY[searchParams.error] : undefined;
+  // Set by /auth/mfa/enroll after a successful enrolment: the person was
+  // signed out on purpose (their old token proved one factor only) and sent
+  // here to sign in again — this time Firebase asks for the code.
+  const mfaEnrolled = searchParams?.mfa === 'enrolled';
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-bg-base">
@@ -135,6 +139,16 @@ export default function LoginPage({ params: { locale }, searchParams }: PageProp
                 <div className="mb-4 animate-in fade-in slide-in-from-top-1 duration-300">
                   <Alert variant="destructive">
                     <AlertDescription>{t(errorKey)}</AlertDescription>
+                  </Alert>
+                </div>
+              )}
+              {mfaEnrolled && (
+                <div className="mb-4 animate-in fade-in slide-in-from-top-1 duration-300">
+                  <Alert className="border-success/40 bg-success/5">
+                    <AlertDescription className="text-success">
+                      Verificación en dos pasos activada. Iniciá sesión con tu contraseña o Google y
+                      después escribí el código de la app.
+                    </AlertDescription>
                   </Alert>
                 </div>
               )}

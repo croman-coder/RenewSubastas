@@ -79,13 +79,19 @@ Firestore es la base que el cliente escribe directo. Las reglas lo protegían ig
 
 ### 3.3 Auth
 
-| Control                    | Estado                                                                                              |
-| -------------------------- | --------------------------------------------------------------------------------------------------- |
-| Anti-enumeración de emails | **ON** ✓                                                                                            |
-| Dominios autorizados       | localhost, `*.firebaseapp.com`, `*.web.app`, `carbidpy.netlify.app` (viejo), `renewsubastas.com.py` |
-| MFA                        | Desactivada — recomendable para admin/staff/finanzas                                                |
-| Política de contraseña     | Ninguna del lado del servidor                                                                       |
-| Funciones de bloqueo       | Ninguna                                                                                             |
+| Control                    | Antes                                                             | Ahora (15/09)                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Anti-enumeración de emails | ON                                                                | ON                                                                                                              |
+| Política de contraseña     | Ninguna del lado del servidor; tres criterios distintos en la app | **ENFORCE: 10 caracteres, una minúscula, un número** — en Firebase y en los cuatro puntos de la app (ver abajo) |
+| MFA                        | Desactivada                                                       | **Código listo y probado; falta el upgrade a Identity Platform** (ver abajo)                                    |
+| Dominios autorizados       | incluye `carbidpy.netlify.app` (viejo)                            | igual                                                                                                           |
+| Funciones de bloqueo       | Ninguna                                                           | igual                                                                                                           |
+
+**Contraseña.** La regla vive en `@carbid/shared-types` (`PasswordSchema`) y se aplica en: la política del proyecto de Firebase (la puerta que una petición armada no puede saltar); registro, cambio de contraseña y set-password en la web; y `redeemPasswordReset` en functions, con copia explícita porque pone la contraseña con el Admin SDK, que NO pasa por la política de Firebase — era la única puerta que seguía aceptando 8 caracteres. Sin `forceUpgradeOnSignin`: a los 24 usuarios con contraseña no se les rechaza el login hasta que la cambien, porque el formulario de login no maneja ese error todavía. Scripts: `functions/scripts/auth-password-policy.mjs` (`apply` / `off`).
+
+**MFA para el equipo interno — diseño y estado.** Firebase no tiene MFA por rol: su estado de proyecto es "pueden enrolar" o "todos deben", y "todos" pondría una app autenticadora delante de cada comprador. La exigencia para admin/staff/finanzas la impone la app en el único lugar donde se acuña una sesión, `/api/session`: sin `sign_in_second_factor` en el token, no hay cookie (`apps/web/src/lib/auth/mfa-gate.ts`, 11 tests). Qué roles se exigen sale de `app_config/global.security.mfaRequiredRoles` — **vacío por defecto**, cambia sin deploy con `functions/scripts/mfa-enforce.mjs`, y un valor malformado abre el gate en vez de cerrarlo. Sólo TOTP (app autenticadora), nunca SMS. Flujo: login → 403 `mfa_required` → `/auth/mfa/enroll` (QR + clave manual + código) → cierre de sesión forzado → login con desafío de código (contraseña y Google, mismo paso). Ajustes → Seguridad lista y quita factores. Salida de emergencia para quien perdió el teléfono: `functions/scripts/mfa-unenroll.mjs <email>` (quita factores, revoca sesiones, deja audit_log).
+
+Probado en emulador: gate (flag vacío → todos entran; flag staff → admin 403 con `enrolled:false`, comprador entra; flag roto → entra), redirección a enrolar, página, y que con el flag apagado el admin entra normal. **Lo que el emulador no puede probar es el TOTP en sí** (sólo implementa MFA por SMS): el intercambio real de enrolamiento y desafío se prueba después del upgrade, con el flag apagado, enrolando una cuenta propia. El proyecto está en Firebase Auth clásico: la API rechaza habilitar MFA con `MFA can only be enabled in GCIP or Firebase Auth upgraded to aligned product`. El upgrade a _Firebase Authentication with Identity Platform_ es irreversible y cambia el modelo de facturación (gratis hasta 50.000 usuarios activos/mes; hoy 140 cuentas → USD 0). Orden seguro: upgrade → `auth-mfa-config.mjs activar` (MFA opcional + TOTP) → enrolar vos y probar el login con código → `mfa-enforce.mjs admin staff finanzas`.
 
 ### 3.4 Headers HTTP en producción
 
@@ -184,7 +190,7 @@ Por orden de impacto. Ninguno lo puedo hacer yo sin tocar producción o tu servi
 2. ~~Desplegar~~ — **hecho**: web `70dd5c3` publicada en Netlify con los headers; reglas de Storage liberadas; 37 functions actualizadas.
 3. ~~TTL en `rate_limits`~~ — **hecho**: política ACTIVE sobre `expiresAt`, y los 7.204 contadores viejos (último timestamp > 24 h) se borraron por script: 7.489 → 286 docs.
 4. ~~Espejo en el servidor~~ — **hecho**: corriendo en SRPY186 (`apps/mirror/README.md`), `verify` contra producción ESPEJO AL DÍA.
-5. **Política de contraseña** en Auth (largo mínimo, mayúscula, número) y **MFA para admin/staff/finanzas**. Console → Authentication → Settings. Bajo riesgo.
+5. ~~Política de contraseña~~ — **hecho** (§3.3). **MFA** — código desplegado con la exigencia apagada; falta el upgrade a Identity Platform (decisión tuya: irreversible, USD 0 a esta escala) y después los tres pasos de §3.3.
 6. **Upgrades de mayor** en su propia rama, con este mismo e2e y estas mismas pruebas de reglas como red: Next 15.5.24+, `firebase` 12, `next-intl` 4, `firebase-admin` 13, `@sentry/nextjs` último.
 7. **Un proyecto de staging descartable** en Firebase. Sin él, la latencia real de `placeBid` bajo ráfaga sigue sin medirse — el emulador no puede. `load-test/hot-auction-bids.js` ya está listo para apuntarle (`-e BASE_URL=… -e TRANSPORT_MAX=10`).
 8. **CSP completa** (§3.4). Trabajo aparte.

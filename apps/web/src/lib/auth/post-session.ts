@@ -3,7 +3,14 @@ import { isLocale } from '@/lib/seo/site';
 
 export type PostSessionResult =
   | { ok: true; role: Role; audience: Audience | null }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      error: string;
+      /** Only with `error === 'mfa_required'`: whether the account already
+       *  has a second factor enrolled (→ sign in again with the code) or
+       *  not (→ go enrol one). */
+      enrolled?: boolean;
+    };
 
 /**
  * Exchanges a Firebase ID token for a session cookie via /api/session.
@@ -18,8 +25,12 @@ export async function postSession(idToken: string): Promise<PostSessionResult> {
     body: JSON.stringify({ idToken }),
   });
   if (!res.ok) {
-    const j = (await res.json().catch(() => ({}))) as { error?: string };
-    return { ok: false, error: j.error ?? 'generic' };
+    const j = (await res.json().catch(() => ({}))) as { error?: string; enrolled?: boolean };
+    return {
+      ok: false,
+      error: j.error ?? 'generic',
+      ...(typeof j.enrolled === 'boolean' ? { enrolled: j.enrolled } : {}),
+    };
   }
   const { role, audience } = (await res.json()) as { role: Role; audience: Audience | null };
   return { ok: true, role, audience };

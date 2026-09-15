@@ -97,6 +97,17 @@
       "revokeSessions": "Cerrar sesión en todos los dispositivos",
       "revoking": "Cerrando sesiones…",
       "revoked": "Todas tus sesiones fueron cerradas.",
+      "mfa": {
+        "title": "Verificación en dos pasos",
+        "description": "Además de tu contraseña, un código de 6 dígitos de una app autenticadora (Google Authenticator, Authy, 1Password). Obligatorio para el equipo interno.",
+        "enable": "Activar verificación en dos pasos",
+        "remove": "Quitar",
+        "confirmRemove": "¿Quitar la verificación en dos pasos? Si tu rol la requiere, vas a tener que activarla de nuevo en el próximo inicio de sesión.",
+        "removed": "Verificación en dos pasos quitada.",
+        "enrolledOn": "Activada el {date}",
+        "factorFallback": "App autenticadora",
+        "noClientSession": "Volvé a iniciar sesión para administrar la verificación en dos pasos."
+      },
       "errors": {
         "wrongCurrent": "La contraseña actual es incorrecta.",
         "passwordsDontMatch": "Las contraseñas no coinciden.",

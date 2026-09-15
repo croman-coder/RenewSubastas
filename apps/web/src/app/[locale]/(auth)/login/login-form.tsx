@@ -5,12 +5,27 @@ import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { sendEmailVerification, signInWithEmailAndPassword, type User } from 'firebase/auth';
+import {
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  type MultiFactorInfo,
+  type MultiFactorResolver,
+  type User,
+} from 'firebase/auth';
 import { ArrowRight, Eye, EyeOff, Loader2, Mail, Lock } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { homeFor } from '@/lib/auth/constants';
 import { safeRedirect } from '@/lib/auth/post-session';
 import { finalizePasswordAccount } from '@/lib/auth/finalize-password-account';
+import { finalizeGoogleAccount } from '@/lib/auth/finalize-google-account';
+import {
+  describeMfaError,
+  isMfaRequiredError,
+  resolveTotpSignIn,
+  totpResolver,
+} from '@/lib/auth/mfa-client';
+import { mfaEnrollPath, sessionOutcome } from '@/lib/auth/session-outcome';
+import { MfaCodeStep } from '@/components/auth/mfa-code-step';
 import { trackCompleteRegistration } from '@/lib/analytics/meta-events';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +58,18 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
   // this state renders its own actions (resend, "ya verifiqué"), not just a
   // message — see the render block below.
   const [unverifiedUser, setUnverifiedUser] = useState<User | null>(null);
+  // Set when Firebase stopped a sign-in at the second factor. While set, the
+  // credentials form is replaced by the 6-digit code step. `provider`
+  // decides which provisioning tail runs after the code is accepted — the
+  // same two tails the one-factor paths use.
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    resolver: MultiFactorResolver;
+    hint: MultiFactorInfo;
+    provider: 'password' | 'google';
+    email: string | null;
+  } | null>(null);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [mfaBusy, setMfaBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
@@ -91,74 +118,17 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     setResendNotice(null);
     try {
       const cred = await signInWithEmailAndPassword(fb.auth, data.email, data.password);
-      // Try to provision/sign-in FIRST, and only look at emailVerified if
-      // that fails. An account invited via createUser.ts already has
-      // role/status claims the moment it's created — finalizePasswordAccount
-      // succeeds for it regardless of emailVerified (which stays false
-      // there until redeemPasswordReset.ts's password-set flow), so it
-      // never reaches the branch below at all. That branch is only
-      // reachable for an account with NO claims whatsoever, which
-      // self-registration is the only path that produces. Checking
-      // emailVerified first — the original shape of this gate — assumed
-      // false always meant "unfinished self-registration", which is wrong
-      // for every admin-panel account: createUser.ts creates all of them
-      // with emailVerified:false, so that ordering locked out the entire
-      // existing staff/admin/finanzas base.
-      let result;
-      try {
-        result = await finalizePasswordAccount(cred.user);
-      } catch {
-        // A real failure inside finalizePasswordAccount (rate-limited,
-        // server error, dropped connection) rather than the expected
-        // "not applicable" precondition it already swallows internally —
-        // don't leave a half-signed-in session dangling.
-        setError(t('errors.generic'));
-        await fb.auth.signOut().catch(() => {});
+      await completeSignIn(cred.user, 'password');
+      return;
+    } catch (e) {
+      if (isMfaRequiredError(e)) {
+        // Right password, but the account has an authenticator enrolled:
+        // Firebase wants the code before it issues any token. Swap the form
+        // for the code step; nothing is signed in yet.
+        openMfaChallenge(e, 'password', data.email);
         setSubmitting(false);
         return;
       }
-      if (!result.ok) {
-        if (!cred.user.emailVerified) {
-          // Firebase signs this in regardless of verification status. A
-          // self-registered buyer who never clicked the verification link
-          // has no users/{uid} doc and no claims — provisioning above
-          // failed for exactly that reason. Surface it here, where we
-          // actually know why, and offer the resend affordance, instead of
-          // the generic "account_disabled" below (which reads like an
-          // admin disabled the account).
-          setUnverifiedUser(cred.user);
-          setSubmitting(false);
-          return;
-        }
-        if (result.error === 'account_disabled') {
-          setError(t('errors.accountDisabled'));
-        } else if (
-          result.error === 'server_misconfigured' ||
-          result.error === 'session_creation_failed'
-        ) {
-          setError(
-            'Servicio no disponible. El equipo fue notificado. Probá de nuevo en unos minutos.',
-          );
-        } else if (result.error === 'forbidden_origin') {
-          setError('Origen no permitido. Cerrá la pestaña y volvé a abrir el sitio.');
-        } else {
-          setError(t('errors.generic'));
-        }
-        await fb.auth.signOut();
-        return;
-      }
-      // Almost always false on this path — this is the sign-in form. It
-      // turns true for the buyer who verified their email but never returned
-      // to the registration tab: their account is provisioned right here, so
-      // this login IS the alta, and it is the only moment it can be reported.
-      if (result.isNewAccount) trackCompleteRegistration('email', cred.user.uid);
-      const { role, audience } = result;
-      const target = safeRedirect(from) ?? homeFor(role, audience ?? undefined);
-      setEntering(true);
-      router.replace(`/${locale}${target}`);
-      router.refresh();
-      return;
-    } catch (e) {
       const code = (e as { code?: string }).code;
       if (
         code === 'auth/user-not-found' ||
@@ -171,6 +141,168 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
       }
       setSubmitting(false);
     }
+  }
+
+  function openMfaChallenge(err: unknown, provider: 'password' | 'google', email: string | null) {
+    const bundle = totpResolver(fb.auth, err as Parameters<typeof totpResolver>[1]);
+    if (!bundle) {
+      // A factor this app doesn't handle (SMS enrolled from the console?).
+      // Say so instead of showing a code box that can never succeed.
+      setError(
+        'Tu cuenta tiene un segundo factor que esta app no puede verificar. Pedile al administrador que lo revise.',
+      );
+      return;
+    }
+    setMfaError(null);
+    setMfaChallenge({ ...bundle, provider, email });
+  }
+
+  async function onMfaCode(code: string) {
+    if (!mfaChallenge) return;
+    setMfaBusy(true);
+    setMfaError(null);
+    try {
+      const cred = await resolveTotpSignIn(mfaChallenge.resolver, mfaChallenge.hint, code);
+      await completeSignIn(cred.user, mfaChallenge.provider);
+    } catch (e) {
+      setMfaError(describeMfaError(e));
+    } finally {
+      setMfaBusy(false);
+    }
+  }
+
+  function cancelMfa() {
+    setMfaChallenge(null);
+    setMfaError(null);
+    setError(null);
+  }
+
+  /**
+   * Everything after Firebase has a signed-in `User`, for either provider,
+   * with or without a second factor having been asked: provision the
+   * account, mint the session cookie, and act on the server's verdict —
+   * including the two second-factor verdicts, which route to enrolment or
+   * to a fresh sign-in instead of showing an error.
+   */
+  async function completeSignIn(user: User, provider: 'password' | 'google') {
+    if (provider === 'google') {
+      const result = await finalizeGoogleAccount(user);
+      const outcome = sessionOutcome(result);
+      if (outcome.kind === 'enroll_mfa') {
+        router.replace(mfaEnrollPath(locale, from) as `/${string}`);
+        return;
+      }
+      if (outcome.kind === 'reauth_mfa') {
+        setError(
+          'Tu rol requiere verificación en dos pasos. Volvé a iniciar sesión con tu código.',
+        );
+        await fb.auth.signOut().catch(() => {});
+        setMfaChallenge(null);
+        return;
+      }
+      if (outcome.kind === 'error') {
+        setError(
+          outcome.error === 'account_disabled'
+            ? t('errors.accountDisabled')
+            : t('errors.googleFailed'),
+        );
+        await fb.auth.signOut().catch(() => {});
+        setMfaChallenge(null);
+        return;
+      }
+      if (result.ok && result.isNewAccount) trackCompleteRegistration('google', user.uid);
+      const target = safeRedirect(from) ?? homeFor(outcome.role, outcome.audience ?? undefined);
+      setEntering(true);
+      router.replace(`/${locale}${target}`);
+      router.refresh();
+      return;
+    }
+
+    const cred = { user };
+    // Try to provision/sign-in FIRST, and only look at emailVerified if
+    // that fails. An account invited via createUser.ts already has
+    // role/status claims the moment it's created — finalizePasswordAccount
+    // succeeds for it regardless of emailVerified (which stays false
+    // there until redeemPasswordReset.ts's password-set flow), so it
+    // never reaches the branch below at all. That branch is only
+    // reachable for an account with NO claims whatsoever, which
+    // self-registration is the only path that produces. Checking
+    // emailVerified first — the original shape of this gate — assumed
+    // false always meant "unfinished self-registration", which is wrong
+    // for every admin-panel account: createUser.ts creates all of them
+    // with emailVerified:false, so that ordering locked out the entire
+    // existing staff/admin/finanzas base.
+    let result;
+    try {
+      result = await finalizePasswordAccount(cred.user);
+    } catch {
+      // A real failure inside finalizePasswordAccount (rate-limited,
+      // server error, dropped connection) rather than the expected
+      // "not applicable" precondition it already swallows internally —
+      // don't leave a half-signed-in session dangling.
+      setError(t('errors.generic'));
+      await fb.auth.signOut().catch(() => {});
+      setSubmitting(false);
+      return;
+    }
+    // Second-factor verdicts come BEFORE the emailVerified branch below:
+    // staff accounts created from the admin panel keep emailVerified:false
+    // for good (see the comment above), so an admin sent to enrol must not
+    // be mistaken for an unfinished self-registration.
+    const outcome = sessionOutcome(result);
+    if (outcome.kind === 'enroll_mfa') {
+      // Keep the Firebase client session — enrolment needs it.
+      router.replace(mfaEnrollPath(locale, from) as `/${string}`);
+      return;
+    }
+    if (outcome.kind === 'reauth_mfa') {
+      setError('Tu rol requiere verificación en dos pasos. Volvé a iniciar sesión con tu código.');
+      await fb.auth.signOut().catch(() => {});
+      setMfaChallenge(null);
+      setSubmitting(false);
+      return;
+    }
+    if (!result.ok) {
+      if (!cred.user.emailVerified) {
+        // Firebase signs this in regardless of verification status. A
+        // self-registered buyer who never clicked the verification link
+        // has no users/{uid} doc and no claims — provisioning above
+        // failed for exactly that reason. Surface it here, where we
+        // actually know why, and offer the resend affordance, instead of
+        // the generic "account_disabled" below (which reads like an
+        // admin disabled the account).
+        setUnverifiedUser(cred.user);
+        setSubmitting(false);
+        return;
+      }
+      if (result.error === 'account_disabled') {
+        setError(t('errors.accountDisabled'));
+      } else if (
+        result.error === 'server_misconfigured' ||
+        result.error === 'session_creation_failed'
+      ) {
+        setError(
+          'Servicio no disponible. El equipo fue notificado. Probá de nuevo en unos minutos.',
+        );
+      } else if (result.error === 'forbidden_origin') {
+        setError('Origen no permitido. Cerrá la pestaña y volvé a abrir el sitio.');
+      } else {
+        setError(t('errors.generic'));
+      }
+      await fb.auth.signOut();
+      return;
+    }
+    // Almost always false on this path — this is the sign-in form. It
+    // turns true for the buyer who verified their email but never returned
+    // to the registration tab: their account is provisioned right here, so
+    // this login IS the alta, and it is the only moment it can be reported.
+    if (result.isNewAccount) trackCompleteRegistration('email', cred.user.uid);
+    const { role, audience } = result;
+    const target = safeRedirect(from) ?? homeFor(role, audience ?? undefined);
+    setEntering(true);
+    router.replace(`/${locale}${target}`);
+    router.refresh();
+    return;
   }
 
   async function onResendVerification() {
@@ -221,6 +353,21 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
     } finally {
       setChecking(false);
     }
+  }
+
+  if (mfaChallenge) {
+    return (
+      <>
+        {entering && <EnteringOverlay />}
+        <MfaCodeStep
+          email={mfaChallenge.email}
+          busy={mfaBusy}
+          error={mfaError}
+          onSubmit={(code) => void onMfaCode(code)}
+          onCancel={cancelMfa}
+        />
+      </>
+    );
   }
 
   return (
@@ -364,7 +511,11 @@ export function LoginForm({ from, locale }: { from?: string; locale: string }) {
           </span>
         </div>
       </div>
-      <GoogleSignInButton {...(from !== undefined ? { from } : {})} locale={locale} />
+      <GoogleSignInButton
+        {...(from !== undefined ? { from } : {})}
+        locale={locale}
+        onMfaChallenge={(err, email) => openMfaChallenge(err, 'google', email)}
+      />
     </>
   );
 }

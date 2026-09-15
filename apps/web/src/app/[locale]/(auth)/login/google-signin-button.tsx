@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
 import { Loader2 } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
-import { postSession, safeRedirect } from '@/lib/auth/post-session';
+import { safeRedirect } from '@/lib/auth/post-session';
+import { finalizeGoogleAccount } from '@/lib/auth/finalize-google-account';
+import { isMfaRequiredError } from '@/lib/auth/mfa-client';
+import { mfaEnrollPath, sessionOutcome } from '@/lib/auth/session-outcome';
 import { trackCompleteRegistration } from '@/lib/analytics/meta-events';
 import { homeFor } from '@/lib/auth/constants';
 import { Button } from '@/components/ui/button';
@@ -35,7 +37,18 @@ function GoogleGlyph() {
   );
 }
 
-export function GoogleSignInButton({ from, locale }: { from?: string; locale: string }) {
+export function GoogleSignInButton({
+  from,
+  locale,
+  onMfaChallenge,
+}: {
+  from?: string;
+  locale: string;
+  /** Called when Google sign-in stops at the account's second factor. The
+   *  login form owns the code step (it is the same step for both providers),
+   *  so the button hands the error up and steps aside. */
+  onMfaChallenge?: (err: unknown, email: string | null) => void;
+}) {
   const t = useTranslations('auth.login');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -44,18 +57,27 @@ export function GoogleSignInButton({ from, locale }: { from?: string; locale: st
     setBusy(true);
     try {
       const cred = await signInWithPopup(fb.auth, new GoogleAuthProvider());
-      // Provision (or resolve) the account server-side; forces buyer/retail
-      // for new users, no-ops for existing ones.
-      const provisioned = await httpsCallable<void, { isNew?: boolean }>(
-        fb.functions,
-        'registerGoogleBuyer',
-      )();
-      // Force-refresh so the JWT carries the freshly-set custom claims.
-      const idToken = await cred.user.getIdToken(true);
-      const result = await postSession(idToken);
-      if (!result.ok) {
+      // Provision (or resolve) the account server-side — forces buyer/retail
+      // for new users, no-ops for existing ones — then exchange a refreshed
+      // token for the session cookie. Same tail the login form runs after a
+      // second-factor completion of a Google sign-in.
+      const result = await finalizeGoogleAccount(cred.user);
+      const outcome = sessionOutcome(result);
+      if (outcome.kind === 'enroll_mfa') {
+        // Keep the Firebase client session — enrolment needs it.
+        router.replace(mfaEnrollPath(locale, from) as `/${string}`);
+        return;
+      }
+      if (outcome.kind === 'reauth_mfa') {
         toast.error(
-          result.error === 'account_disabled'
+          'Tu rol requiere verificación en dos pasos. Volvé a iniciar sesión con tu código.',
+        );
+        await signOut(fb.auth).catch(() => {});
+        return;
+      }
+      if (outcome.kind === 'error') {
+        toast.error(
+          outcome.error === 'account_disabled'
             ? t('errors.accountDisabled')
             : t('errors.googleFailed'),
         );
@@ -66,11 +88,19 @@ export function GoogleSignInButton({ from, locale }: { from?: string; locale: st
       // same page — so only the callable's own answer can tell them apart.
       // Reported after postSession succeeded: an account that exists but
       // couldn't open a session is not a completed registration.
-      if (provisioned.data?.isNew === true) trackCompleteRegistration('google', cred.user.uid);
-      const target = safeRedirect(from) ?? homeFor(result.role, result.audience ?? undefined);
+      if (result.isNewAccount) trackCompleteRegistration('google', cred.user.uid);
+      const target = safeRedirect(from) ?? homeFor(outcome.role, outcome.audience ?? undefined);
       router.replace(`/${locale}${target}`);
       router.refresh();
     } catch (e) {
+      if (isMfaRequiredError(e) && onMfaChallenge) {
+        // Right Google account, but it has an authenticator enrolled. The
+        // popup's error carries the email in customData; nothing is signed
+        // in yet.
+        const email = (e as { customData?: { email?: string } }).customData?.email ?? null;
+        onMfaChallenge(e, email);
+        return;
+      }
       const code = (e as { code?: string }).code ?? '';
       // User closed/cancelled the popup — not an error worth surfacing.
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
