@@ -1,29 +1,23 @@
-# Servicio de espejo en SRPY186. Se suma al stack de /home/santarosa/stack/infra
-# (donde vive srpy-postgres) o se levanta aparte con la red de ese stack.
+# Servicio de espejo en SRPY186. Vive en /home/santarosa/stack/renew-mirror/
+# junto a `.env` (600), `secrets/renew-mirror-sa.json` (600) y `storage/`
+# (las fotos, bind-mount para que los backups del servidor las vean).
 #
-# Antes de levantarlo hacen falta tres cosas, en este orden:
+# La imagen NO se construye en el servidor: la construye deploy-to-srpy186.sh
+# desde este repo y la carga por ssh (`docker save | docker load`). Así el
+# servidor no necesita credenciales del repo de GitHub.
 #
-#   1. Una service account de SÓLO LECTURA en el proyecto carbid-staging, con
-#      exactamente estos roles y ninguno más:
-#        roles/datastore.viewer          (leer Firestore)
-#        roles/storage.objectViewer      (leer el bucket)
-#        roles/firebaseauth.viewer       (listar usuarios de Auth)
-#      Su clave JSON va a /home/santarosa/stack/infra/secrets/renew-mirror-sa.json
-#      con permisos 600. NUNCA la clave del owner: el espejo no tiene que poder
-#      escribir en producción, ni por bug ni por compromiso del servidor.
-#
-#   2. La base y el usuario en srpy-postgres:
-#        create user renew_mirror password '<generar>';
+# Prerrequisitos (los hace el script la primera vez):
+#   1. Service account de SÓLO LECTURA en carbid-staging — exactamente
+#      roles/datastore.viewer + roles/storage.objectViewer +
+#      roles/firebaseauth.viewer, nada más — y su clave en secrets/.
+#      NUNCA la clave del Admin SDK: el espejo no tiene que poder escribir en
+#      producción, ni por bug ni por compromiso del servidor.
+#   2. Usuario y base en srpy-postgres:
+#        create user renew_mirror password '<generado>';
 #        create database renewsubastas_mirror owner renew_mirror;
-#
-#   3. El archivo .env de al lado con MIRROR_DATABASE_URL apuntando a esa base.
-#
-# La imagen se construye desde la raíz del repo (ver Dockerfile).
+#   3. `.env` con MIRROR_DATABASE_URL apuntando a esa base.
 services:
   renew-mirror:
-    build:
-      context: ../..
-      dockerfile: apps/mirror/Dockerfile
     image: renew-mirror:latest
     container_name: renew-mirror
     restart: unless-stopped
@@ -39,18 +33,17 @@ services:
       MIRROR_STORAGE_MINUTES: '60'
     volumes:
       - ./secrets/renew-mirror-sa.json:/secrets/renew-mirror-sa.json:ro
-      - renew-mirror-storage:/data/storage
+      - ./storage:/data/storage
     ports:
       - '127.0.0.1:8787:8787'
     networks:
-      - infra_default
+      - srpy-infra_default
     logging:
       driver: json-file
       options: { max-size: '20m', max-file: '5' }
 
-volumes:
-  renew-mirror-storage:
-
 networks:
-  infra_default:
+  # La red del stack de /home/santarosa/stack/infra, donde escucha
+  # srpy-postgres:5432. Nombre real (compose lo prefija con el proyecto).
+  srpy-infra_default:
     external: true

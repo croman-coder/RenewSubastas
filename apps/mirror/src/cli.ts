@@ -31,7 +31,7 @@ let exitCode = 0;
 try {
   switch (cmd) {
     case 'full': {
-      const r = await fullSync(store, cfg.rootCollections);
+      const r = await fullSync(store, cfg.rootCollections, cfg.recurseRoots);
       console.log(JSON.stringify(r, null, 2));
       break;
     }

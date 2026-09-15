@@ -19,6 +19,15 @@ export interface MirrorConfig {
   rootCollections: readonly string[];
   /** Known subcollection ids, for collectionGroup tail listeners. */
   subcollections: readonly string[];
+  /** Root collections whose documents may HAVE subcollections. Only these get
+   *  a `listCollections()` per document during the full pass. Today that is
+   *  `auctions` alone (bids/viewers/priceChanges/private); every other root
+   *  is flat, and asking Firestore "any subcollections?" for each of 7,000
+   *  rate-limit counters is one round-trip each — the first production run
+   *  spent twelve minutes doing exactly that. Add a root here the day it
+   *  grows a subcollection, same as adding a new collection to the list
+   *  above. */
+  recurseRoots: readonly string[];
   /** Root collections that are transient counters — mirrored on the full
    *  sync (so the copy is complete) but NOT tailed in real time: they churn
    *  on every page view and carry nothing worth a listener. */
@@ -52,6 +61,8 @@ export const DEFAULT_ROOT_COLLECTIONS = [
 export const DEFAULT_SUBCOLLECTIONS = ['bids', 'viewers', 'priceChanges', 'private'] as const;
 
 export const DEFAULT_NO_TAIL = ['rate_limits', 'page_views'] as const;
+
+export const DEFAULT_RECURSE_ROOTS = ['auctions'] as const;
 
 function required(name: string): string {
   const v = process.env[name];
@@ -88,6 +99,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): MirrorConfig {
       rootCollections: listOr('MIRROR_ROOT_COLLECTIONS', DEFAULT_ROOT_COLLECTIONS),
       subcollections: listOr('MIRROR_SUBCOLLECTIONS', DEFAULT_SUBCOLLECTIONS),
       noTail: listOr('MIRROR_NO_TAIL', DEFAULT_NO_TAIL),
+      recurseRoots: listOr('MIRROR_RECURSE_ROOTS', DEFAULT_RECURSE_ROOTS),
       reconcileEveryHours: numberOr('MIRROR_RECONCILE_HOURS', 6),
       authEveryMinutes: numberOr('MIRROR_AUTH_MINUTES', 30),
       storageEveryMinutes: numberOr('MIRROR_STORAGE_MINUTES', 60),

@@ -2,10 +2,14 @@
  * Firestore → Postgres: the full pass and the live tail.
  *
  * FULL PASS (`fullSync`): for each root collection, page through every
- * document, upsert it, then walk its subcollections (listCollections per
- * document — fine at this size: ~100 auctions × 4 subcollections). At the
- * end, any path the mirror had live under that root that was NOT seen this
- * pass gets soft-deleted. That is what makes the full pass a reconciliation
+ * document and upsert it. For roots in `recurseRoots` (today: `auctions`),
+ * also list each document's subcollections and copy them — one level deep,
+ * which is as deep as this app's data goes. `listCollections()` is a
+ * round-trip per document, so it is NOT done for flat roots: the first
+ * production run asked it of every one of 7,000 rate-limit counters and took
+ * twelve minutes; scoped to auctions it takes seconds. At the end, any path
+ * the mirror had live under that root that was NOT seen this pass gets
+ * soft-deleted. That is what makes the full pass a reconciliation
  * and not just a copy: it converges the mirror to Firestore even after the
  * tail missed events (restart, network blip, listener reset).
  *
@@ -45,7 +49,7 @@ function toRow(d: DocumentSnapshot): DocRow {
   return { path: d.ref.path, data: docToJson(d.data() ?? {}) };
 }
 
-/** Walks a document's subcollections recursively (depth-first). */
+/** Copies the subcollections of one root document (one level deep). */
 async function syncSubcollections(
   ref: DocumentReference,
   store: MirrorStore,
@@ -64,12 +68,22 @@ async function syncSubcollections(
           counters.upserted += await store.upsertDocs(batch);
           batch = [];
         }
-        // A subcollection document can have subcollections of its own.
-        await syncSubcollections(d.ref, store, seen, counters);
       }
     }
     if (batch.length) counters.upserted += await store.upsertDocs(batch);
   }
+}
+
+/** Runs `fn` over `items` with at most `limit` in flight. */
+async function mapLimit<T>(items: readonly T[], limit: number, fn: (t: T) => Promise<void>) {
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const item = items[i++]!;
+      await fn(item);
+    }
+  });
+  await Promise.all(workers);
 }
 
 export interface FullSyncResult {
@@ -82,6 +96,8 @@ export interface FullSyncResult {
 export async function fullSync(
   store: MirrorStore,
   rootCollections: readonly string[],
+  recurseRoots: readonly string[] = [],
+  onProgress?: (root: string, seen: number) => void,
 ): Promise<FullSyncResult> {
   const runId = await store.startRun('full');
   const totals = { seen: 0, upserted: 0, deleted: 0 };
@@ -92,6 +108,7 @@ export async function fullSync(
       const seen = new Set<string>();
       const before = await store.livePathsUnderRoot(root);
 
+      const recurse = recurseRoots.includes(root);
       let batch: DocRow[] = [];
       for await (const docs of pageCollection(db().collection(root))) {
         for (const d of docs) {
@@ -102,8 +119,13 @@ export async function fullSync(
             counters.upserted += await store.upsertDocs(batch);
             batch = [];
           }
-          await syncSubcollections(d.ref, store, seen, counters);
         }
+        if (recurse) {
+          // Subcollection discovery is a round-trip per document; a handful
+          // in flight at once keeps a 100-auction pass at a few seconds.
+          await mapLimit(docs, 8, (d) => syncSubcollections(d.ref, store, seen, counters));
+        }
+        onProgress?.(root, counters.seen);
       }
       if (batch.length) counters.upserted += await store.upsertDocs(batch);
 

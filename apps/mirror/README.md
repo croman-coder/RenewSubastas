@@ -54,20 +54,26 @@ y sale con 1 si hay desfase en una colección con tail.
 
 ## Desplegar en SRPY186
 
-Ver `docker-compose.server.yml` — la cabecera lista los tres prerrequisitos
-(service account de sólo lectura, base + usuario en `srpy-postgres`, `.env`).
-Después:
+Un comando desde esta máquina, con `ssh srpy-servidor` configurado:
 
 ```bash
-# en el servidor, con el repo clonado
-docker compose -f apps/mirror/docker-compose.server.yml up -d --build
-curl -s http://127.0.0.1:8787/healthz | jq .healthy      # true
-docker exec renew-mirror node dist/cli.js verify          # ESPEJO AL DÍA
+# primera vez: clave de la SA de sólo lectura + base + .env + imagen + up
+FIRST_RUN=1 SA_KEY=/ruta/renew-mirror-sa.json bash apps/mirror/deploy-to-srpy186.sh
+
+# actualizaciones: sólo imagen + reinicio (clave, base y .env se conservan)
+bash apps/mirror/deploy-to-srpy186.sh
 ```
+
+El script construye la imagen acá y la carga por ssh (`docker save | docker
+load`): el servidor no necesita credenciales del repo. Todo queda en
+`/home/santarosa/stack/renew-mirror/` — `docker-compose.yml`, `.env` (600),
+`secrets/renew-mirror-sa.json` (600) y `storage/` con las fotos, en bind
+mount para que los backups del servidor las vean. Al final espera `/healthz`
+y corre `verify`.
 
 `/healthz` devuelve 200 sólo si el tail está enganchado y la última pasada de
 cada tipo terminó bien; si no, 503 con el motivo en el JSON. Apuntarle el
-health check de Coolify o Beszel.
+health check de Beszel/Netdata del stack de monitoreo.
 
 ## Lo que NO espeja, a propósito
 
