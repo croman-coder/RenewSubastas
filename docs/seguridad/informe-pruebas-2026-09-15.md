@@ -65,17 +65,17 @@ Todo lo que se rompió está en §5 con causa y arreglo. Lo que queda de tu lado
 
 Corrido dos veces seguidas: idempotente.
 
-### 3.2 App Check — la respuesta que faltaba
+### 3.2 App Check — la respuesta que faltaba, y el cambio
 
-Leído por API (no por consola):
+Leído por API (no por consola), antes de esta auditoría:
 
-| Servicio               | Estado         |
-| ---------------------- | -------------- |
-| Storage                | **ENFORCED**   |
-| **Firestore**          | **UNENFORCED** |
-| Auth (identitytoolkit) | UNENFORCED     |
+| Servicio               | Antes          | Ahora (15/09 17:05 UTC)                                                               |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------- |
+| Storage                | ENFORCED       | ENFORCED                                                                              |
+| **Firestore**          | **UNENFORCED** | **ENFORCED**                                                                          |
+| Auth (identitytoolkit) | UNENFORCED     | UNENFORCED (a propósito: forzado, quien no pase reCAPTCHA no puede ni iniciar sesión) |
 
-Firestore es la base que el cliente escribe directo. Las reglas lo protegen igual (§3.1), pero sin App Check cualquier script con la config pública puede hablarle a Firestore como si fuera la app — leer el catálogo entero como comprador, hacer ruido. Proveedores reCAPTCHA v3 y Enterprise están configurados en la app web, así que el cliente **ya manda** el token. → SEC-1 en §6, con el procedimiento para forzarlo sin dejar a nadie afuera.
+Firestore es la base que el cliente escribe directo. Las reglas lo protegían igual (§3.1), pero sin App Check cualquier script con la config pública podía hablarle a Firestore como si fuera la app. Se forzó después de comprobar, en este orden, que ningún usuario real se quedaba afuera: `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` presente en Netlify en todos los contextos; reCAPTCHA v3 cargado y con badge en la página de login de producción (o sea, `initializeAppCheck` corre, con auto-refresh del token); y los callables (`placeBid`, etc.) ya exigían App Check desde siempre con pujas entrando — los navegadores reales obtienen tokens válidos. Los caminos servidor (SSR con Admin SDK, Cloud Functions, el espejo) no pasan por App Check y se verificaron intactos después del cambio. Rollback: `node functions/scripts/appcheck-enforcement.mjs firestore.googleapis.com UNENFORCED`.
 
 ### 3.3 Auth
 
@@ -180,14 +180,10 @@ Tres prerrequisitos, en `apps/mirror/docker-compose.server.yml`: crear la servic
 
 Por orden de impacto. Ninguno lo puedo hacer yo sin tocar producción o tu servidor sin tu OK.
 
-1. **Forzar App Check en Firestore** (SEC-1). Antes de tocar el toggle: Firebase Console → App Check → Firestore → pestaña de métricas. Si ~100 % de los pedidos de los últimos 7 días llegan con token válido, pasá a **Enforce**; si hay un porcentaje sin token, ese porcentaje son usuarios que van a ver el catálogo vacío — hay que entender quiénes son primero (¿el wrapper iOS dormido? ¿navegadores viejos con reCAPTCHA bloqueado?). Auth (identitytoolkit) puede quedar sin forzar: bloquearía el login de quien no pase reCAPTCHA.
-2. **Desplegar** lo de este commit: `git push origin main` (web: headers) + `firebase deploy --only storage,functions --project carbid-staging` (regla `resource == null` + `expiresAt`). Reglas primero, web después — y el orden acá no importa porque nada cambia el contrato cliente↔reglas.
-3. **Habilitar TTL** en `rate_limits` después de desplegar functions (para que el campo exista):
-   ```bash
-   gcloud firestore fields ttls update expiresAt --collection-group=rate_limits --enable-ttl --project=carbid-staging
-   ```
-   Los 7.336 docs viejos no tienen `expiresAt` y no se van solos; se borran una vez con un script, o se dejan (son 300 KB).
-4. **Espejo en el servidor** (§4.5): decime si arranco. Necesito crear la service account de sólo lectura en GCP (con la SA owner que ya tengo), la base en `srpy-postgres` y levantar el compose. Media hora, reversible, sin tocar la app.
+1. ~~Forzar App Check en Firestore~~ — **hecho** el 15/09 17:05 UTC (§3.2). Si alguien ve el catálogo o el panel de pujas vacío desde hoy, el rollback es una línea (§3.2).
+2. ~~Desplegar~~ — **hecho**: web `70dd5c3` publicada en Netlify con los headers; reglas de Storage liberadas; 37 functions actualizadas.
+3. ~~TTL en `rate_limits`~~ — **hecho**: política ACTIVE sobre `expiresAt`, y los 7.204 contadores viejos (último timestamp > 24 h) se borraron por script: 7.489 → 286 docs.
+4. ~~Espejo en el servidor~~ — **hecho**: corriendo en SRPY186 (`apps/mirror/README.md`), `verify` contra producción ESPEJO AL DÍA.
 5. **Política de contraseña** en Auth (largo mínimo, mayúscula, número) y **MFA para admin/staff/finanzas**. Console → Authentication → Settings. Bajo riesgo.
 6. **Upgrades de mayor** en su propia rama, con este mismo e2e y estas mismas pruebas de reglas como red: Next 15.5.24+, `firebase` 12, `next-intl` 4, `firebase-admin` 13, `@sentry/nextjs` último.
 7. **Un proyecto de staging descartable** en Firebase. Sin él, la latencia real de `placeBid` bajo ráfaga sigue sin medirse — el emulador no puede. `load-test/hot-auction-bids.js` ya está listo para apuntarle (`-e BASE_URL=… -e TRANSPORT_MAX=10`).
