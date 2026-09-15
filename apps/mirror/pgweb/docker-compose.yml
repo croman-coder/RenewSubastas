@@ -1,0 +1,45 @@
+# Visor web del espejo — https://subastas.santarosa.lat
+#
+# pgweb (sosedoff/pgweb) apuntado a renewsubastas_mirror con un rol de SÓLO
+# LECTURA (renew_mirror_ro: SELECT y nada más) y además --readonly
+# --lock-session: ni escribe, ni deja cambiar la conexión a otra base.
+#
+# Cómo llega el tráfico: Cloudflare Tunnel (cloudflared-compras, ingress
+# `subastas.santarosa.lat → http://renew-pgweb:8081`) por la red `coolify`.
+# Sin puertos publicados en el host. Delante, Cloudflare Access (mail +
+# código): quien no esté en la política no llega ni al login de pgweb.
+#
+# PGWEB_AUTH_USER/PASS (basic auth) es la segunda cerradura. Se dejó puesta
+# al levantarlo, ANTES de que Access cubriera el hostname, para que el
+# espejo —que tiene datos personales de compradores— no quedara ni un
+# minuto abierto a internet. Con Access confirmado se puede vaciar (dejar
+# las dos variables vacías y `compose up -d`) o conservar como doble
+# llave; ver apps/mirror/README.md.
+#
+# Vive en /home/santarosa/stack/renew-mirror/pgweb/ junto a su .env (600).
+services:
+  renew-pgweb:
+    image: sosedoff/pgweb:0.16.2
+    container_name: renew-pgweb
+    restart: unless-stopped
+    env_file: .env
+    command:
+      - --bind=0.0.0.0
+      - --listen=8081
+      - --readonly
+      - --lock-session
+      - --skip-open
+    networks:
+      - coolify
+      - srpy-infra_default
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+
+networks:
+  # Donde escucha cloudflared-compras (el túnel) y coolify-proxy.
+  coolify:
+    external: true
+  # Donde escucha srpy-postgres:5432.
+  srpy-infra_default:
+    external: true

@@ -75,6 +75,41 @@ y corre `verify`.
 cada tipo terminó bien; si no, 503 con el motivo en el JSON. Apuntarle el
 health check de Beszel/Netdata del stack de monitoreo.
 
+## Visor web — https://subastas.santarosa.lat
+
+pgweb (`apps/mirror/pgweb/`), apuntado al espejo con el rol `renew_mirror_ro`
+(SELECT y nada más, también sobre tablas futuras) y arrancado con
+`--readonly --lock-session`: no escribe ni deja cambiar de base. Llega por el
+mismo Cloudflare Tunnel que el resto de `*.santarosa.lat` (regla
+`subastas.santarosa.lat → renew-pgweb:8081` en
+`/home/santarosa/cloudflared-compras/config.yml`), sin puertos en el host.
+
+Dos cerraduras, en este orden:
+
+1. **Cloudflare Access** (mail + código, como `monitoreo.santarosa.lat`). La
+   app de Access se administra en Zero Trust → Access → Applications; los
+   mails permitidos van en su política. Es el paso que se hace a mano en el
+   dashboard: no hay token de API de Cloudflare en ninguna máquina.
+2. **Basic auth de pgweb** (`PGWEB_AUTH_USER`/`PGWEB_AUTH_PASS` en el `.env`
+   del servidor). Se puso al levantarlo, antes de que Access cubriera el
+   hostname, para que una base con datos personales de compradores no
+   quedara abierta ni un minuto. Con Access confirmado se puede vaciar
+   (`PGWEB_AUTH_USER=` y `PGWEB_AUTH_PASS=` vacíos, `docker compose up -d`)
+   o conservar como doble llave. La clave está en `~/keys/subastas-pgweb.txt`
+   de la notebook de Croman (600).
+
+Desplegar o actualizar: `bash apps/mirror/pgweb/deploy-to-srpy186.sh`
+(idempotente: rota la contraseña del rol, reescribe el `.env`, recrea el
+contenedor, agrega la regla del túnel si falta, crea el DNS si falta y prueba
+desde afuera). Consultas típicas, en la caja de SQL de pgweb:
+
+```sql
+select doc_id, data->>'status', (data->>'currentBid')::numeric from v_auctions order by 3 desc nulls last;
+select data->>'email', data->>'role', data->>'createdBy' from v_users order by first_seen desc;
+select * from v_bids where parent_path = 'auctions/WKRwtPAVYUUUp0n6SMpN';
+select kind, ok, rows_seen, finished_at - started_at from mirror_runs order by id desc;
+```
+
 ## Lo que NO espeja, a propósito
 
 - **Hashes de contraseña.** Firebase los exporta (`firebase auth:export
