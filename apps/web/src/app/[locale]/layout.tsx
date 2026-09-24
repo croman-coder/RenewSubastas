@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { CookieBanner } from '@/components/legal/cookie-banner';
 import { MetaPixelRouteTracker } from '@/components/analytics/meta-pixel-route-tracker';
 import { TrafficTracker } from '@/components/analytics/traffic-tracker';
+import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import '../globals.css';
 
 // Body: Inter (modern neutral grotesque, excellent at small sizes).
@@ -87,6 +88,10 @@ export default async function LocaleLayout({
                 <MetaPixelRouteTracker />
                 <TrafficTracker />
               </Suspense>
+              {/* Outside the Suspense on purpose: it only needs usePathname,
+                  so the server renders the gtag.js preload into every public
+                  page's HTML. Skips internal and credential-bearing routes. */}
+              <GoogleAnalytics />
               <Toaster position="top-right" richColors closeButton />
             </ThemeProvider>
           </AuthProvider>

@@ -11,7 +11,7 @@ import type { Company } from './load-company';
  */
 
 /** Effective date shown on every legal page. Bump when the text changes. */
-export const LEGAL_VERSION_DATE = '10 de agosto de 2026';
+export const LEGAL_VERSION_DATE = '24 de septiembre de 2026';
 
 export interface LegalSection {
   heading: string;
@@ -73,6 +73,7 @@ export function privacySections(c: Company): LegalSection[] {
         'Un proveedor de envío de correo electrónico transaccional, para las notificaciones de la plataforma.',
         'Un servicio de monitoreo de errores, que registra fallas técnicas de la aplicación.',
         'Meta Platforms: recibe las páginas que visitás dentro del sitio, en todas las visitas, y además cuatro hechos concretos, para medir el resultado de nuestros anuncios: qué vehículo abriste, si creaste una cuenta nueva, el monto de cada puja que el sistema aceptó y el precio de la unidad que te adjudicaste. Si tenés la sesión iniciada le enviamos también un identificador interno de tu cuenta y tu correo convertido en una huella criptográfica (SHA-256) por tu propio navegador antes de salir de tu dispositivo: Meta no recibe la dirección en texto legible. No le enviamos tu nombre, documento ni teléfono. Esta medición no depende de tu respuesta al aviso de cookies; si no la querés, bloqueá las cookies de terceros en tu navegador.',
+        'Google (Google Analytics): recibe las páginas que visitás dentro del sitio, de dónde llegaste, datos técnicos de tu dispositivo y navegador, y si creaste una cuenta nueva o tocaste un enlace de WhatsApp, para medir cuánta gente usa el sitio y cómo llega. Usa cookies propias de Google para distinguir una visita de otra. No le enviamos tu nombre, documento, teléfono ni correo. No se activa en las páginas internas del equipo ni en los enlaces para restablecer la contraseña. Esta medición no depende de tu respuesta al aviso de cookies; si no la querés, bloqueá las cookies de terceros en tu navegador.',
         'Autoridades competentes, cuando exista una obligación legal o un requerimiento judicial.',
       ],
     },
@@ -205,6 +206,7 @@ export function cookieSections(c: Company): LegalSection[] {
         'Preferencia de cookies: guarda la decisión que tomás en el aviso de cookies, para no volver a preguntarte en cada visita.',
         'Monitoreo de errores: cuando lo aceptás, un servicio de terceros registra información técnica ante una falla de la aplicación para poder diagnosticarla. Si lo rechazás, no se activa.',
         'Medición publicitaria (Meta Pixel): se activa en todas las visitas, sin esperar tu respuesta a este aviso. Registra las páginas que visitás dentro del sitio y guarda una cookie de Meta Platforms, para medir el resultado de nuestros anuncios y mostrarte publicidad más relevante en Facebook e Instagram. También informa cuatro acciones del embudo: abrir la ficha de un vehículo, crear una cuenta nueva, enviar una puja aceptada y adjudicarte una unidad. Con la sesión iniciada se suma un identificador interno de tu cuenta y tu correo convertido en huella criptográfica por tu navegador antes de enviarse, para atribuir esas acciones a la publicidad correcta. Rechazar el aviso no la desactiva. Si no querés que se registre, podés bloquear las cookies de terceros desde la configuración de tu navegador o usar una ventana privada; la plataforma sigue funcionando igual.',
+        'Estadísticas de uso (Google Analytics): se activa en todas las visitas, sin esperar tu respuesta a este aviso. Guarda cookies de Google para contar visitas y reconocer si ya estuviste antes, y registra las páginas que visitás, de dónde llegaste y dos acciones: crear una cuenta nueva y tocar un enlace de WhatsApp. No recibe tu nombre, documento, teléfono ni correo. No se activa en las páginas internas del equipo ni en los enlaces para restablecer la contraseña. Rechazar el aviso no la desactiva; si no querés que se registre, podés bloquear las cookies de terceros desde la configuración de tu navegador o usar una ventana privada.',
       ],
     },
     {

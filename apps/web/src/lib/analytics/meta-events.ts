@@ -1,5 +1,6 @@
 import { META_PIXEL_ID, isCredentialBearingPath, isMetaPixelLoaded } from './meta-pixel';
 import { browserStore, createOnceGuard } from './once-guard';
+import { trackGoogleLead } from './google-analytics';
 
 /**
  * The four funnel events Meta measures on this site, plus advanced matching.
@@ -179,6 +180,11 @@ export function trackPurchase(vehicle: VehicleEvent, uid: string): void {
 export function trackCompleteRegistration(method: 'email' | 'google', uid: string): void {
   const eventId = registrationEventId(uid);
   if (!claimOnce(eventId)) return;
+  // GA4 gets the same confirmed sign-up as `generate_lead`. Hooked here, not
+  // at the five call sites, so it inherits both guarantees above: backend-
+  // confirmed new account, once per account. Independent of the pixel being
+  // loaded — trackGoogleLead has its own gtag / excluded-path checks.
+  trackGoogleLead(method);
   emit('CompleteRegistration', { status: true, method }, eventId);
 }
 
