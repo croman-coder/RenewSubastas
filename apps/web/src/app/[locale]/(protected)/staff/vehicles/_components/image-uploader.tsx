@@ -6,6 +6,24 @@ import { toast } from 'sonner';
 import { GripVertical, X } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Button } from '@/components/ui/button';
+import { makeThumbnail } from '@/lib/images/make-thumbnail';
+import { thumbnailPathFor, thumbnailPathsFor } from '@/lib/images/thumbnail';
+
+/**
+ * Small copy of the photo for cards and lists, next to the original (see
+ * lib/images/thumbnail.ts). Its name is unique like the original's, so it
+ * can be cached for a year.
+ */
+async function uploadThumbnail(file: File, originalPath: string): Promise<string | null> {
+  const thumb = await makeThumbnail(file);
+  if (!thumb) return null;
+  const r = storageRef(fb.storage, thumbnailPathFor(originalPath, thumb.ext));
+  await uploadBytes(r, thumb.blob, {
+    contentType: thumb.contentType,
+    cacheControl: 'public, max-age=31536000, immutable',
+  });
+  return getDownloadURL(r);
+}
 
 export interface UploadedImage {
   url: string;
@@ -54,7 +72,10 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
         const r = storageRef(fb.storage, path);
         await uploadBytes(r, file);
         const url = await getDownloadURL(r);
-        next.push({ url, thumbnailUrl: url, order: next.length, storagePath: path });
+        // A failed thumbnail must not lose the photo: fall back to the
+        // original, which is what every thumbnail was before 2026-09-26.
+        const thumbnailUrl = (await uploadThumbnail(file, path).catch(() => null)) ?? url;
+        next.push({ url, thumbnailUrl, order: next.length, storagePath: path });
       }
       setImages(next);
       onChange(next);
@@ -70,11 +91,12 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
     const next = images.filter((_, i) => i !== idx).map((img, i) => ({ ...img, order: i }));
     setImages(next);
     onChange(next);
-    try {
-      await deleteObject(storageRef(fb.storage, removed.storagePath));
-    } catch {
-      // best-effort cleanup
-    }
+    // Best-effort cleanup of the original and whichever thumbnail it has.
+    await Promise.allSettled(
+      [removed.storagePath, ...thumbnailPathsFor(removed.storagePath)].map((p) =>
+        deleteObject(storageRef(fb.storage, p)),
+      ),
+    );
   }
 
   /** Move the image at `from` to position `to`, re-indexing `order`. */
