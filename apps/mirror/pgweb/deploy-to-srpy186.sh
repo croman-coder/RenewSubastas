@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Levanta (o actualiza) el visor web del espejo en SRPY186 y lo cuelga del
-# túnel de Cloudflare como https://subastas.santarosa.lat
+# túnel de Cloudflare como https://espejo-subastas.santarosa.lat
+#
+# Hasta el 2026-09-26 vivía en subastas.santarosa.lat; ese nombre quedó para
+# la copia de la app en servidor propio (docs/superpowers/specs/
+# 2026-09-26-servidor-propio-design.md). Si el túnel todavía tiene la regla
+# vieja, el paso 4 la renombra en vez de agregar una segunda.
 #
 #   bash apps/mirror/pgweb/deploy-to-srpy186.sh
 #
@@ -23,7 +28,7 @@ set -euo pipefail
 HOST="${HOST:-srpy-servidor}"
 REMOTE_DIR="${REMOTE_DIR:-/home/santarosa/stack/renew-mirror/pgweb}"
 TUNNEL_ID="505fc6ac-4f83-4fbe-b490-9110828589ea"
-HOSTNAME_PUB="subastas.santarosa.lat"
+HOSTNAME_PUB="espejo-subastas.santarosa.lat"
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 LOCAL_SECRET="$HOME/keys/subastas-pgweb.txt"
 
@@ -33,6 +38,7 @@ log "1/6 rol de sólo lectura + 2/6 .env de pgweb"
 RO_PW="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-32)"
 if [[ -f "$LOCAL_SECRET" ]]; then
   BA_PW="$(sed -n 's/^password=//p' "$LOCAL_SECRET")"
+  sed -i "s#^url=.*#url=https://$HOSTNAME_PUB#" "$LOCAL_SECRET"
   echo "   basic auth: reutilizo la clave de $LOCAL_SECRET"
 else
   BA_PW="$(openssl rand -base64 24 | tr -d '/+=' | cut -c1-20)"
@@ -83,17 +89,24 @@ ssh "$HOST" "HOSTNAME_PUB='$HOSTNAME_PUB' bash -s" <<'REMOTE'
   if grep -q "hostname: $HOSTNAME_PUB" "$CFG"; then
     echo "   ya estaba en el ingress"
   else
-    cp "$CFG" "$CFG.bak-antes-subastas-$(date +%Y%m%d-%H%M%S)"
+    cp "$CFG" "$CFG.bak-antes-espejo-subastas-$(date +%Y%m%d-%H%M%S)"
     python3 - "$CFG" "$HOSTNAME_PUB" <<'PY'
-import sys
+import re, sys
 p, host = sys.argv[1], sys.argv[2]
 s = open(p).read()
-rule = f"- hostname: {host}\n  service: http://renew-pgweb:8081\n"
-marker = "- service: http_status:404"
-assert marker in s, "no encuentro la regla catch-all"
-s = s.replace(marker, rule + marker)
+svc = "  service: http://renew-pgweb:8081\n"
+# Una regla existente de pgweb con otro nombre (la vieja de subastas.santarosa.lat)
+# se renombra: dos nombres apuntando al visor dejarían abierto el viejo.
+old = re.search(r"- hostname: ([^\n]+)\n" + re.escape(svc), s)
+if old:
+    s = s.replace(old.group(0), f"- hostname: {host}\n{svc}")
+    print(f"   regla movida de {old.group(1)} a {host}")
+else:
+    marker = "- service: http_status:404"
+    assert marker in s, "no encuentro la regla catch-all"
+    s = s.replace(marker, f"- hostname: {host}\n{svc}" + marker)
+    print("   regla agregada antes del catch-all")
 open(p, "w").write(s)
-print("   regla agregada antes del catch-all")
 PY
     for c in cloudflared-compras cloudflared-replica2; do
       docker restart "$c" >/dev/null

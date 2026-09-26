@@ -8,9 +8,13 @@
 
 Tener una copia completa de Renew Subastas corriendo en SRPY186 (Coolify) con **Supabase
 autoalojado en lugar de Firebase** para datos, login, archivos, tiempo real y lógica de negocio,
-probarla en `subastas.santarosa.lat` sin tocar producción, y al final servir
-`renewsubastas.com.py` desde el servidor por el túnel de Cloudflare. Firebase queda de respaldo
-de solo lectura 30 días después del corte.
+**con toda la base de producción cargada**, para hacer pruebas completas en
+`subastas.santarosa.lat`.
+
+**Alcance acordado el 26/9: es un entorno de pruebas. No reemplaza a producción.** Producción
+sigue en Firebase + Netlify. El corte (servir `renewsubastas.com.py` desde el servidor) queda
+fuera de alcance hasta que Croman lo decida; las secciones que lo describen quedan como
+referencia para ese momento.
 
 ## 2. Decisiones tomadas
 
@@ -20,6 +24,7 @@ de solo lectura 30 días después del corte.
 | Nombre de prueba | `subastas.santarosa.lat` para la copia; el visor pgweb del espejo pasa a `espejo-subastas.santarosa.lat`                                        |
 | Contraseñas      | Llevar los hashes de Firebase (scrypt modificado) si la versión de GoTrue lo acepta; si no, enlace de recuperación a las 24 cuentas en el corte |
 | Apps nativas     | Webapp instalable (PWA) primero; Swift/Kotlin en la fase 6                                                                                      |
+| Alcance          | Entorno de pruebas con la base completa; sin corte de producción por ahora                                                                      |
 
 ## 3. Punto de partida (medido el 26/9)
 
@@ -138,35 +143,36 @@ tiene ese techo. La prueba de carga (`load-test/`) se apunta a `place_bid`.
 
 - **Prueba:** `subastas.santarosa.lat` → web; `api-subastas.santarosa.lat` → Kong. Visor pgweb →
   `espejo-subastas.santarosa.lat` (la app de Cloudflare Access tiene que cubrir ese nombre).
-- **Corte:** pasar el DNS de `renewsubastas.com.py` de Netlify a Cloudflare (cambio de NS en
-  NIC.py), con los registros apuntando todavía a Netlify; recién en la ventana de corte se
-  cambian los nombres al túnel. Así el cambio de NS no produce corte.
-- **Respaldo (fase 0, obligatorio):** `pg_dump` nocturno + archivos de Storage, 30 días de
-  retención, copia **fuera del servidor** y restauración de prueba semanal en una base
-  descartable. Monitoreo con lo que ya tiene Monitoreo SRPY.
-- **Disponibilidad:** Firebase y Netlify son redundantes; SRPY186 es un solo equipo. Sin el
-  respaldo externo y la restauración probada, la copia aumenta el riesgo de caída. No se hace el
-  corte sin eso.
+- **Corte (fuera de alcance por ahora, referencia):** pasar el DNS de `renewsubastas.com.py` de
+  Netlify a Cloudflare (cambio de NS en NIC.py), con los registros apuntando todavía a Netlify;
+  recién en la ventana de corte se cambian los nombres al túnel. Así el cambio de NS no produce
+  corte.
+- **Respaldo:** en el entorno de pruebas los datos se recargan desde el espejo en minutos, así que
+  alcanza con un `pg_dump` nocturno local. **Antes de cualquier corte** es obligatorio: copia
+  fuera del servidor, 30 días de retención y restauración de prueba semanal.
+- **Disponibilidad:** Firebase y Netlify son redundantes; SRPY186 es un solo equipo. Si algún día
+  se decide el corte, sin respaldo externo y restauración probada la copia aumentaría el riesgo
+  de caída.
 
 ## 9. Carga de datos
 
 Script idempotente que lee `renewsubastas_mirror.fs_documents` (y `auth_users`,
-`storage_objects`) y hace upsert por `legacy_id`. Se corre las veces que haga falta hasta el
-corte; la última, con Firebase en modo mantenimiento. Los 181 archivos se copian de Firebase
+`storage_objects`) y hace upsert por `legacy_id`. Se corre las veces que haga falta para tener la
+copia al día con producción (a pedido o programado). Los 181 archivos se copian de Firebase
 Storage a Supabase Storage y se reescriben las rutas. Verificación: conteos por tabla contra el
 espejo y los ocho invariantes de `functions/scripts/verify-load-auction.mjs` por subasta.
 
 ## 10. Fases
 
-| Fase | Entregable                                                                                                      | Criterio de salida                                                 |
-| ---- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 0    | Visor movido; stack `renew-supabase`; respaldo nocturno; esquema + RLS; carga desde el espejo; prueba de hashes | Conteos iguales al espejo; restauración de prueba OK               |
-| 1    | Web en Coolify con Supabase, solo lectura, en `subastas.santarosa.lat`                                          | Catálogo y fichas con datos reales                                 |
-| 2    | Login (Google + contraseña) y funciones de dinero                                                               | E2E y carga contra `place_bid` en verde                            |
-| 3    | Worker (correo, push), pg_cron, paneles internos, PWA                                                           | Todos los flujos de `docs/ARQUITECTURA.md` §8                      |
-| 4    | Ensayo general con el equipo                                                                                    | Visto bueno de Croman y Lujan                                      |
-| 5    | Corte (ventana ~30 min)                                                                                         | Producción servida desde SRPY186; Firebase de solo lectura 30 días |
-| 6    | Apps nativas Swift / Kotlin                                                                                     | Fuera de este diseño                                               |
+| Fase | Entregable                                                                                                             | Criterio de salida                                                 |
+| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 0    | Visor movido; stack `renew-supabase`; `pg_dump` nocturno local; esquema + RLS; carga desde el espejo; prueba de hashes | Conteos iguales al espejo                                          |
+| 1    | Web en Coolify con Supabase, solo lectura, en `subastas.santarosa.lat`                                                 | Catálogo y fichas con datos reales                                 |
+| 2    | Login (Google + contraseña) y funciones de dinero                                                                      | E2E y carga contra `place_bid` en verde                            |
+| 3    | Worker (correo, push), pg_cron, paneles internos, PWA                                                                  | Todos los flujos de `docs/ARQUITECTURA.md` §8                      |
+| 4    | Ensayo general con el equipo                                                                                           | Visto bueno de Croman y Lujan                                      |
+| 5    | Corte — **fuera de alcance por ahora** (decisión de Croman)                                                            | Producción servida desde SRPY186; Firebase de solo lectura 30 días |
+| 6    | Apps nativas Swift / Kotlin                                                                                            | Fuera de este diseño                                               |
 
 ## 11. Pruebas
 
@@ -178,12 +184,12 @@ espejo y los ocho invariantes de `functions/scripts/verify-load-auction.mjs` por
 
 ## 12. Dependencias externas
 
-| Qué                                                | Quién                                 | Para cuándo        |
-| -------------------------------------------------- | ------------------------------------- | ------------------ |
-| Cliente OAuth de Google (redirect de §6)           | Croman, en Google Cloud Console       | Fase 2             |
-| App de Access para `espejo-subastas.santarosa.lat` | Croman, en Zero Trust                 | Fase 0             |
-| Destino del respaldo externo (R2, B2 o Drive)      | Croman                                | Fase 0             |
-| Cambio de NS de `renewsubastas.com.py`             | Quien administra el dominio en NIC.py | Antes de la fase 5 |
+| Qué                                                | Quién                                 | Para cuándo                |
+| -------------------------------------------------- | ------------------------------------- | -------------------------- |
+| Cliente OAuth de Google (redirect de §6)           | Croman, en Google Cloud Console       | Fase 2                     |
+| App de Access para `espejo-subastas.santarosa.lat` | Croman, en Zero Trust                 | Fase 0                     |
+| Destino del respaldo externo (R2, B2 o Drive)      | Croman                                | Solo si se decide el corte |
+| Cambio de NS de `renewsubastas.com.py`             | Quien administra el dominio en NIC.py | Solo si se decide el corte |
 
 ## 13. Fuera de alcance
 
