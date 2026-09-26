@@ -15,7 +15,7 @@ const auction = {
   outcome: null,
   startsAt: ts('2026-10-01T12:00:00Z'),
   endsAt: ts('2026-10-03T21:00:00Z'),
-  // Private: must never reach the public shape.
+  // Privado: nunca debe llegar a la forma pública.
   reservePrice: 23456,
   winnerUid: 'uid-winner-secret',
   currentBidderUid: 'uid-bidder-secret',
