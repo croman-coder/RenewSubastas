@@ -85,8 +85,18 @@ on conflict (id) do update set
 delete from public.vehicle_images vi
 using legacy.fs_documents d
 where d.collection = 'vehicles' and vi.vehicle_id = legacy.id('vehicle', d.doc_id);
-insert into public.vehicle_images (vehicle_id, position, url, thumbnail_url)
-select legacy.id('vehicle', d.doc_id), t.ord - 1, t.img ->> 'url', t.img ->> 'thumbnailUrl'
+-- storage_path: the object inside the `vehicles` bucket (copy-storage.sh),
+-- decoded from the Firebase download URL (…/o/vehicles%2F<id>%2F<file>?…).
+insert into public.vehicle_images (vehicle_id, position, url, thumbnail_url, storage_path)
+select
+  legacy.id('vehicle', d.doc_id),
+  t.ord - 1,
+  t.img ->> 'url',
+  t.img ->> 'thumbnailUrl',
+  nullif(regexp_replace(
+    replace(split_part(split_part(t.img ->> 'url', '/o/', 2), '?', 1), '%2F', '/'),
+    '^vehicles/', ''
+  ), '')
 from legacy.fs_documents d
 cross join lateral jsonb_array_elements(
   case when jsonb_typeof(d.data -> 'images') = 'array' then d.data -> 'images' else '[]'::jsonb end
