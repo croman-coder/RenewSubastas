@@ -28,18 +28,30 @@ export const REOPEN_EVENT = 'renew:cookie-preferences';
  * to "error monitoring" is not consent to advertising measurement, so adding
  * a tracker there without amending this text collects a consent nobody gave.
  *
- * Renders nothing until mounted so the server never guesses at a choice it
- * cannot read, which would flash the banner at visitors who already decided.
+ * Server-rendered open, so it paints with the first HTML instead of seconds
+ * later after hydration (it was the landing's LCP at 5,9 s on mobile,
+ * auditoría 2026-09-26). Visitors who already decided never see it: the
+ * <head> script from consentFlagScript() flags <html> before the first paint
+ * and globals.css hides #cookie-banner under that flag; the effect below then
+ * removes it for good. No entrance animation on that first render — fading
+ * in from opacity 0 would delay the very paint this is meant to speed up. It
+ * animates only when reopened from the footer.
  */
 export function CookieBanner({ locale }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [reopened, setReopened] = useState(false);
 
   useEffect(() => {
     const existing = readCookieConsent();
     if (existing === 'accepted') applyConsent();
-    if (existing === null) setOpen(true);
+    if (existing !== null) setOpen(false);
 
-    const reopen = () => setOpen(true);
+    const reopen = () => {
+      setReopened(true);
+      setOpen(true);
+      // The flag would keep a reopened banner hidden.
+      delete document.documentElement.dataset['cookieConsent'];
+    };
     window.addEventListener(REOPEN_EVENT, reopen);
     return () => window.removeEventListener(REOPEN_EVENT, reopen);
   }, []);
@@ -54,14 +66,17 @@ export function CookieBanner({ locale }: Props) {
 
   return (
     <div
+      id="cookie-banner"
       role="dialog"
       aria-modal="false"
       aria-labelledby="cookie-title"
       aria-describedby="cookie-desc"
       className={
         'fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4 ' +
-        'pb-[max(0.75rem,env(safe-area-inset-bottom))] ' +
-        'animate-in fade-in slide-in-from-bottom-4 duration-300 motion-reduce:animate-none'
+        'pb-[max(0.75rem,env(safe-area-inset-bottom))]' +
+        (reopened
+          ? ' animate-in fade-in slide-in-from-bottom-4 duration-300 motion-reduce:animate-none'
+          : '')
       }
     >
       <div

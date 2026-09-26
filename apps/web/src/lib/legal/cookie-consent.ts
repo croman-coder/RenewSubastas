@@ -18,6 +18,21 @@ export function readCookieConsent(): CookieConsent | null {
   return value === 'accepted' || value === 'rejected' ? value : null;
 }
 
+/**
+ * Inline script for <head> that marks <html data-cookie-consent> when a
+ * choice is already stored, before the first paint.
+ *
+ * The banner used to render only after hydration, so on a phone it appeared
+ * seconds late and was the landing's largest paint (LCP 5,9 s, auditoría
+ * 2026-09-26). Now the server always sends it and CSS hides it under this
+ * flag: visitors who already decided never see it flash, and the static pages
+ * stay static because nothing reads cookies on the server. Same rule as
+ * readCookieConsent (only 'accepted' or 'rejected' count as a choice).
+ */
+export function consentFlagScript(): string {
+  return `if(/(?:^|; )${CONSENT_COOKIE}=(?:accepted|rejected)(?:;|$)/.test(document.cookie))document.documentElement.dataset.cookieConsent='1'`;
+}
+
 export function writeCookieConsent(value: CookieConsent): void {
   if (typeof document === 'undefined') return;
   const secure = window.location.protocol === 'https:' ? '; Secure' : '';

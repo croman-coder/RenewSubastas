@@ -3,11 +3,12 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { isLocale, SITE_URL } from '@/lib/seo/site';
+import { indexRobots, isLocale, SITE_URL } from '@/lib/seo/site';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { CookieBanner } from '@/components/legal/cookie-banner';
+import { consentFlagScript } from '@/lib/legal/cookie-consent';
 import { MetaPixelRouteTracker } from '@/components/analytics/meta-pixel-route-tracker';
 import { TrafficTracker } from '@/components/analytics/traffic-tracker';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
@@ -23,14 +24,20 @@ const display = Space_Grotesk({
   weight: ['400', '500', '600', '700'],
 });
 
-export const metadata = {
-  // Without metadataBase, Next emits the generated opengraph-image as a
-  // relative URL and warns at build. A crawler or chat unfurl can't resolve
-  // a relative image, so the preview silently falls back to no image.
-  metadataBase: new URL(SITE_URL),
-  title: 'Renew Subastas',
-  description: 'Subastas de vehículos · Santa Rosa Paraguay SA',
-};
+export function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  return {
+    // Without metadataBase, Next emits the generated opengraph-image as a
+    // relative URL and warns at build. A crawler or chat unfurl can't resolve
+    // a relative image, so the preview silently falls back to no image.
+    metadataBase: new URL(SITE_URL),
+    title: 'Renew Subastas',
+    description: 'Subastas de vehículos · Santa Rosa Paraguay SA',
+    // Whole-locale switch: every /en page stays out of the index until the
+    // English copy exists (see INDEXED_LOCALES). Pages that set their own
+    // robots (login, register) override it.
+    robots: indexRobots(locale),
+  };
+}
 
 // `viewport-fit=cover` lets the layout paint under the notch/home-indicator so
 // `env(safe-area-inset-*)` (used by fixed bottom bars, drawers, etc.) resolves
@@ -70,6 +77,11 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${display.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        {/* Runs before the first paint: hides the server-rendered cookie
+            banner for visitors who already chose (see consentFlagScript). */}
+        <script dangerouslySetInnerHTML={{ __html: consentFlagScript() }} />
+      </head>
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AuthProvider>

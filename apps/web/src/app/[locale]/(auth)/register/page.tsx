@@ -1,10 +1,15 @@
 import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { PixelGrid } from '@/components/brand/pixel-grid';
 import { RegisterForm } from './register-form';
+import { authPageMetadata } from '@/lib/seo/site';
 
 interface PageProps {
   params: { locale: string };
   searchParams?: { from?: string };
+}
+
+export function generateMetadata({ params: { locale } }: PageProps) {
+  return authPageMetadata(locale, 'register');
 }
 
 /**

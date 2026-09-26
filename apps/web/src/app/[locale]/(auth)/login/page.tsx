@@ -5,10 +5,15 @@ import { RenewWordmark } from '@/components/brand/renew-wordmark';
 import { PixelGrid } from '@/components/brand/pixel-grid';
 import { LoginForm } from './login-form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { authPageMetadata } from '@/lib/seo/site';
 
 interface PageProps {
   params: { locale: string };
   searchParams?: { from?: string; error?: string; mfa?: string };
+}
+
+export function generateMetadata({ params: { locale } }: PageProps) {
+  return authPageMetadata(locale, 'login');
 }
 
 const ERROR_KEY: Record<string, string> = {

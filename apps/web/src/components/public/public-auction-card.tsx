@@ -5,6 +5,8 @@ import { Clock, Gavel, LogIn } from 'lucide-react';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 import { SoldBanner } from '@/components/auctions/sold-banner';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+import { formatAmount } from '@/lib/format/money';
+import { vehicleAlt } from '@/lib/format/vehicle-alt';
 
 interface Props {
   locale: string;
@@ -19,7 +21,13 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   cancelled: { label: 'Cancelada', cls: 'bg-rose-600/90 text-white ring-rose-400/30' },
 };
 
-const usd = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 });
+/**
+ * Cards in the first row on desktop. They paint without the entrance
+ * animation and load their photo eagerly: the staggered fade started every
+ * card at opacity 0 and the photos were lazy, so the landing's largest paint
+ * waited on both (Lighthouse, auditoría 2026-09-26).
+ */
+const ABOVE_FOLD = 4;
 
 /**
  * Auction card for signed-out visitors.
@@ -33,6 +41,7 @@ const usd = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 });
  * favorite handler is how you end up shipping a no-op heart button.
  */
 export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
+  const aboveFold = index < ABOVE_FOLD;
   // Real clock, so the SERVER renders the true remaining time. Seeding from
   // endsAtMs to force matching markup makes SSR emit "—" on every card until
   // hydration. Sub-second drift is absorbed by suppressHydrationWarning below
@@ -73,10 +82,14 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
         'transition-[border-color,background-color,transform,box-shadow] duration-300 ' +
         'hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
         'hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.55)] ' +
-        'motion-reduce:transition-none motion-reduce:hover:translate-y-0 ' +
-        'animate-in fade-in slide-in-from-bottom-2 duration-300'
+        'motion-reduce:transition-none motion-reduce:hover:translate-y-0' +
+        (aboveFold ? '' : ' animate-in fade-in slide-in-from-bottom-2 duration-300')
       }
-      style={{ animationDelay: `${Math.min(index, 11) * 45}ms`, animationFillMode: 'both' }}
+      style={
+        aboveFold
+          ? undefined
+          : { animationDelay: `${Math.min(index, 11) * 45}ms`, animationFillMode: 'both' }
+      }
     >
       {/* Full-card overlay link. A signed-out visitor has no auction detail to
           reach, so it goes to login carrying `from` — after signing in they
@@ -100,10 +113,10 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
         {auction.thumbnailUrl ? (
           <img
             src={auction.thumbnailUrl}
-            alt=""
+            alt={vehicleAlt(auction.make, auction.model, auction.year)}
             width={640}
             height={480}
-            loading="lazy"
+            loading={aboveFold ? 'eager' : 'lazy'}
             decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] motion-reduce:transition-none"
           />
@@ -163,7 +176,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
                   (isLive ? 'text-text-strong' : 'text-text-muted')
                 }
               >
-                USD&nbsp;{usd.format(displayPrice)}
+                USD&nbsp;{formatAmount(displayPrice)}
               </p>
             </div>
             {/* Hidden at zero, matching auction-card.tsx: "Precio inicial"

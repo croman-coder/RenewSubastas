@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getOptionalUser } from '@/lib/auth/server';
 import { homeFor } from '@/lib/auth/constants';
-import { listPublicAuctions } from '@/lib/buyer/list-public-auctions';
+import { listLandingAuctions } from '@/lib/buyer/landing-auctions';
 import { loadCompany } from '@/lib/legal/load-company';
 import { PublicLanding } from '@/components/public/public-landing';
 import { OrganizationJsonLd } from '@/components/seo/organization-json-ld';
-import { SITE_URL, LOCALES, DEFAULT_LOCALE } from '@/lib/seo/site';
+import { SITE_URL, INDEXED_LOCALES, DEFAULT_LOCALE } from '@/lib/seo/site';
 
 const TITLE = 'Subastas de vehículos usados certificados · Renew Subastas';
 const DESCRIPTION =
@@ -24,8 +24,10 @@ export function generateMetadata({ params: { locale } }: { params: { locale: str
     description: DESCRIPTION,
     alternates: {
       canonical: path,
+      // Only indexed locales: announcing /en as the English version of a page
+      // that is still in Spanish is what made it duplicate content.
       languages: Object.fromEntries([
-        ...LOCALES.map((l) => [l, `${SITE_URL}/${l}`]),
+        ...INDEXED_LOCALES.map((l) => [l, `${SITE_URL}/${l}`]),
         ['x-default', `${SITE_URL}/${DEFAULT_LOCALE}`],
       ]),
     },
@@ -51,17 +53,13 @@ export function generateMetadata({ params: { locale } }: { params: { locale: str
  * still cannot read `auctions` directly without an authenticated,
  * audience-matching session.
  *
- * `audience: 'retail'` is hardcoded and must stay that way: wholesale is a
- * closed segment and must never be visible to an anonymous visitor.
+ * The list is retail-only and cached for a minute — see listLandingAuctions.
  */
 export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
   const user = await getOptionalUser();
   if (user) redirect(`/${locale}${homeFor(user.role, user.audience)}`);
 
-  const [items, company] = await Promise.all([
-    listPublicAuctions({ tab: 'all', audience: 'retail' }),
-    loadCompany(),
-  ]);
+  const [items, company] = await Promise.all([listLandingAuctions(), loadCompany()]);
   return (
     <>
       <OrganizationJsonLd locale={locale} company={company} />

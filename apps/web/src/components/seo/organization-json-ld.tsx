@@ -22,6 +22,11 @@ export function OrganizationJsonLd({ locale, company }: Props) {
     '@type': 'AutoDealer',
     name: 'Renew Subastas',
     url: `${SITE_URL}/${locale}`,
+    // The app icon (1024×1024, app/icon.png) doubles as logo: a product
+    // constant, not a claim about the company. Local results and the
+    // knowledge panel show a blank tile without it.
+    logo: `${SITE_URL}/icon.png`,
+    image: `${SITE_URL}/icon.png`,
     description:
       'Plataforma de subastas de vehículos usados certificados en Paraguay, operada por Santa Rosa. Publica lotes de vehículos con fecha de cierre y permite pujar en línea en tiempo real.',
     areaServed: { '@type': 'Country', name: 'Paraguay' },
@@ -46,6 +51,9 @@ export function OrganizationJsonLd({ locale, company }: Props) {
   if (company.address) {
     data['address'] = { '@type': 'PostalAddress', streetAddress: company.address };
   }
+  // Top-level telephone is what local-business results read; the
+  // contactPoint below keeps it tied to customer service.
+  if (company.phone) data['telephone'] = company.phone;
   if (company.email || company.phone) {
     data['contactPoint'] = {
       '@type': 'ContactPoint',

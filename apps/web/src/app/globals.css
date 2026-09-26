@@ -545,3 +545,11 @@
     overflow: hidden;
   }
 }
+
+/* Cookie banner for visitors who already chose: the server always renders it
+   (so it paints with the first HTML instead of seconds later) and the <head>
+   script sets data-cookie-consent before the first paint. See
+   consentFlagScript in lib/legal/cookie-consent.ts. */
+html[data-cookie-consent] #cookie-banner {
+  display: none;
+}
