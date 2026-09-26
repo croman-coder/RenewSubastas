@@ -8,6 +8,18 @@ interface Props {
 }
 
 /**
+ * Renew's brand profiles, as linked from the Renew web footer
+ * (renew-usados, 2026-09-26). Product constants like the logo, not company
+ * identity, so they live here rather than in app_config. They tie the
+ * auction site to the accounts that bring most of its traffic (Instagram
+ * and Facebook, 77% in the audit) in search engines' knowledge graph.
+ */
+const SOCIAL_PROFILES = [
+  'https://www.instagram.com/renewpy.sr',
+  'https://www.facebook.com/renewpy.sr',
+];
+
+/**
  * Organization structured data for the landing.
  *
  * Every value is either a constant of this product or comes from the
@@ -27,6 +39,7 @@ export function OrganizationJsonLd({ locale, company }: Props) {
     // knowledge panel show a blank tile without it.
     logo: `${SITE_URL}/icon.png`,
     image: `${SITE_URL}/icon.png`,
+    sameAs: SOCIAL_PROFILES,
     description:
       'Plataforma de subastas de vehículos usados certificados en Paraguay, operada por Santa Rosa. Publica lotes de vehículos con fecha de cierre y permite pujar en línea en tiempo real.',
     areaServed: { '@type': 'Country', name: 'Paraguay' },

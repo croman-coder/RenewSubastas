@@ -22,6 +22,13 @@ describe('OrganizationJsonLd', () => {
     expect(d['image']).toBe('https://renewsubastas.com.py/icon.png');
   });
 
+  it('links the brand profiles on Instagram and Facebook', () => {
+    expect(dealer(EMPTY)['sameAs']).toEqual([
+      'https://www.instagram.com/renewpy.sr',
+      'https://www.facebook.com/renewpy.sr',
+    ]);
+  });
+
   it('puts the configured phone at the top level, where local results read it', () => {
     const d = dealer({ ...EMPTY, phone: '+595 21 000 000' });
     expect(d['telephone']).toBe('+595 21 000 000');
