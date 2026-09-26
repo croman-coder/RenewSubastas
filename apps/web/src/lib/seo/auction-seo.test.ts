@@ -24,7 +24,7 @@ const d: PublicAuctionDetail = {
   status: 'live',
   outcome: null,
   startsAtMs: Date.parse('2026-10-01T12:00:00Z'),
-  // 18:00 in Asunción (UTC-3).
+  // 18:00 en Asunción (UTC-3).
   endsAtMs: Date.parse('2026-10-03T21:00:00Z'),
 };
 const labels = { fuel: 'Diésel', transmission: 'Automática' };
@@ -98,5 +98,38 @@ describe('vehicleJsonLd', () => {
 
   it('never publishes the VIN or the plate', () => {
     expect(JSON.stringify(vehicleJsonLd(d, labels, live, 'es'))).not.toMatch(/vin|licensePlate/i);
+  });
+
+  it('omits km and color when missing', () => {
+    const j = vehicleJsonLd({ ...d, mileage: null, color: null }, labels, live, 'es');
+    expect(j['mileageFromOdometer']).toBeUndefined();
+    expect(j['color']).toBeUndefined();
+  });
+
+  it('marks a pre-order with scheduled state', () => {
+    const j = vehicleJsonLd(d, labels, { kind: 'scheduled', indexable: true }, 'es');
+    expect((j['offers'] as Record<string, unknown>)['availability']).toBe(
+      'https://schema.org/PreOrder',
+    );
+  });
+
+  it('marks as sold out when finished with sold result', () => {
+    const j = vehicleJsonLd(
+      d,
+      labels,
+      { kind: 'finished', result: 'sold', indexable: false },
+      'es',
+    );
+    expect((j['offers'] as Record<string, unknown>)['availability']).toBe(
+      'https://schema.org/SoldOut',
+    );
+  });
+});
+
+describe('auctionDescription (null fields)', () => {
+  it('omits km when mileage is null', () => {
+    const descNoMileage = auctionDescription({ ...d, mileage: null }, labels, live);
+    expect(descNoMileage).not.toContain('km');
+    expect(descNoMileage).toContain('Toyota Hilux 2019, diésel, automática');
   });
 });
