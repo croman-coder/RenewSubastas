@@ -82,7 +82,7 @@ export function MfaSection({ locale }: { locale: string }) {
           {factors.map((f) => (
             <li
               key={f.uid}
-              className="flex items-center justify-between gap-3 rounded-lg border border-text-subtle/15 bg-bg-elev/40 px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded-lg border border-text-subtle/15 bg-bg-elev px-3 py-2"
             >
               <div className="min-w-0">
                 <p className="text-sm text-text-strong truncate">

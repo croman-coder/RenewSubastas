@@ -250,27 +250,17 @@ export function BidPanel({
     // Auction over and this buyer holds the top bid -> they won.
     if (iWon) {
       return (
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 animate-in fade-in zoom-in-95 duration-300">
-          <div
-            aria-hidden
-            className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"
-          />
+        // DESIGN.md success callout (fg on tinted bg), no halos.
+        <div className="relative overflow-hidden rounded-2xl border border-[#bbf7d0] bg-[#dcfce7] p-5 animate-in fade-in zoom-in-95 duration-300 dark:border-[rgb(22_101_52/0.6)] dark:bg-[rgb(22_101_52/0.3)]">
           <div className="relative flex items-start gap-3">
-            <span className="w-10 h-10 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
-              <Trophy
-                className="w-5 h-5 text-emerald-700 dark:text-emerald-300"
-                strokeWidth={2.5}
-                style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
-              />
+            <span className="w-10 h-10 rounded-full bg-[#166534]/10 grid place-items-center shrink-0 dark:bg-[#bbf7d0]/10">
+              <Trophy className="w-5 h-5 text-[#166534] dark:text-[#bbf7d0]" strokeWidth={2.5} />
             </span>
             <div className="min-w-0">
-              <p
-                className="text-lg font-bold tracking-tight text-emerald-700 dark:text-emerald-300 leading-tight"
-                style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
-              >
+              <p className="text-lg font-extrabold tracking-tight text-[#166534] dark:text-[#bbf7d0] leading-tight">
                 ¡Ganaste la subasta!
               </p>
-              <p className="text-sm text-emerald-700/80 dark:text-emerald-300/70 mt-1 leading-relaxed">
+              <p className="text-sm text-[#166534]/85 dark:text-[#bbf7d0]/80 mt-1 leading-relaxed">
                 Adjudicaste este vehículo por USD {fmtUsd(currentBid)}. Te enviamos los pasos para
                 pagar la seña por correo.
               </p>
@@ -289,7 +279,7 @@ export function BidPanel({
       return <SoldBanner variant="detail" />;
     }
     return (
-      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-2">
         <div className="flex items-center gap-2">
           <span className="w-7 h-7 rounded-md bg-zinc-500/15 text-zinc-400 grid place-items-center">
             <Gavel className="w-4 h-4" strokeWidth={2.5} />
@@ -322,7 +312,8 @@ export function BidPanel({
   const pendingAmountLabel = pendingBid !== null ? fmtUsd(pendingBid) : '';
 
   return (
-    <div className="ink-mesh rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-4">
+    // The page's anchor: ink panel on paper (see .panel-ink in globals.css).
+    <div className="panel-ink rounded-2xl border p-5 space-y-4 shadow-card">
       <div className="flex items-center gap-2">
         <span className="w-7 h-7 rounded-md bg-text-strong text-bg-base grid place-items-center">
           <Gavel className="w-4 h-4" strokeWidth={2.5} />
@@ -331,29 +322,18 @@ export function BidPanel({
       </div>
 
       {isWinning && (
-        <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 animate-in fade-in zoom-in-95 duration-300">
-          <div
-            aria-hidden
-            className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-emerald-500/20 blur-2xl pointer-events-none"
-          />
+        // Sits inside the ink panel in both themes, so it always uses the
+        // dark-ground success tone; no halos (DESIGN.md).
+        <div className="relative overflow-hidden rounded-xl border border-[rgb(187_247_208/0.25)] bg-[rgb(22_101_52/0.4)] px-4 py-3 animate-in fade-in zoom-in-95 duration-300">
           <div className="relative flex items-center gap-3">
-            <span className="w-9 h-9 rounded-full bg-emerald-500/20 grid place-items-center shrink-0">
-              <Trophy
-                className="w-5 h-5 text-emerald-700 dark:text-emerald-300"
-                strokeWidth={2.5}
-                style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
-              />
+            <span className="w-9 h-9 rounded-full bg-[#bbf7d0]/10 grid place-items-center shrink-0">
+              <Trophy className="w-5 h-5 text-[#bbf7d0]" strokeWidth={2.5} />
             </span>
             <div className="min-w-0">
-              <p
-                className="text-base sm:text-lg font-bold tracking-tight text-emerald-700 dark:text-emerald-300 leading-tight"
-                style={{ textShadow: '0 0 12px rgba(16,185,129,0.45)' }}
-              >
+              <p className="text-base sm:text-lg font-extrabold tracking-tight text-[#bbf7d0] leading-tight">
                 {t('winning')}
               </p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300/70 mt-0.5">
-                Sos el mejor postor por ahora
-              </p>
+              <p className="text-xs text-[#bbf7d0]/80 mt-0.5">Sos el mejor postor por ahora</p>
             </div>
           </div>
         </div>

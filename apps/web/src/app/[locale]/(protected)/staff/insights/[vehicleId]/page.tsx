@@ -49,7 +49,7 @@ export default async function VehicleInsightPage({ params: { locale, vehicleId }
         </p>
       </header>
 
-      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev">
         <h2 className="px-5 pt-4 pb-2 text-sm font-semibold text-text-strong">
           Movimientos de precio
         </h2>
@@ -77,7 +77,7 @@ export default async function VehicleInsightPage({ params: { locale, vehicleId }
         )}
       </section>
 
-      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev">
         <h2 className="px-5 pt-4 pb-2 text-sm font-semibold text-text-strong">
           Quiénes lo miraron
         </h2>
@@ -104,7 +104,7 @@ export default async function VehicleInsightPage({ params: { locale, vehicleId }
         )}
       </section>
 
-      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+      <section className="rounded-xl border border-text-subtle/15 bg-bg-elev">
         <h2 className="px-5 pt-4 pb-2 text-sm font-semibold text-text-strong">Subastas</h2>
         {v.auctions.length === 0 ? (
           <p className="px-5 pb-5 text-xs text-text-muted">Nunca fue subastado.</p>

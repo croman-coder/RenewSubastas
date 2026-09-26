@@ -53,8 +53,12 @@ export function KpiCard({
           <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium">
             {label}
           </p>
-          <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
-            {prefix}
+          {/* Prefix ("USD") smaller and on the same line: at text-3xl in a
+              quarter-width card, "USD 12.500" broke into two lines. */}
+          <p className="flex items-baseline gap-1.5 whitespace-nowrap text-3xl font-extrabold tracking-tight text-text-strong num-tab">
+            {prefix ? (
+              <span className="text-base font-bold text-text-muted">{prefix.trim()}</span>
+            ) : null}
             <BlurNumber value={value} animateOnMount duration={1.1} format={formatNumber} />
           </p>
         </div>

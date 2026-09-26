@@ -69,7 +69,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
     <article
       className={
         'sheen group relative flex flex-col rounded-xl overflow-hidden border border-text-subtle/15 ' +
-        'bg-bg-elev/40 ' +
+        'bg-bg-elev ' +
         'transition-[border-color,background-color,transform,box-shadow] duration-300 ' +
         'hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
         'hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.55)] ' +
@@ -120,7 +120,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
         <span
           className={
             'absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 ' +
-            'text-[11px] font-semibold ring-1 backdrop-blur-md ' +
+            'text-[11px] font-semibold ring-1 ' +
             status.cls
           }
         >
@@ -136,7 +136,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           suppressHydrationWarning
           className={
             'absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 ' +
-            'rounded-md px-2 py-1 text-xs font-medium num-tab backdrop-blur-md ' +
+            'rounded-md px-2 py-1 text-xs font-medium num-tab ' +
             (isUrgent ? 'bg-rose-500/90 text-white' : 'bg-black/55 text-white ring-1 ring-white/10')
           }
         >

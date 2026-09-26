@@ -118,7 +118,7 @@ export function PaymentProofUpload({ auctionId, existingProofUrl }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 space-y-4">
+    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-4">
       <div className="flex items-start gap-3">
         <span className="shrink-0 w-9 h-9 rounded-lg bg-text-strong/[0.08] ring-1 ring-text-subtle/25 grid place-items-center text-text-strong">
           <FileUp className="w-4 h-4" strokeWidth={2.25} />

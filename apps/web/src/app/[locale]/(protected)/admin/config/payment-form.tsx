@@ -112,7 +112,7 @@ export function PaymentForm({ initial }: { initial: Initial }) {
       </div>
 
       {/* USD account. */}
-      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev/30 p-4">
+      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev p-4">
         <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
           Cuenta en dólares (USD)
         </h3>
@@ -151,7 +151,7 @@ export function PaymentForm({ initial }: { initial: Initial }) {
       </div>
 
       {/* PYG account. */}
-      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev/30 p-4">
+      <div className="space-y-3 max-w-2xl rounded-xl border border-text-subtle/15 bg-bg-elev p-4">
         <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-text-muted">
           Cuenta en guaraníes (PYG)
         </h3>

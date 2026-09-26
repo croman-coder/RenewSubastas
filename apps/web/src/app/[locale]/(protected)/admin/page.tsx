@@ -19,14 +19,6 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
     <div className="space-y-8">
       {/* Hero header with gradient accent + subtle 3D robot on wide screens */}
       <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-6 py-6 animate-in fade-in slide-in-from-top-2 duration-500">
-        <div
-          aria-hidden
-          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-copper/10 blur-3xl pointer-events-none"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-text-strong/5 blur-3xl pointer-events-none"
-        />
         <div className="relative z-10">
           <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
             <TodayLabel locale={locale} />
@@ -39,7 +31,7 @@ export default async function AdminHome({ params: { locale } }: { params: { loca
       </header>
 
       {/* Batch clock. Lotes close together, so the deadline leads the panel. */}
-      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} />}
+      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} variant="compact" />}
 
       <KpiCards
         usersTotal={usersTotal}

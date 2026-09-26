@@ -149,7 +149,7 @@ function RequestRow({
 
   return (
     <li
-      className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-4 sm:p-5 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in slide-in-from-bottom-1"
+      className="rounded-xl border border-text-subtle/15 bg-bg-elev p-4 sm:p-5 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in slide-in-from-bottom-1"
       style={{ animationDelay: `${index * 40}ms`, animationFillMode: 'both' }}
     >
       <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5">
@@ -242,7 +242,7 @@ function EmptyState({ status }: { status: 'pending' | 'resolved' }) {
       ? 'No hay solicitudes pendientes. Cuando un buyer pida resetear su contraseña, va a aparecer acá.'
       : 'No hay solicitudes atendidas todavía.';
   return (
-    <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center">
+    <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center">
       <Icon className="w-10 h-10 mx-auto text-text-muted/50 mb-3" strokeWidth={1.5} />
       <p className="text-sm text-text-muted max-w-md mx-auto">{msg}</p>
     </div>

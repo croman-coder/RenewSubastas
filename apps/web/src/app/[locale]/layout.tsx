@@ -73,7 +73,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AuthProvider>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
               {children}
               {/* Global: the choice has to be reachable from every surface,
                   and every consent-gated tracker stays off until it's made. */}

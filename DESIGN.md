@@ -2,6 +2,14 @@
 
 Canonical source: the transactional email system (`functions/src/lib/email-templates.ts`). All surfaces match it.
 
+**The web app applies it since 2026-09-26 ("dirección A — tinta y papel").** Where it lives:
+tokens in `apps/web/src/app/globals.css` (tinted paper `bg-base`, white opaque cards `bg-elev`,
+ink `text-strong`; a tinted charcoal "tinta" dark version), radii and `shadow-card` in
+`apps/web/tailwind.config.ts`, status tones as `Badge` variants (`success`, `warning`, `danger`,
+`info`, `neutral`), and the ink bid panel as `.panel-ink`, which redefines the tokens inside it
+instead of restyling each child. Light is the default theme. The old `glass-*`, `ink-mesh` and
+`sheen` class names still exist but are solid now — don't reintroduce blur or glow under them.
+
 ## Color (OKLCH, tinted neutrals — never pure #000/#fff)
 
 Strategy: **Restrained**. Ink + warm-neutral paper; one semantic accent per status only.

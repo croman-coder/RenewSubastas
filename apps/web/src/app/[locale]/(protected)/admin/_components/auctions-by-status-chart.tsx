@@ -32,7 +32,7 @@ export function AuctionsByStatusChart({ live, scheduled, ended }: Props) {
   return (
     <section
       className={
-        'rounded-xl border border-text-subtle/15 bg-bg-elev/40 ' +
+        'rounded-xl border border-text-subtle/15 bg-bg-elev ' +
         'transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 ' +
         'animate-in fade-in duration-500'
       }

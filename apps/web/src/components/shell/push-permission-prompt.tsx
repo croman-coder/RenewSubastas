@@ -125,7 +125,7 @@ export function PushPermissionPrompt({ locale }: Props) {
       aria-label="Activar notificaciones"
       className={
         'sticky top-14 z-20 border-b border-text-subtle/15 ' +
-        'bg-bg-elev/95 backdrop-blur supports-[backdrop-filter]:bg-bg-elev/80 ' +
+        'bg-bg-elev ' +
         'animate-in fade-in slide-in-from-top-1 duration-300'
       }
     >

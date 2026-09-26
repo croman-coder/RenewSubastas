@@ -52,7 +52,7 @@ export function TrafficPanel({ insights }: Props) {
 
   if (!hasToday && !hasHistory) {
     return (
-      <section className="rounded-xl border border-dashed border-text-subtle/25 bg-bg-elev/30 px-5 py-8 text-center">
+      <section className="rounded-xl border border-dashed border-text-subtle/25 bg-bg-elev px-5 py-8 text-center">
         <p className="text-sm text-text-muted max-w-prose mx-auto">
           Todavía no hay datos de tráfico. El contador recién arranca: en cuanto entre la primera
           visita vas a ver el conteo de hoy acá, y el resumen de días anteriores va a aparecer a
@@ -100,7 +100,7 @@ export function TrafficPanel({ insights }: Props) {
       )}
 
       {!hasHistory ? (
-        <div className="rounded-xl border border-dashed border-text-subtle/25 bg-bg-elev/30 px-5 py-6 text-center">
+        <div className="rounded-xl border border-dashed border-text-subtle/25 bg-bg-elev px-5 py-6 text-center">
           <p className="text-sm text-text-muted max-w-prose mx-auto">
             Todavía no hay días anteriores agregados — el resumen diario corre a las 9:30 y hoy es
             el primer día. La serie, el origen y el embudo van a aparecer acá a partir de mañana.

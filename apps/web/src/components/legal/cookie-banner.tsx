@@ -67,7 +67,7 @@ export function CookieBanner({ locale }: Props) {
       <div
         className={
           'mx-auto max-w-3xl rounded-2xl border border-text-subtle/20 ' +
-          'bg-bg-elev/95 backdrop-blur shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] ' +
+          'bg-bg-elev shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)] ' +
           'px-4 py-4 sm:px-5 sm:py-4'
         }
       >

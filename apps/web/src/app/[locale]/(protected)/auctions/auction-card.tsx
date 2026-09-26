@@ -76,10 +76,11 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
     // its own stop and clickable above the overlay via z-index.
     <div
       className={
-        'sheen group relative block rounded-xl overflow-hidden border border-text-subtle/15 ' +
-        'bg-bg-elev/40 transition-[border-color,background-color,transform,box-shadow] duration-300 ' +
-        'hover:border-text-strong/40 hover:bg-bg-elev/70 ' +
-        'hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(0,0,0,0.55)] ' +
+        // Dirección A: opaque card, 18px, one soft shadow; hover only lifts
+        // and firms the hairline (no translucent fill, no heavy drop).
+        'group relative block rounded-2xl overflow-hidden border border-text-subtle/20 ' +
+        'bg-bg-elev shadow-card transition-[border-color,transform] duration-300 ' +
+        'hover:border-text-strong/35 hover:-translate-y-0.5 ' +
         'animate-in fade-in slide-in-from-bottom-2 duration-300'
       }
       style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
@@ -88,7 +89,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
         href={`/${locale}/auctions/${auction.id}` as `/${string}`}
         aria-label={cardLabel}
         className={
-          'absolute inset-0 z-0 rounded-xl ' +
+          'absolute inset-0 z-0 rounded-2xl ' +
           'active:scale-[0.99] ' +
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
           'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
@@ -120,7 +121,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           aria-pressed={fav}
           className={
             'absolute top-2.5 right-2.5 w-9 h-9 rounded-full grid place-items-center pointer-events-auto ' +
-            'bg-black/40 backdrop-blur-md ring-1 ring-white/10 ' +
+            'bg-black/40 ring-1 ring-white/10 ' +
             'transition-all duration-200 hover:bg-black/60 hover:scale-105 active:scale-95 ' +
             (fav ? 'text-rose-400' : 'text-white/80 hover:text-rose-300')
           }
@@ -137,7 +138,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           suppressHydrationWarning
           className={
             'absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 ' +
-            'rounded-md px-2 py-1 text-xs font-medium num-tab backdrop-blur-md ' +
+            'rounded-md px-2 py-1 text-xs font-medium num-tab ' +
             (isUrgent
               ? 'bg-rose-500/90 text-white animate-pulse'
               : 'bg-black/55 text-white ring-1 ring-white/10')
@@ -148,7 +149,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
         </div>
       </div>
       <div className="relative z-[1] p-3.5 space-y-2 pointer-events-none">
-        <h3 className="font-medium text-text-strong tracking-tight truncate">
+        <h3 className="font-bold text-text-strong tracking-tight truncate">
           {auction.make} {auction.model}{' '}
           <span className="num-tab text-text-muted font-normal">{auction.year}</span>
         </h3>
@@ -159,7 +160,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
             </p>
             <p
               className={
-                'text-lg font-semibold num-tab tracking-tight ' +
+                'text-xl font-extrabold num-tab tracking-tight ' +
                 (isLive ? 'text-text-strong' : 'text-text-muted')
               }
             >
@@ -181,27 +182,28 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
   );
 }
 
+// DESIGN.md status tones (fg on tinted bg) as pills — they sit on the photo,
+// so they stay the light tones in both themes.
 function StatusBadge({ status, label }: { status: string; label: string }) {
   const map: Record<string, string> = {
-    live: 'bg-emerald-500/90 text-white ring-emerald-400/30',
-    scheduled: 'bg-amber-500/90 text-white ring-amber-400/30',
-    ended: 'bg-zinc-700/85 text-zinc-200 ring-zinc-500/30',
-    cancelled: 'bg-rose-600/90 text-white ring-rose-400/30',
+    live: 'bg-[#dcfce7] text-[#166534]',
+    scheduled: 'bg-[#fef3c7] text-[#92400e]',
+    ended: 'bg-[#27272a] text-[#fafafa]',
+    cancelled: 'bg-[#fee2e2] text-[#991b1b]',
   };
   const cls = map[status] ?? map['ended']!;
   return (
     <span
       className={
-        'inline-flex items-center gap-1.5 rounded-md px-2 py-1 ' +
-        'text-[10px] uppercase tracking-[0.08em] font-semibold ' +
-        'backdrop-blur-md ring-1 ring-inset ' +
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ' +
+        'text-[10px] uppercase tracking-[0.08em] font-bold ' +
         cls
       }
     >
       {status === 'live' && (
         <span className="relative flex w-1.5 h-1.5">
-          <span className="absolute inline-flex w-full h-full rounded-full bg-white/70 animate-ping" />
-          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-white" />
+          <span className="absolute inline-flex w-full h-full rounded-full bg-[#16a34a]/60 animate-ping" />
+          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-[#16a34a]" />
         </span>
       )}
       {label}

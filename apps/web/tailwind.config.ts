@@ -26,6 +26,18 @@ const config: Config = {
         },
         ink: 'oklch(var(--ink) / <alpha-value>)',
         copper: 'oklch(var(--copper) / <alpha-value>)',
+        // Bid panel + its CTA (globals.css): ink panel on paper, white panel
+        // CTA; in the dark version a raised panel with the same white CTA.
+        panel: {
+          DEFAULT: 'oklch(var(--panel-bg) / <alpha-value>)',
+          fg: 'oklch(var(--panel-fg) / <alpha-value>)',
+          muted: 'oklch(var(--panel-muted) / <alpha-value>)',
+          line: 'oklch(var(--panel-line))',
+        },
+        cta: {
+          DEFAULT: 'oklch(var(--cta-bg) / <alpha-value>)',
+          fg: 'oklch(var(--cta-fg) / <alpha-value>)',
+        },
         success: 'oklch(var(--success) / <alpha-value>)',
         warning: 'oklch(var(--warning) / <alpha-value>)',
         danger: 'oklch(var(--danger) / <alpha-value>)',
@@ -63,10 +75,18 @@ const config: Config = {
         input: 'hsl(var(--input) / <alpha-value>)',
         ring: 'hsl(var(--ring) / <alpha-value>)',
       },
+      // DESIGN.md: buttons 11px (lg = --radius), tiles 12–14px, cards 18px.
+      // xl/2xl override Tailwind's 12/16px so the existing rounded-xl and
+      // rounded-2xl cards pick up the system's shape without edits.
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        xl: '0.875rem',
+        '2xl': '1.125rem',
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
       },
     },
   },

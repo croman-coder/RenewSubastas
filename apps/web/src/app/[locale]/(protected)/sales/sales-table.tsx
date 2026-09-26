@@ -124,7 +124,7 @@ export function SalesTable({ locale }: { locale: string }) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center">
+      <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center">
         <Trophy className="w-10 h-10 mx-auto text-text-muted/50 mb-3" strokeWidth={1.5} />
         <p className="text-sm text-text-muted">
           Todavía no hay subastas vendidas. Cuando una subasta cierre con ganador, aparece acá en
@@ -139,7 +139,7 @@ export function SalesTable({ locale }: { locale: string }) {
       {rows.map((r) => (
         <li
           key={r.auctionId}
-          className="hover-lift rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-4 flex items-center gap-4 hover:border-text-subtle/30 hover:bg-bg-elev/60"
+          className="hover-lift rounded-xl border border-text-subtle/15 bg-bg-elev p-4 flex items-center gap-4 hover:border-text-subtle/30 hover:bg-bg-elev/60"
         >
           {r.thumbnailUrl ? (
             <img

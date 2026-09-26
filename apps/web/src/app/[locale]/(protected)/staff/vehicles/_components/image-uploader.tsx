@@ -159,7 +159,7 @@ export function ImageUploader({ vehicleId, initial, onChange }: Props) {
                 </span>
               )}
               {i !== 0 && (
-                <span className="absolute top-1.5 left-1.5 text-[10px] num-tab bg-black/55 text-white px-1.5 py-0.5 rounded font-semibold backdrop-blur-sm">
+                <span className="absolute top-1.5 left-1.5 text-[10px] num-tab bg-black/55 text-white px-1.5 py-0.5 rounded font-semibold">
                   #{i + 1}
                 </span>
               )}

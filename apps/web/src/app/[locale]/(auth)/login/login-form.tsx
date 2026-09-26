@@ -531,7 +531,7 @@ function EnteringOverlay() {
       role="status"
       aria-live="polite"
       aria-label="Ingresando"
-      className="fixed inset-0 z-[80] grid place-items-center bg-bg-base/95 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[80] grid place-items-center bg-bg-base/95 animate-in fade-in duration-200"
     >
       <div className="flex flex-col items-center gap-6">
         <div className="relative">

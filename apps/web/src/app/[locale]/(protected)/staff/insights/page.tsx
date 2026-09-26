@@ -50,7 +50,7 @@ export default async function InsightsPage({ params: { locale }, searchParams }:
       <h2 className="text-sm font-semibold text-text-strong tracking-tight">Por vehículo</h2>
 
       {rows.length === 0 ? (
-        <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-10 text-center">
+        <div className="rounded-xl border border-text-subtle/15 bg-bg-elev px-4 py-10 text-center">
           <p className="text-sm text-text-muted">Todavía no hay vehículos publicados.</p>
         </div>
       ) : (
@@ -59,7 +59,7 @@ export default async function InsightsPage({ params: { locale }, searchParams }:
             <li key={r.vehicleId}>
               <Link
                 href={`/${locale}/staff/insights/${r.vehicleId}` as `/${string}`}
-                className="flex items-center gap-3 rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-3 transition-colors hover:border-text-subtle/30 hover:bg-bg-elev/60"
+                className="flex items-center gap-3 rounded-xl border border-text-subtle/15 bg-bg-elev px-4 py-3 transition-colors hover:border-text-subtle/30 hover:bg-bg-elev/60"
               >
                 {r.thumbnailUrl ? (
                   <img

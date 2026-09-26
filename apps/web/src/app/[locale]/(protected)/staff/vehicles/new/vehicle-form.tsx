@@ -349,7 +349,7 @@ export function VehicleForm({ locale, actorUid }: Props) {
         </FormSection>
       </div>
 
-      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 backdrop-blur-md border-t border-text-subtle/15 sm:mx-0">
+      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 border-t border-text-subtle/15 sm:mx-0">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-text-muted hidden sm:block">
             Se guarda como <span className="text-text-strong font-medium">borrador</span>. Podés

@@ -79,7 +79,7 @@ function Delta({ abs, pct }: { abs: number; pct: number | null }) {
 /** Headline card for the three metrics Lujan asked for by name. */
 function HeadlineCard({ row, days }: { row: ComparisonRow; days: { a: number; b: number } }) {
   return (
-    <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-3">
+    <div className="rounded-xl border border-text-subtle/15 bg-bg-elev px-4 py-3">
       <p className="text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium">
         {row.label}
       </p>
@@ -132,7 +132,7 @@ export function PeriodComparator({ locale, comparison, preset }: Props) {
       </div>
 
       {/* ---- Range picker: presets as links, custom range as a GET form ---- */}
-      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-4 space-y-3">
+      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev px-4 py-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.08em] text-text-muted font-medium mr-1">
             <CalendarRange className="w-3.5 h-3.5" aria-hidden />
@@ -211,7 +211,7 @@ export function PeriodComparator({ locale, comparison, preset }: Props) {
       </div>
 
       {/* ---- Full table ---- */}
-      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 overflow-x-auto">
+      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev overflow-x-auto">
         <table className="w-full text-sm min-w-[560px]">
           <caption className="sr-only">
             Comparación de {fmtRange(a.totals.range)} contra {fmtRange(b.totals.range)}
@@ -247,7 +247,7 @@ export function PeriodComparator({ locale, comparison, preset }: Props) {
       </div>
 
       {/* ---- Day-by-day register ---- */}
-      <details className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 group">
+      <details className="rounded-xl border border-text-subtle/15 bg-bg-elev group">
         <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-text-strong flex items-center justify-between gap-3">
           <span>Registro por fechas (día a día)</span>
           <span className="text-xs text-text-muted font-normal group-open:hidden">Ver</span>

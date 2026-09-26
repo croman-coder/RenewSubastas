@@ -261,12 +261,15 @@ export function AuctionDetailView({
           />
 
           {/* Price card */}
-          <div className="ink-mesh sheen rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
+          <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-2 shadow-card">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-semibold">
               {live.currentBid > 0 ? 'Puja actual' : t('startingPrice')}
             </p>
-            <p className="text-4xl sm:text-5xl font-bold tracking-tight num-tab text-text-strong">
-              USD <BlurNumber value={displayPrice} format={fmtUsd} />
+            {/* "USD" as a smaller prefix on the same line: at text-5xl the
+                full "USD 29.000,00" used to break into two lines. */}
+            <p className="flex items-baseline gap-2 whitespace-nowrap text-4xl sm:text-5xl font-extrabold tracking-tight num-tab text-text-strong">
+              <span className="text-xl sm:text-2xl font-bold text-text-muted">USD</span>
+              <BlurNumber value={displayPrice} format={fmtUsd} />
             </p>
             <p className="text-xs text-text-muted num-tab">
               {live.currentBid > 0 && <span>Inicial: USD {fmtUsd(initial.startingPrice)} · </span>}
@@ -314,7 +317,7 @@ export function AuctionDetailView({
             <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
               {t('bidsTitle')}
             </h2>
-            <ul className="divide-y divide-text-subtle/15 rounded-xl border border-text-subtle/15 bg-bg-elev/40 overflow-hidden">
+            <ul className="divide-y divide-text-subtle/15 rounded-xl border border-text-subtle/15 bg-bg-elev overflow-hidden">
               {bids.map((b, i) => (
                 <li
                   key={b.id}
@@ -349,7 +352,7 @@ export function AuctionDetailView({
 
 function Spec({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="hover-lift rounded-lg border border-text-subtle/10 bg-bg-elev/30 px-3 py-2.5 hover:border-text-subtle/25 hover:bg-bg-elev/50">
+    <div className="hover-lift rounded-lg border border-text-subtle/10 bg-bg-elev px-3 py-2.5 hover:border-text-subtle/25 hover:bg-bg-elev/50">
       <dt className="text-text-muted text-[10px] uppercase tracking-[0.1em] font-semibold">
         {label}
       </dt>
@@ -406,57 +409,21 @@ function CountdownCard({
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
 
-  // Color theme switches as urgency rises.
+  // Urgency is carried by the digits' color alone. The halos, the gradient
+  // hairline and the blurred blob behind the clock went with direction A
+  // (DESIGN.md: flat surfaces, one soft shadow, no glows).
   const tone = ended
-    ? {
-        glow: 'shadow-none',
-        text: 'text-text-muted',
-        accent: 'from-zinc-500/0 via-zinc-400/30 to-zinc-500/0',
-      }
+    ? { text: 'text-text-muted' }
     : critical
-      ? {
-          glow: 'shadow-[0_0_40px_-4px_rgba(244,63,94,0.55)]',
-          text: 'text-rose-400',
-          accent: 'from-rose-500/0 via-rose-400/70 to-rose-500/0',
-        }
+      ? { text: 'text-rose-600 dark:text-rose-400' }
       : urgent
-        ? {
-            glow: 'shadow-[0_0_36px_-6px_rgba(251,146,60,0.5)]',
-            text: 'text-amber-700 dark:text-amber-300',
-            accent: 'from-amber-500/0 via-amber-400/70 to-amber-500/0',
-          }
-        : {
-            glow: 'shadow-[0_0_36px_-6px_rgba(0,0,0,0.35)]',
-            text: 'text-copper',
-            accent: 'from-copper/0 via-copper/70 to-copper/0',
-          };
+        ? { text: 'text-amber-700 dark:text-amber-300' }
+        : { text: 'text-text-strong' };
 
   const showDays = days > 0 && !ended;
 
   return (
-    <div
-      className={
-        'relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev/60 p-5 ' +
-        'transition-shadow duration-500 ' +
-        tone.glow
-      }
-    >
-      {/* Top hairline gradient accent */}
-      <div
-        aria-hidden
-        className={'absolute inset-x-0 top-0 h-px bg-gradient-to-r ' + tone.accent}
-      />
-      {/* Subtle radial glow background */}
-      {!ended && (
-        <div
-          aria-hidden
-          className={
-            'absolute -top-12 -right-12 w-40 h-40 rounded-full blur-3xl pointer-events-none ' +
-            (critical ? 'bg-rose-500/15' : urgent ? 'bg-amber-500/15' : 'bg-copper/15')
-          }
-        />
-      )}
-
+    <div className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 shadow-card">
       <div className="relative space-y-2">
         <div className="flex items-center gap-1.5">
           <Clock
@@ -505,17 +472,12 @@ function DigitGroup({
         // differ on hydration. Same fix as BatchCountdown's Unit.
         suppressHydrationWarning
         className={
-          'font-bold num-tab tracking-tight tabular-nums ' +
+          'font-extrabold num-tab tracking-tight tabular-nums ' +
           (small ? 'text-3xl' : 'text-5xl sm:text-[3.5rem] sm:leading-[1]') +
           ' ' +
           tone +
           (pulsing ? ' animate-pulse' : '')
         }
-        style={{
-          textShadow: pulsing
-            ? '0 0 20px currentColor, 0 0 40px currentColor'
-            : '0 0 24px currentColor',
-        }}
       >
         {padded}
       </span>

@@ -260,7 +260,7 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
         </FormSection>
       </div>
 
-      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 backdrop-blur-md border-t border-text-subtle/15 sm:mx-0">
+      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 border-t border-text-subtle/15 sm:mx-0">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-text-muted hidden sm:block">
             Al crear, el vehículo pasa a estado{' '}

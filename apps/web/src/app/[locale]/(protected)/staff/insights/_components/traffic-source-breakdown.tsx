@@ -29,7 +29,7 @@ export function TrafficSourceBreakdown({ bySource, days }: Props) {
   const total = SOURCE_ORDER.reduce((acc, s) => acc + bySource[s], 0);
 
   return (
-    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 h-full">
+    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev h-full">
       <header className="flex items-center gap-2.5 px-5 pt-5 pb-1">
         <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong grid place-items-center ring-1 ring-text-subtle/20">
           <Share2 className="w-3.5 h-3.5" strokeWidth={2.25} />

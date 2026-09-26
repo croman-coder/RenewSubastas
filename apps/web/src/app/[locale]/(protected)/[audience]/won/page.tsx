@@ -23,7 +23,7 @@ export default async function MyWonPage({ params: { locale, audience } }: PagePr
         <p className="text-sm text-text-muted">{t('subtitle')}</p>
       </header>
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center">
           <Trophy className="w-10 h-10 mx-auto text-text-muted/50 mb-3" strokeWidth={1.5} />
           <p className="text-sm text-text-muted">{t('empty')}</p>
         </div>
@@ -34,7 +34,7 @@ export default async function MyWonPage({ params: { locale, audience } }: PagePr
             return (
               <li
                 key={w.auctionId}
-                className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in slide-in-from-bottom-1"
+                className="rounded-xl border border-text-subtle/15 bg-bg-elev transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in slide-in-from-bottom-1"
                 style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
               >
                 <Link href={href} className="flex items-center gap-4 p-4">

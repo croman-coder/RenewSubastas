@@ -443,7 +443,7 @@ export function EditVehicleForm({ locale, vehicleId, initial }: Props) {
         </fieldset>
       </div>
 
-      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 backdrop-blur-md border-t border-text-subtle/15 sm:mx-0">
+      <div className="sticky bottom-0 mt-8 -mx-4 px-4 py-3 bg-bg-base/95 border-t border-text-subtle/15 sm:mx-0">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2">
             {status === 'draft' && images.length > 0 && (

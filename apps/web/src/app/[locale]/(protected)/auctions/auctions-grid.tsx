@@ -33,10 +33,6 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
     <div className="space-y-6">
       {/* Hero header */}
       <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
-        <div
-          aria-hidden
-          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-copper/10 blur-3xl pointer-events-none"
-        />
         <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-4 lg:gap-6">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
@@ -107,7 +103,7 @@ function EmptyState({ tab }: { tab: CatalogTab }) {
   const Icon = tab === 'favorites' ? Heart : Gavel;
   const msg = tab === 'favorites' ? t('emptyFavorites') : t('empty');
   return (
-    <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center animate-in fade-in duration-500">
+    <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center animate-in fade-in duration-500">
       <Icon className="w-10 h-10 mx-auto text-text-muted/50 mb-3" strokeWidth={1.5} />
       <p className="text-sm text-text-muted">{msg}</p>
     </div>

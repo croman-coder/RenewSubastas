@@ -8,6 +8,13 @@ interface Props {
   endsAtMs: number;
   /** `closing` (default) counts to the end of the running lote; `opening` to the start of the next. */
   mode?: BatchMode;
+  /**
+   * `compact` is one line — label + clock — for page headers. It replaced the
+   * full-width `hero` on the buyer and admin homes (dirección A, 2026-09-26):
+   * DESIGN.md bans the hero-metric layout, and on a phone the giant clock plus
+   * the stat tiles pushed the first car below the second screen.
+   */
+  variant?: 'hero' | 'compact';
   className?: string;
 }
 
@@ -30,7 +37,12 @@ interface Props {
  * `suppressHydrationWarning` on the digits, which is what it exists for.
  * Same approach as the per-card timer in AuctionCard.
  */
-export function BatchCountdown({ endsAtMs, mode = 'closing', className = '' }: Props) {
+export function BatchCountdown({
+  endsAtMs,
+  mode = 'closing',
+  variant = 'hero',
+  className = '',
+}: Props) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -68,20 +80,60 @@ export function BatchCountdown({ endsAtMs, mode = 'closing', className = '' }: P
       : 'Subastas cerradas'
     : `${opening ? 'Comienza en' : 'Tiempo restante'}: ${d} días, ${h} horas, ${m} minutos, ${s} segundos`;
 
+  if (variant === 'compact') {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const Icon = opening ? Hourglass : Clock;
+    return (
+      <div
+        className={
+          'inline-flex items-center gap-2.5 rounded-xl border px-3.5 py-2 ' +
+          (urgent
+            ? 'border-rose-500/40 bg-rose-500/[0.07]'
+            : 'border-text-subtle/20 bg-bg-elev shadow-card') +
+          (className ? ` ${className}` : '')
+        }
+      >
+        <Icon
+          className={
+            'w-4 h-4 shrink-0 ' + (urgent ? 'text-rose-700 dark:text-rose-300' : 'text-text-muted')
+          }
+          strokeWidth={2.5}
+          aria-hidden="true"
+        />
+        <span
+          suppressHydrationWarning
+          className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted"
+        >
+          {heading}
+        </span>
+        <span className="sr-only" aria-live="off" suppressHydrationWarning>
+          {label}
+        </span>
+        {/* The clock is this span's own text: suppression goes here, not on
+            an ancestor (see Unit below for the incident behind that rule). */}
+        <span
+          aria-hidden="true"
+          suppressHydrationWarning
+          className={
+            'num-tab text-lg font-extrabold tracking-tight leading-none ' +
+            (urgent ? 'text-rose-700 dark:text-rose-300' : 'text-text-strong')
+          }
+        >
+          {done ? '—' : `${d > 0 ? `${d} d ` : ''}${pad(h)}:${pad(m)}:${pad(s)}`}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       className={
         'relative overflow-hidden rounded-2xl border px-5 py-4 text-center ' +
         'transition-colors duration-300 ' +
-        (urgent ? 'border-rose-500/40 bg-rose-500/[0.07]' : 'border-text-subtle/20 bg-bg-base/50') +
+        (urgent ? 'border-rose-500/40 bg-rose-500/[0.07]' : 'border-text-subtle/20 bg-bg-elev') +
         (className ? ` ${className}` : '')
       }
     >
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 -top-16 h-32 bg-[radial-gradient(ellipse_50%_100%_at_50%_100%,rgba(255,255,255,0.10),transparent_70%)] pointer-events-none"
-      />
-
       <p
         suppressHydrationWarning
         className={
@@ -164,7 +216,6 @@ function Unit({
               ? 'text-text-muted'
               : 'text-text-strong')
         }
-        style={small ? undefined : { textShadow: '0 0 28px rgba(255,255,255,0.18)' }}
       >
         {String(value).padStart(2, '0')}
       </span>

@@ -32,7 +32,7 @@ export function FormSection({
   children,
 }: Props) {
   return (
-    <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 transition-colors hover:bg-bg-elev/55">
+    <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev transition-colors hover:bg-bg-elev/55">
       <header className="flex items-start gap-3 px-5 sm:px-6 pt-5 pb-4">
         <span
           aria-hidden

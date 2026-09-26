@@ -22,6 +22,7 @@ import {
 import type { AuctionListItem } from '@/lib/staff/list-auctions';
 import { formatAmount } from '@/lib/format/money';
 import { formatDateTimePy } from '@/lib/format/date';
+import { auctionStatusVariant } from '@/lib/format/status-variant';
 
 interface Props {
   locale: string;
@@ -75,7 +76,7 @@ export function AuctionsTable({ locale, items, nextCursor, currentStatus }: Prop
           <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
         </SelectContent>
       </Select>
-      <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+      <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev">
         <Table>
           <TableHeader>
             <TableRow>
@@ -116,7 +117,7 @@ export function AuctionsTable({ locale, items, nextCursor, currentStatus }: Prop
                 </TableCell>
                 <TableCell className="num-tab">{a.bidCount}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{t(`status.${a.status}`)}</Badge>
+                  <Badge variant={auctionStatusVariant(a.status)}>{t(`status.${a.status}`)}</Badge>
                 </TableCell>
                 <TableCell className="text-text-muted text-sm num-tab">
                   {formatDateTimePy(locale, new Date(a.endsAt))}

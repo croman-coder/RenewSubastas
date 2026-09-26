@@ -4,86 +4,107 @@
 
 @layer base {
   :root {
-    /* Renew Subastas — pure monochrome palette.
-       Values are "L C H" (no parens). Chroma forced to 0 so every neutral
-       sits dead-center on the achromatic axis — no tinted "warm gray"
-       drifting back in. Hue is irrelevant when C=0, kept at 0 for clarity. */
-    --bg-base: 1 0 0; /* pure white */
-    --bg-elev: 0.97 0 0;
-    --bg-deep: 0.93 0 0;
-    --text-strong: 0.1 0 0; /* near-black, was 0.12 — title tier */
-    --text-muted: 0.34 0 0; /* subtitle / icon, was 0.42 — bumped for AA contrast on white */
-    --text-subtle: 0.58 0 0; /* hairlines / disabled, was 0.62 */
-    --ink: 0.12 0 0; /* solid black for wordmark "new" half */
-    --copper: 0.18 0 0; /* accent — used to be copper, now pure ink black */
+    /* Renew Subastas — "tinta y papel" (DESIGN.md, dirección A, 2026-09-26).
+       Values are "L C H" (no parens). Neutrals carry a hair of chroma on hue
+       286 — the same tint as the transactional emails — instead of the pure
+       achromatic greys the app used before: pure white and pure black read
+       as a template, the tint reads as chosen.
+       Roles: bg-base = the paper the page sits on; bg-elev = a card, opaque
+       and white; bg-deep = an inset (inputs, tiles inside a card). */
+    --bg-base: 0.955 0.003 286; /* paper */
+    --bg-elev: 0.995 0.001 286; /* card */
+    --bg-deep: 0.94 0.003 286; /* inset */
+    --text-strong: 0.17 0.005 286; /* ink — titles, primary text, CTAs */
+    --text-muted: 0.45 0.012 286; /* secondary text, AA on paper and card */
+    --text-subtle: 0.62 0.012 286; /* hairlines (at low alpha), disabled */
+    --ink: 0.15 0.004 286;
+    --copper: 0.15 0.004 286; /* historical name: the accent is ink */
     --success: 0.55 0.14 155;
     --warning: 0.65 0.16 75;
     --danger: 0.55 0.2 25;
+    /* One soft shadow, never stacked glows (DESIGN.md: flat or one shadow). */
+    --shadow-card: 0 1px 2px rgb(14 14 18 / 0.05), 0 12px 28px -16px rgb(14 14 18 / 0.22);
+    /* The bid panel is the page's anchor: ink-filled on paper. */
+    --panel-bg: 0.17 0.005 286;
+    --panel-fg: 0.98 0.002 286;
+    --panel-muted: 0.74 0.008 286;
+    --panel-line: 1 0 0 / 0.16;
+    --panel-deep: 0.23 0.006 286;
+    --panel-subtle: 0.62 0.01 286;
+    --cta-bg: 0.98 0.002 286;
+    --cta-fg: 0.17 0.005 286;
   }
 
-  /* shadcn tokens recolored to neutral grayscale — `240` hue stripped to 0
-     so radix primitives don't reintroduce a violet undertone next to the
-     monochrome brand surface. */
+  /* shadcn tokens on the same tinted neutrals (hue 240 in HSL ≈ 286 in
+     OKLCH), so radix primitives sit on the paper instead of pure white. */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 6%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 6%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 6%;
-    --primary: 0 0% 8%;
-    --primary-foreground: 0 0% 99%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 8%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 42%;
-    --accent: 0 0% 95%;
-    --accent-foreground: 0 0% 8%;
+    --background: 240 5% 94.5%;
+    --foreground: 240 12% 7%;
+    --card: 240 20% 99.5%;
+    --card-foreground: 240 12% 7%;
+    --popover: 240 20% 99.5%;
+    --popover-foreground: 240 12% 7%;
+    --primary: 240 10% 8%;
+    --primary-foreground: 240 20% 99%;
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 10% 8%;
+    --muted: 240 5% 92%;
+    --muted-foreground: 240 4% 42%;
+    --accent: 240 5% 92%;
+    --accent-foreground: 240 10% 8%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 99%;
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 0 0% 8%;
-    --radius: 0.5rem;
+    --border: 240 6% 88%;
+    --input: 240 6% 86%;
+    --ring: 240 10% 8%;
+    --radius: 0.6875rem; /* 11px: DESIGN.md buttons */
   }
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 8%;
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 16%;
-    --accent-foreground: 0 0% 98%;
+    --background: 240 8% 9.5%;
+    --foreground: 240 5% 96%;
+    --card: 240 7% 12.5%;
+    --card-foreground: 240 5% 96%;
+    --popover: 240 7% 12.5%;
+    --popover-foreground: 240 5% 96%;
+    --primary: 240 5% 96%;
+    --primary-foreground: 240 10% 8%;
+    --secondary: 240 6% 17%;
+    --secondary-foreground: 240 5% 96%;
+    --muted: 240 6% 17%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 6% 17%;
+    --accent-foreground: 240 5% 96%;
     --destructive: 0 63% 41%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 0 0% 80%;
+    --border: 240 6% 18%;
+    --input: 240 6% 20%;
+    --ring: 240 5% 80%;
   }
 
   .dark {
-    /* Pure-black dark theme for Renew Subastas. Deep near-black canvas
-       with layered surface elevations (bg-elev / bg-deep) lifted just
-       enough to read against bg-base under the side-rails and cards.
-       Copper accent becomes pure white so wordmark + focus rings pop. */
-    --bg-base: 0.13 0 0;
-    --bg-elev: 0.17 0 0;
-    --bg-deep: 0.22 0 0;
-    --text-strong: 0.98 0 0;
-    --text-muted: 0.72 0 0;
-    --text-subtle: 0.5 0 0;
-    --ink: 0.98 0 0;
-    --copper: 0.98 0 0;
+    /* "Tinta": the dark version of the same system. Tinted charcoal, three
+       clear surface steps (paper → card → inset) instead of near-black
+       layers that blurred together, and white solid CTAs. */
+    --bg-base: 0.165 0.005 286;
+    --bg-elev: 0.205 0.006 286;
+    --bg-deep: 0.245 0.007 286;
+    --text-strong: 0.97 0.002 286;
+    --text-muted: 0.76 0.008 286;
+    --text-subtle: 0.56 0.01 286;
+    --ink: 0.97 0.002 286;
+    --copper: 0.97 0.002 286;
     --success: 0.7 0.13 155;
     --warning: 0.78 0.14 75;
     --danger: 0.65 0.18 25;
+    --shadow-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 16px 32px -20px rgb(0 0 0 / 0.8);
+    --panel-bg: 0.23 0.007 286;
+    --panel-fg: 0.97 0.002 286;
+    --panel-muted: 0.74 0.008 286;
+    --panel-line: 1 0 0 / 0.12;
+    --panel-deep: 0.27 0.007 286;
+    --panel-subtle: 0.58 0.01 286;
+    --cta-bg: 0.97 0.002 286;
+    --cta-fg: 0.17 0.005 286;
   }
 
   /* Smooth-scroll for in-page anchor jumps + reserve scrollbar width so a
@@ -276,35 +297,41 @@
     );
   }
 
-  /* Subtle ink-mesh hero background. Two radial washes of ink at low
-     opacity sit behind the hero content to give a sense of depth
-     without breaking the monochrome palette. Pointer-events disabled
-     so it never intercepts clicks. */
+  /* The bid panel: an ink "island" on the paper (dirección A). It doesn't
+     restyle its children one by one — it redefines the tokens they already
+     read, so every text, tile, chip, input and button inside inverts on its
+     own: ink ground, light text, white solid buttons with ink text. In the
+     dark version the panel is a raised charcoal with the same white CTA.
+     Portaled content (dialogs) lives outside the panel and keeps the page
+     theme. */
+  .panel-ink {
+    --bg-base: var(--panel-bg);
+    --bg-elev: var(--panel-bg);
+    --bg-deep: var(--panel-deep);
+    --text-strong: var(--panel-fg);
+    --text-muted: var(--panel-muted);
+    --text-subtle: var(--panel-subtle);
+    --ink: var(--panel-fg);
+    --copper: var(--panel-fg);
+    --background: 240 7% 16%;
+    --foreground: 240 5% 96%;
+    --input: 240 6% 28%;
+    --border: 240 6% 24%;
+    --ring: 240 5% 80%;
+    --muted-foreground: 240 5% 68%;
+    --primary: 240 5% 96%;
+    --primary-foreground: 240 10% 8%;
+    background-color: oklch(var(--panel-bg));
+    color: oklch(var(--panel-fg));
+    border-color: oklch(var(--panel-line));
+  }
+
+  /* Historical name: used to paint two radial ink washes behind heroes.
+     DESIGN.md asks for flat surfaces, so it only keeps the stacking context
+     the markup relies on. */
   .ink-mesh {
     position: relative;
     isolation: isolate;
-  }
-  .ink-mesh::before,
-  .ink-mesh::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .ink-mesh::before {
-    background: radial-gradient(
-      ellipse 60% 50% at 85% 10%,
-      oklch(var(--text-strong) / 0.06),
-      transparent 60%
-    );
-  }
-  .ink-mesh::after {
-    background: radial-gradient(
-      ellipse 70% 60% at 0% 100%,
-      oklch(var(--text-strong) / 0.05),
-      transparent 65%
-    );
   }
 
   /* Optional dotted ink grid backdrop. Use as decoration behind heroes
@@ -315,152 +342,44 @@
     background-position: 0 0;
   }
 
-  /* Liquid-glass surface. Translucent, blurred, saturated backdrop with an
-     inner top highlight so the panel reads as a pane of frosted glass over
-     the animated grid behind it. Works on both themes: the inset highlight
-     is white at low alpha, the border tints toward ink. */
+  /* Historical names. These three used to be "liquid glass": translucent,
+     blurred, with refractive rims and travelling sheens. DESIGN.md bans glass
+     (tinta y papel, 2026-09-26), so they are now solid — and because the
+     names stay, every screen that used them gets weight without edits.
+     .glass-surface = a card: opaque, one hairline, one soft shadow. */
   .glass-surface {
-    background-color: oklch(var(--bg-elev) / 0.55);
-    backdrop-filter: blur(22px) saturate(1.5);
-    -webkit-backdrop-filter: blur(22px) saturate(1.5);
-    border: 1px solid oklch(var(--text-strong) / 0.08);
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.14),
-      inset 0 0 0 1px oklch(1 0 0 / 0.02),
-      0 24px 60px -30px rgba(0, 0, 0, 0.6);
+    background-color: oklch(var(--bg-elev));
+    border: 1px solid oklch(var(--text-subtle) / 0.22);
+    box-shadow: var(--shadow-card);
   }
 
-  /* Liquid-glass CTA. Frosted pill that lifts and brightens on hover, with a
-     traveling sheen on the surface. Pairs with the `glass` button variant. */
+  /* .glass-cta = secondary action: solid card fill, hairline, darker on hover. */
   .glass-cta {
-    position: relative;
-    overflow: hidden;
-    background-color: oklch(var(--text-strong) / 0.08);
-    backdrop-filter: blur(14px) saturate(1.5);
-    -webkit-backdrop-filter: blur(14px) saturate(1.5);
-    border: 1px solid oklch(var(--text-strong) / 0.14);
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.18),
-      0 8px 24px -12px oklch(var(--text-strong) / 0.35);
+    background-color: oklch(var(--bg-elev));
+    border: 1px solid oklch(var(--text-subtle) / 0.35);
     transition:
-      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 220ms ease-out,
-      border-color 220ms ease-out,
-      box-shadow 220ms ease-out;
+      background-color 200ms ease-out,
+      border-color 200ms ease-out;
   }
   .glass-cta:hover {
-    background-color: oklch(var(--text-strong) / 0.14);
-    border-color: oklch(var(--text-strong) / 0.24);
-    transform: translateY(-1px);
-  }
-  .glass-cta:active {
-    transform: translateY(0);
-    transition-duration: 80ms;
-  }
-  .glass-cta::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent 30%, oklch(1 0 0 / 0.18) 50%, transparent 70%);
-    transform: translateX(-130%);
-    transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: none;
-  }
-  .glass-cta:hover::after {
-    transform: translateX(130%);
+    background-color: oklch(var(--bg-deep));
+    border-color: oklch(var(--text-strong) / 0.35);
   }
 
-  /* Strong liquid-glass PRIMARY button. Frosted ink (white-on-dark theme)
-     that stays high-contrast as a primary CTA while reading as glass:
-     translucent fill, blur, inner highlight, soft lift, traveling sheen.
-     The `glass` button variant applies this; text color comes from the
-     button (primary-foreground), so it inverts correctly per theme. */
+  /* .glass-primary = the primary action: ink filled (white in the dark
+     version, via --text-strong), text from primary-foreground. */
   .glass-primary {
-    position: relative;
-    overflow: hidden;
-    background-color: oklch(var(--text-strong) / 0.86);
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
-    border: 1px solid oklch(1 0 0 / 0.14);
-    /* 21st.dev liquid-glass bezel: layered inset highlights/lowlights carve a
-       refractive glass rim, plus a soft drop + faint outer glow. Tuned for the
-       light theme (ink fill); the .dark override below flips it for white fill. */
-    box-shadow:
-      inset 2px 2px 0.5px -2px oklch(1 0 0 / 0.85),
-      inset -2px -2px 0.5px -2px oklch(1 0 0 / 0.55),
-      inset 1px 1px 1px -0.5px oklch(1 0 0 / 0.4),
-      inset 0 0 8px 4px oklch(1 0 0 / 0.06),
-      0 8px 24px -12px oklch(var(--text-strong) / 0.6),
-      0 0 12px oklch(1 0 0 / 0.1);
+    background-color: oklch(var(--text-strong));
     transition:
-      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 220ms ease-out,
-      box-shadow 220ms ease-out;
+      background-color 200ms ease-out,
+      transform 200ms ease-out;
   }
   .glass-primary:hover {
-    background-color: oklch(var(--text-strong) / 0.97);
-    transform: translateY(-1px);
-    box-shadow:
-      inset 2px 2px 0.5px -2px oklch(1 0 0 / 0.95),
-      inset -2px -2px 0.5px -2px oklch(1 0 0 / 0.6),
-      inset 1px 1px 1px -0.5px oklch(1 0 0 / 0.5),
-      inset 0 0 8px 4px oklch(1 0 0 / 0.08),
-      0 14px 34px -14px oklch(var(--text-strong) / 0.7),
-      0 0 16px oklch(1 0 0 / 0.14);
-  }
-  /* Dark theme: fill is white, so the refractive rim is carved with dark
-     inset shadows instead of white ones (mirrors 21st's dark recipe). */
-  .dark .glass-primary {
-    border-color: oklch(0 0 0 / 0.2);
-    box-shadow:
-      inset 2px 2px 0.5px -2px oklch(0 0 0 / 0.55),
-      inset -2px -2px 0.5px -2px oklch(0 0 0 / 0.4),
-      inset 1px 1px 1px -0.5px oklch(0 0 0 / 0.3),
-      inset 0 0 8px 4px oklch(0 0 0 / 0.06),
-      0 8px 24px -12px oklch(0 0 0 / 0.7),
-      0 0 12px oklch(1 0 0 / 0.08);
-  }
-  .dark .glass-primary:hover {
-    box-shadow:
-      inset 2px 2px 0.5px -2px oklch(0 0 0 / 0.6),
-      inset -2px -2px 0.5px -2px oklch(0 0 0 / 0.45),
-      inset 1px 1px 1px -0.5px oklch(0 0 0 / 0.35),
-      inset 0 0 8px 4px oklch(0 0 0 / 0.08),
-      0 14px 34px -14px oklch(0 0 0 / 0.8),
-      0 0 16px oklch(1 0 0 / 0.12);
+    background-color: oklch(var(--text-strong) / 0.88);
   }
   .glass-primary:active {
-    transform: translateY(0) scale(0.985);
+    transform: scale(0.985);
     transition-duration: 80ms;
-  }
-  /* Soft white glow ring that blooms on hover (monochrome "neon" feel,
-     no color). Sits just outside the pill, behind it. */
-  .glass-primary::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    box-shadow: 0 0 0 0 oklch(1 0 0 / 0);
-    transition: box-shadow 260ms ease-out;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .glass-primary:hover::before {
-    box-shadow:
-      0 0 18px 1px oklch(1 0 0 / 0.18),
-      0 0 4px 0 oklch(1 0 0 / 0.25);
-  }
-  .glass-primary::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent 30%, oklch(1 0 0 / 0.22) 50%, transparent 70%);
-    transform: translateX(-130%);
-    transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: none;
-  }
-  .glass-primary:hover::after {
-    transform: translateX(130%);
   }
 
   /* 21st.dev "Sign In Flow" accent lines: three horizontal + three vertical
@@ -619,28 +538,10 @@
     }
   }
 
-  /* Sheen sweep across an element on hover. Used on primary CTAs and
-     "ganaste" hero panels for a premium, restrained accent. The mask
-     keeps the sweep limited to the inside of the rounded shape. */
+  /* Historical name: was a gradient sweep on hover. DESIGN.md bans gradient
+     shine, so it only keeps the clipping the markup relies on. */
   .sheen {
     position: relative;
     overflow: hidden;
-  }
-  .sheen::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      120deg,
-      transparent 30%,
-      oklch(var(--text-strong) / 0.08) 50%,
-      transparent 70%
-    );
-    transform: translateX(-120%);
-    transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: none;
-  }
-  .sheen:hover::after {
-    transform: translateX(120%);
   }
 }

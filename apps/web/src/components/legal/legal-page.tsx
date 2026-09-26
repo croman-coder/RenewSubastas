@@ -34,7 +34,7 @@ export function LegalPage({ locale, title, intro, sections, company }: Props) {
         Saltar al contenido
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-text-subtle/15 bg-bg-base/85 backdrop-blur supports-[backdrop-filter]:bg-bg-base/70">
+      <header className="sticky top-0 z-40 border-b border-text-subtle/15 bg-bg-base/85">
         <div className="mx-auto max-w-3xl px-4 md:px-8 h-14 flex items-center justify-between gap-4">
           <Link
             href={`/${locale}` as `/${string}`}

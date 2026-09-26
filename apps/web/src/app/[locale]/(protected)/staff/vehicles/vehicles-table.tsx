@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { VehicleListItem } from '@/lib/staff/list-vehicles';
+import { vehicleStatusVariant } from '@/lib/format/status-variant';
 
 interface Props {
   locale: string;
@@ -74,7 +75,7 @@ export function VehiclesTable({ locale, items, nextCursor, currentStatus }: Prop
           <SelectItem value="archived">{t('status.archived')}</SelectItem>
         </SelectContent>
       </Select>
-      <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+      <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev">
         <Table>
           <TableHeader>
             <TableRow>
@@ -111,7 +112,7 @@ export function VehiclesTable({ locale, items, nextCursor, currentStatus }: Prop
                 </TableCell>
                 <TableCell className="num-tab">{v.year}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{t(`status.${v.status}`)}</Badge>
+                  <Badge variant={vehicleStatusVariant(v.status)}>{t(`status.${v.status}`)}</Badge>
                 </TableCell>
                 <TableCell className="text-text-muted text-sm num-tab">
                   {new Date(v.createdAt).toLocaleDateString(locale)}

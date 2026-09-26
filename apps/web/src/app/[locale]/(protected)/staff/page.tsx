@@ -36,14 +36,6 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
     <div className="space-y-8">
       {/* Hero header */}
       <header className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-gradient-to-br from-bg-elev/60 via-bg-elev/30 to-transparent px-5 py-5 sm:px-6 sm:py-6 animate-in fade-in slide-in-from-top-2 duration-500">
-        <div
-          aria-hidden
-          className="absolute -top-16 -right-12 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-24 -left-10 w-72 h-72 rounded-full bg-copper/5 blur-3xl pointer-events-none"
-        />
         <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-text-muted font-medium">
@@ -73,7 +65,7 @@ export default async function StaffHome({ params: { locale } }: PageProps) {
 
       {/* Batch clock. Lotes close together, so the operator sees the deadline
           before anything else on the panel. */}
-      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} />}
+      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} variant="compact" />}
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -181,7 +173,7 @@ function SummaryPanel({
 }) {
   const a = ACCENT[accent];
   return (
-    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in duration-500">
+    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev transition-all duration-300 hover:border-text-subtle/30 hover:bg-bg-elev/60 animate-in fade-in duration-500">
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2.5">
           <span

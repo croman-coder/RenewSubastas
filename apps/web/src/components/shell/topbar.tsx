@@ -116,7 +116,7 @@ export function Topbar({
       <header
         className={
           'sticky top-0 z-30 h-14 border-b border-text-subtle/15 ' +
-          'bg-bg-elev/80 backdrop-blur-md backdrop-saturate-150 ' +
+          'bg-bg-elev ' +
           'flex items-center justify-between px-4 md:px-6 gap-3'
         }
       >
@@ -301,7 +301,7 @@ function MobileDrawer({
         aria-hidden
         onClick={onClose}
         className={
-          'lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ' +
+          'lg:hidden fixed inset-0 z-40 bg-black/60 transition-opacity duration-200 ' +
           (open ? 'opacity-100' : 'opacity-0 pointer-events-none')
         }
       />

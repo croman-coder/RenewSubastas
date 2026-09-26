@@ -83,7 +83,7 @@ export function PublicAuctionsBrowser({ locale, items }: Props) {
               placeholder="Buscar marca o modelo…"
               className={
                 'h-11 w-full sm:w-64 rounded-lg pl-9 pr-9 text-sm [touch-action:manipulation] ' +
-                'bg-bg-elev/60 border border-text-subtle/20 text-text-strong ' +
+                'bg-bg-elev border border-text-subtle/20 text-text-strong ' +
                 'placeholder:text-text-subtle ' +
                 'transition-[border-color,background-color] duration-200 ' +
                 'hover:border-text-subtle/40 ' +
@@ -111,7 +111,7 @@ export function PublicAuctionsBrowser({ locale, items }: Props) {
           <div
             role="group"
             aria-label="Filtrar subastas"
-            className="inline-flex rounded-lg border border-text-subtle/20 bg-bg-elev/40 p-1 gap-1"
+            className="inline-flex rounded-lg border border-text-subtle/20 bg-bg-elev p-1 gap-1"
           >
             {FILTERS.map((f) => {
               const active = filter === f.id;
@@ -139,7 +139,7 @@ export function PublicAuctionsBrowser({ locale, items }: Props) {
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-text-subtle/25 bg-bg-elev/30 px-6 py-14 text-center">
+        <div className="rounded-2xl border border-dashed border-text-subtle/25 bg-bg-elev px-6 py-14 text-center">
           <Gavel
             className="w-8 h-8 mx-auto text-text-subtle opacity-50"
             strokeWidth={1.5}

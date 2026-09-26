@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Clock, Gavel, Heart, Trophy } from 'lucide-react';
+import { ArrowRight, Clock } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { loadBuyerStats } from '@/lib/buyer/load-buyer-stats';
 import { loadFavorites } from '@/lib/buyer/load-favorites';
@@ -42,74 +42,78 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      {/* Dirección A (2026-09-26): the cars lead. The batch clock is one line
+          beside the title and the personal numbers are one strip of links —
+          they used to be a full-width clock plus four big tiles, which on a
+          phone pushed the first car below the second screen. */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text-strong text-pretty">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-text-strong text-pretty">
             Subastas en curso
           </h1>
           <p className="mt-1 text-sm text-text-muted">
             Hola, {user.firstName || 'Buyer'} — estas son las unidades disponibles ahora.
           </p>
         </div>
-        <Link
-          href={`/${locale}/auctions` as `/${string}`}
-          className={
-            'shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-medium ' +
-            'border border-text-subtle/25 text-text-strong [touch-action:manipulation] ' +
-            'transition-colors duration-200 hover:bg-bg-elev/70 ' +
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40'
-          }
-        >
-          Ver catálogo completo
-          <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
-        </Link>
+        {clock !== null && (
+          <BatchCountdown
+            endsAtMs={clock.at}
+            mode={clock.mode}
+            variant="compact"
+            className="self-start sm:self-auto"
+          />
+        )}
       </header>
 
-      {/* Batch clock. Every lote closes at the same time, so it leads. */}
-      {clock !== null && <BatchCountdown endsAtMs={clock.at} mode={clock.mode} />}
-
-      {/* Compact personal strip. Every tile is a link into the detail view it
-          summarises — a number the buyer can't act on is just decoration. */}
-      <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatTile
-          href={`/${locale}/auctions`}
-          icon={Gavel}
-          label="Activas"
-          value={stats.liveAuctions}
-        />
-        <StatTile
-          href={`/${locale}/${audience}/bids`}
-          icon={Trophy}
-          label="Estoy ganando"
-          value={stats.myWinningCount}
-          emphasis
-        />
-        <StatTile
-          href={`/${locale}/${audience}/bids`}
-          icon={Heart}
-          label="Mis pujas"
-          value={stats.myActiveBidsCount}
-        />
-        <StatTile
-          href={`/${locale}/${audience}/won`}
-          icon={Trophy}
-          label="Ganadas"
-          value={stats.myWonCount}
-        />
-      </ul>
+      {/* Every pill links into the view it summarises — a number the buyer
+          can't act on is just decoration. */}
+      <nav aria-label="Tu actividad">
+        <ul className="flex flex-wrap gap-2">
+          <ActivityLink href={`/${locale}/auctions`} label="Activas" value={stats.liveAuctions} />
+          <ActivityLink
+            href={`/${locale}/${audience}/bids`}
+            label="Vas ganando"
+            value={stats.myWinningCount}
+            emphasis={stats.myWinningCount > 0}
+          />
+          <ActivityLink
+            href={`/${locale}/${audience}/bids`}
+            label="Mis pujas"
+            value={stats.myActiveBidsCount}
+          />
+          <ActivityLink
+            href={`/${locale}/${audience}/won`}
+            label="Ganadas"
+            value={stats.myWonCount}
+          />
+        </ul>
+      </nav>
 
       <section aria-labelledby="grid-heading" className="space-y-4">
         <div className="flex items-end justify-between gap-3">
-          <h2 id="grid-heading" className="text-lg font-semibold tracking-tight text-text-strong">
-            Vehículos disponibles
-          </h2>
-          <p className="text-sm text-text-muted num-tab shrink-0">
-            {items.length} {items.length === 1 ? 'unidad' : 'unidades'}
-          </p>
+          <div className="min-w-0">
+            <h2 id="grid-heading" className="text-lg font-bold tracking-tight text-text-strong">
+              Vehículos disponibles
+            </h2>
+            <p className="text-sm text-text-muted num-tab">
+              {items.length} {items.length === 1 ? 'unidad' : 'unidades'}
+            </p>
+          </div>
+          <Link
+            href={`/${locale}/auctions` as `/${string}`}
+            className={
+              'shrink-0 inline-flex items-center gap-1 text-sm font-semibold text-text-strong ' +
+              'underline-offset-4 hover:underline [touch-action:manipulation] ' +
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 rounded-md'
+            }
+          >
+            Ver catálogo
+            <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+          </Link>
         </div>
 
         {shown.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-text-subtle/25 bg-bg-elev/30 px-6 py-14 text-center">
+          <div className="rounded-2xl border border-dashed border-text-subtle/25 bg-bg-elev px-6 py-14 text-center">
             <Clock
               className="w-8 h-8 mx-auto text-text-subtle opacity-50"
               strokeWidth={1.5}
@@ -161,49 +165,40 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
   );
 }
 
-function StatTile({
+function ActivityLink({
   href,
-  icon: Icon,
   label,
   value,
   emphasis = false,
 }: {
   href: string;
-  icon: typeof Gavel;
   label: string;
   value: number;
+  /** Success tone — used for "Vas ganando" while the buyer leads something. */
   emphasis?: boolean;
 }) {
   return (
-    <li className="min-w-0">
+    <li>
       <Link
         href={href as `/${string}`}
         className={
-          'group flex items-center gap-3 rounded-xl border px-3.5 py-3 [touch-action:manipulation] ' +
+          'inline-flex items-center gap-2 h-9 px-3.5 rounded-full border text-sm [touch-action:manipulation] ' +
           'transition-[border-color,background-color] duration-200 ' +
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40 ' +
           'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base ' +
           (emphasis
-            ? 'border-copper/30 bg-copper/[0.07] hover:border-copper/50'
-            : 'border-text-subtle/15 bg-bg-elev/40 hover:border-text-strong/30 hover:bg-bg-elev/70')
+            ? 'border-transparent bg-[#dcfce7] text-[#166534] dark:bg-[rgb(22_101_52/0.4)] dark:text-[#bbf7d0]'
+            : 'border-text-subtle/20 bg-bg-elev text-text-muted hover:border-text-strong/35')
         }
       >
         <span
           className={
-            'shrink-0 w-9 h-9 rounded-lg grid place-items-center ring-1 ' +
-            (emphasis
-              ? 'bg-copper/15 ring-copper/25 text-copper'
-              : 'bg-text-strong/[0.07] ring-text-subtle/20 text-text-strong')
+            'num-tab font-extrabold tracking-tight ' + (emphasis ? '' : 'text-text-strong')
           }
         >
-          <Icon className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+          {value}
         </span>
-        <span className="min-w-0">
-          <span className="block text-xl font-semibold num-tab tracking-tight text-text-strong leading-none">
-            {value}
-          </span>
-          <span className="block mt-1 text-xs text-text-muted truncate">{label}</span>
-        </span>
+        <span className="font-medium">{label}</span>
       </Link>
     </li>
   );

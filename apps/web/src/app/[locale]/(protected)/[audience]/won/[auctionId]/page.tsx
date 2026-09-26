@@ -107,7 +107,7 @@ export default async function WonDetailPage({
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-text-muted">
           Datos para la transferencia
         </h2>
-        <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 sm:p-6 space-y-1">
+        <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 sm:p-6 space-y-1">
           <div className="flex items-baseline justify-between gap-4 pb-3 mb-3 border-b border-text-subtle/15">
             <span className="text-xs uppercase tracking-[0.12em] text-text-muted">Monto seña</span>
             <span className="text-2xl font-bold tracking-tight text-text-strong num-tab">

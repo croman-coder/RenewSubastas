@@ -45,10 +45,6 @@ export function PublicLanding({ locale, items, company }: Props) {
               aria-hidden="true"
               className="ink-grid absolute inset-0 opacity-30 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black_30%,transparent_75%)] pointer-events-none"
             />
-            <div
-              aria-hidden="true"
-              className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-copper/10 blur-3xl pointer-events-none"
-            />
 
             <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-8">
               <div className="min-w-0 max-w-2xl">

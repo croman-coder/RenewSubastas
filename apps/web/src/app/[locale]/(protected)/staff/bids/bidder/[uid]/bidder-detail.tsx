@@ -64,7 +64,7 @@ export function BidderDetail({ uid, locale }: { uid: string; locale: string }) {
 
   return (
     <div className="space-y-4" data-locale={locale}>
-      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-4">
+      <div className="rounded-xl border border-text-subtle/15 bg-bg-elev p-4">
         <p className="font-medium text-text-strong">{contact?.displayName || uid}</p>
         <p className="text-sm text-text-muted">
           {contact?.email || '—'} · {contact?.phone || '—'}
@@ -79,7 +79,7 @@ export function BidderDetail({ uid, locale }: { uid: string; locale: string }) {
         {bids.map((b) => (
           <li
             key={b.id}
-            className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 p-3 flex items-center gap-3 text-sm"
+            className="rounded-xl border border-text-subtle/15 bg-bg-elev p-3 flex items-center gap-3 text-sm"
           >
             <span className="num-tab font-semibold text-text-strong">USD {fmtUsd(b.amount)}</span>
             <span className="text-text-muted text-xs">{b.status}</span>
@@ -95,7 +95,7 @@ export function BidderDetail({ uid, locale }: { uid: string; locale: string }) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl p-3 bg-bg-elev/40">
+    <div className="rounded-xl p-3 bg-bg-elev">
       <div className="text-xs text-text-muted">{label}</div>
       <div className="text-lg font-semibold num-tab text-text-strong">{value}</div>
     </div>

@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import type { MyBidEntry } from '@/lib/buyer/list-my-bids';
 import { formatAmount } from '@/lib/format/money';
 import { formatDateTimePy } from '@/lib/format/date';
+import { auctionStatusVariant } from '@/lib/format/status-variant';
 
 interface Props {
   locale: string;
@@ -50,11 +51,11 @@ export function MyBidsTable({ locale, audience, items, currentTab }: Props) {
         </TabsList>
       </Tabs>
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center text-sm text-text-muted">
+        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center text-sm text-text-muted">
           {t('empty')}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev/40">
+        <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev">
           <Table>
             <TableHeader>
               <TableRow>
@@ -90,7 +91,9 @@ export function MyBidsTable({ locale, audience, items, currentTab }: Props) {
                   <TableCell className="num-tab">USD {formatAmount(b.myBid)}</TableCell>
                   <TableCell className="num-tab">USD {formatAmount(b.currentBid)}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{tStatus(b.auctionStatus)}</Badge>
+                    <Badge variant={auctionStatusVariant(b.auctionStatus)}>
+                      {tStatus(b.auctionStatus)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-text-muted text-sm num-tab">
                     {formatDateTimePy(locale, b.endsAtMs)}

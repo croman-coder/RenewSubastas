@@ -153,7 +153,7 @@ export function UsersTable({
                   <Badge variant="secondary">{kindLabel(u.role, u.audience)}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={u.status === 'active' ? 'default' : 'outline'}>
+                  <Badge variant={u.status === 'active' ? 'success' : 'outline'}>
                     {u.status === 'active' ? t('status.active') : t('status.disabled')}
                   </Badge>
                 </TableCell>

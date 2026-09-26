@@ -14,6 +14,17 @@ const badgeVariants = cva(
         destructive:
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
         outline: 'text-foreground',
+        // Status tones from DESIGN.md (fg on bg), one per meaning — so
+        // "En curso", "Finalizada" and "Programada" stop being the same
+        // grey pill. Dark variants keep the same hue at lower luminance.
+        success:
+          'border-transparent bg-[#dcfce7] text-[#166534] dark:bg-[rgb(22_101_52/0.4)] dark:text-[#bbf7d0]',
+        warning:
+          'border-transparent bg-[#fef3c7] text-[#92400e] dark:bg-[rgb(146_64_14/0.4)] dark:text-[#fde68a]',
+        danger:
+          'border-transparent bg-[#fee2e2] text-[#991b1b] dark:bg-[rgb(153_27_27/0.4)] dark:text-[#fecaca]',
+        info: 'border-transparent bg-[#dbeafe] text-[#1e40af] dark:bg-[rgb(30_64_175/0.4)] dark:text-[#bfdbfe]',
+        neutral: 'border-transparent bg-[#27272a] text-[#fafafa] dark:bg-[#3f3f46]',
       },
     },
     defaultVariants: {

@@ -74,7 +74,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
 
   if (priceUsd < config.minFinanceableUsd) {
     return (
-      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
+      <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-2">
         <Header />
         <p className="text-sm text-text-muted">
           {t('minNotReached', { amount: fmtUsd(config.minFinanceableUsd) })}
@@ -92,7 +92,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
   const notes = locale === 'en' && config.notesEn ? config.notesEn : config.notesEs;
 
   return (
-    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-5">
+    <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-5">
       <Header subtitle={t('subtitle')} />
 
       <div className="space-y-2">
@@ -140,19 +140,12 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
       </div>
 
       {/* Highlighted monthly payment */}
-      <div className="relative overflow-hidden rounded-2xl border border-copper/30 bg-gradient-to-br from-copper/[0.08] via-copper/[0.04] to-transparent p-5">
-        <div
-          aria-hidden
-          className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-copper/10 blur-3xl pointer-events-none"
-        />
+      <div className="relative overflow-hidden rounded-2xl border border-text-subtle/20 bg-bg-deep p-5">
         <div className="relative">
-          <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-copper/80">
+          <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-text-muted">
             Cuota mensual
           </p>
-          <p
-            className="mt-1 text-3xl sm:text-4xl font-bold tracking-tight num-tab text-copper leading-tight"
-            style={{ textShadow: '0 0 20px rgba(0,0,0,0.25)' }}
-          >
+          <p className="mt-1 text-3xl sm:text-4xl font-extrabold tracking-tight num-tab text-text-strong leading-tight">
             <span className="text-base font-semibold mr-1 opacity-80">Gs.</span>
             {fmtPyg(monthly)}
           </p>

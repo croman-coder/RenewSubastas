@@ -602,9 +602,16 @@ app/
 | `src/components/shell/`                                                                        | Barra superior, menú lateral, campana, aviso de push, puente de sesión      |
 | `src/components/{auctions,auth,brand,forms,insights,legal,motion,public,seo,theme,analytics}/` | Componentes por dominio                                                     |
 
-**Diseño:** Tailwind con tokens semánticos (`bg-base`, `bg-elev`, `text-strong`, `text-muted`,
-`text-subtle`…) definidos en `globals.css` y `tailwind.config`, modo claro/oscuro con
-`next-themes`. `functions/src/lib/email-templates.ts` es la referencia de diseño de los correos.
+**Diseño:** sistema "tinta y papel" de `DESIGN.md`, aplicado a la app desde el 26/9/2026.
+Tailwind con tokens semánticos (`bg-base` = papel, `bg-elev` = tarjeta blanca opaca,
+`bg-deep` = hundido, `text-strong` = tinta, `text-muted`, `text-subtle`) en `globals.css`,
+radios (botones 11 px, tarjetas 18 px) y `shadow-card` en `tailwind.config`. Tema claro por
+defecto; el oscuro ("tinta") se elige en Preferencias. Estados con las variantes de `Badge`
+(`success`, `warning`, `danger`, `info`, `neutral`) vía `lib/format/status-variant.ts`. El panel
+de puja es `.panel-ink`: redefine los tokens dentro del panel, así que todo lo que contiene se
+invierte solo. Las clases `glass-*`, `ink-mesh` y `sheen` conservan el nombre pero ya son sólidas:
+no volver a meter desenfoques ni brillos. `functions/src/lib/email-templates.ts` sigue siendo la
+referencia de diseño de los correos.
 
 **En vivo:** la campana (`notification-bell.tsx`) y la ficha de subasta usan `onSnapshot` bajo
 las reglas. Las acciones van por `httpsCallable(fb.functions, '<nombre>')`.

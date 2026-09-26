@@ -22,7 +22,7 @@ export function LandingFaq() {
       <ul className="space-y-2">
         {LANDING_FAQS.map((f) => (
           <li key={f.q}>
-            <details className="group rounded-xl border border-text-subtle/15 bg-bg-elev/40 px-4 py-3 transition-colors duration-200 hover:border-text-subtle/30 open:bg-bg-elev/60">
+            <details className="group rounded-xl border border-text-subtle/15 bg-bg-elev px-4 py-3 transition-colors duration-200 hover:border-text-subtle/30 open:bg-bg-elev/60">
               <summary
                 className={
                   'flex items-center justify-between gap-3 cursor-pointer list-none ' +

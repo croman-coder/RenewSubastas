@@ -140,7 +140,7 @@ export function BidsActivity({ locale }: { locale: string }) {
       </div>
 
       {bids.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev/30 px-6 py-16 text-center">
+        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center">
           <Gavel className="w-10 h-10 mx-auto text-text-muted/50 mb-3" strokeWidth={1.5} />
           <p className="text-sm text-text-muted">
             Todavía no hay pujas. Cuando alguien puje, aparece acá en tiempo real.
@@ -156,7 +156,7 @@ export function BidsActivity({ locale }: { locale: string }) {
             return (
               <li
                 key={b.id}
-                className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 hover:border-text-subtle/30"
+                className="rounded-xl border border-text-subtle/15 bg-bg-elev hover:border-text-subtle/30"
               >
                 <button
                   type="button"
@@ -200,7 +200,7 @@ export function BidsActivity({ locale }: { locale: string }) {
 function Metric({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
   return (
     <div
-      className={`rounded-xl p-3 ${danger ? 'bg-danger/10 ring-1 ring-danger/20' : 'bg-bg-elev/40'}`}
+      className={`rounded-xl p-3 ${danger ? 'bg-danger/10 ring-1 ring-danger/20' : 'bg-bg-elev'}`}
     >
       <div className={`text-xs ${danger ? 'text-danger' : 'text-text-muted'}`}>{label}</div>
       <div

@@ -15,6 +15,7 @@ import { isBuyNowBelowReserve } from '@/lib/auctions/buy-now-floor';
 import { MarkSoldDialog } from './mark-sold-dialog';
 import { formatAmount as fmtUsd } from '@/lib/format/money';
 import { formatDateTimePy } from '@/lib/format/date';
+import { auctionStatusVariant } from '@/lib/format/status-variant';
 
 interface BidEntry {
   id: string;
@@ -339,7 +340,7 @@ export function AuctionDetailView({
           <h1 className="text-2xl font-semibold text-text-strong">
             {initial.vehicleMake} {initial.vehicleModel} {initial.vehicleYear}
           </h1>
-          <Badge variant="secondary">{tStatus(status)}</Badge>
+          <Badge variant={auctionStatusVariant(status)}>{tStatus(status)}</Badge>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {canEdit && (
@@ -381,7 +382,7 @@ export function AuctionDetailView({
       </header>
 
       {editing && canEdit && (
-        <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 space-y-4">
+        <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-4">
           <div>
             <h2 className="text-base font-medium text-text-strong">Editar subasta</h2>
             <p className="text-xs text-text-muted">
@@ -506,7 +507,7 @@ export function AuctionDetailView({
       </section>
 
       {isPlatformSale && (
-        <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev/40 p-5 space-y-3">
+        <section className="rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-medium text-text-strong">Pago y seña</h2>

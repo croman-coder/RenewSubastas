@@ -35,7 +35,7 @@ export function TrafficSeriesChart({ data, totalViews, totalSessions }: Props) {
   const formatted = data.map((d) => ({ ...d, label: d.date.slice(5) }));
 
   return (
-    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev/40 h-full">
+    <section className="rounded-xl border border-text-subtle/15 bg-bg-elev h-full">
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 pt-5 pb-1">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-md bg-text-strong/[0.06] text-text-strong grid place-items-center ring-1 ring-text-subtle/20">

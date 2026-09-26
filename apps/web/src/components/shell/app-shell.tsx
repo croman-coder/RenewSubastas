@@ -77,7 +77,7 @@ export async function AppShell({ locale, children }: Props) {
         <aside
           className={
             'hidden lg:flex shrink-0 w-60 sticky top-14 self-start h-[calc(100vh-3.5rem)] ' +
-            'border-r border-text-subtle/15 bg-bg-elev/40 ' +
+            'border-r border-text-subtle/15 bg-bg-elev ' +
             'flex-col px-3 py-4'
           }
         >
