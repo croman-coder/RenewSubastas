@@ -1,0 +1,102 @@
+import { describe, expect, it } from 'vitest';
+import { auctionDescription, auctionMetadata, auctionTitle, vehicleJsonLd } from './auction-seo';
+import type { PublicAuctionDetail } from '@/lib/buyer/public-auction';
+
+const d: PublicAuctionDetail = {
+  id: 'auc-1',
+  vehicleId: 'veh-1',
+  make: 'Toyota',
+  model: 'Hilux',
+  year: 2019,
+  mileage: 85000,
+  transmission: 'automatic',
+  fuelType: 'diesel',
+  color: 'Blanco',
+  condition: 'used',
+  descriptionEs: 'Única dueña.',
+  descriptionEn: null,
+  images: [{ url: 'https://img.test/a.jpg', thumbnailUrl: 'https://img.test/a.webp' }],
+  startingPrice: 10000,
+  currentBid: 18500,
+  bidCount: 4,
+  bidIncrement: 500,
+  buyNowPrice: null,
+  status: 'live',
+  outcome: null,
+  startsAtMs: Date.parse('2026-10-01T12:00:00Z'),
+  // 18:00 in Asunción (UTC-3).
+  endsAtMs: Date.parse('2026-10-03T21:00:00Z'),
+};
+const labels = { fuel: 'Diésel', transmission: 'Automática' };
+const live = { kind: 'live', indexable: true } as const;
+
+describe('auctionTitle', () => {
+  it('names the car and the auction', () => {
+    expect(auctionTitle(d)).toBe('Toyota Hilux 2019 en subasta · Renew Subastas');
+  });
+});
+
+describe('auctionDescription', () => {
+  it('summarises km, fuel, transmission, current bid and closing time', () => {
+    expect(auctionDescription(d, labels, live)).toBe(
+      'Toyota Hilux 2019, 85.000 km, diésel, automática. Puja actual USD 18.500. Cierra el 03/10/2026 18:00. Vehículo usado certificado por Santa Rosa.',
+    );
+  });
+
+  it('uses the starting price and the opening time before it opens', () => {
+    const scheduled = { ...d, currentBid: 0, status: 'scheduled' as const };
+    expect(auctionDescription(scheduled, labels, { kind: 'scheduled', indexable: true })).toContain(
+      'Precio de salida USD 10.000. Abre el 01/10/2026 09:00.',
+    );
+  });
+});
+
+describe('auctionMetadata', () => {
+  it('is canonical on the single link and indexable while open', () => {
+    const m = auctionMetadata(d, labels, live, 'es');
+    expect(m.alternates?.canonical).toBe('https://renewsubastas.com.py/es/auctions/auc-1');
+    expect(Object.keys(m.alternates?.languages ?? {})).toEqual(['es', 'x-default']);
+    expect(m.robots).toBeUndefined();
+  });
+
+  it('keeps finished auctions out of the index', () => {
+    const m = auctionMetadata(
+      d,
+      labels,
+      { kind: 'finished', result: 'unsold', indexable: false },
+      'es',
+    );
+    expect(m.robots).toEqual({ index: false, follow: true });
+  });
+});
+
+describe('vehicleJsonLd', () => {
+  it('describes the car and its offer in USD until the close', () => {
+    const j = vehicleJsonLd(d, labels, live, 'es');
+    expect(j['@type']).toBe('Car');
+    expect(j['brand']).toEqual({ '@type': 'Brand', name: 'Toyota' });
+    expect(j['mileageFromOdometer']).toEqual({
+      '@type': 'QuantitativeValue',
+      value: 85000,
+      unitCode: 'KMT',
+    });
+    expect(j['offers']).toMatchObject({
+      '@type': 'Offer',
+      price: 18500,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      priceValidUntil: '2026-10-03',
+    });
+  });
+
+  it('marks a sale as sold out', () => {
+    const j = vehicleJsonLd(d, labels, { kind: 'sold-visible', indexable: false }, 'es');
+    expect((j['offers'] as Record<string, unknown>)['availability']).toBe(
+      'https://schema.org/SoldOut',
+    );
+  });
+
+  it('never publishes the VIN or the plate', () => {
+    expect(JSON.stringify(vehicleJsonLd(d, labels, live, 'es'))).not.toMatch(/vin|licensePlate/i);
+  });
+});
