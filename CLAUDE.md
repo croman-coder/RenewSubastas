@@ -21,8 +21,11 @@ Cloudflare Access (ver su README).
 
 1. `carbid-staging` **es producción**. No hay staging. `firebase deploy --project carbid-staging`
    llega a usuarios reales al instante.
-2. `git push origin main` publica la web (Netlify, ~2 min). Verificar lo publicado con el
-   `published_deploy` de Netlify, no con git.
+2. `git push origin main` publica la web (Netlify, ~2 min) y **cada push cuesta 15 créditos** del
+   equipo de Netlify (el 26/9/2026 se agotaron los 3.000 del mes). Probar en local, juntar cambios
+   y empujar a `main` solo cuando Croman decide publicar. Netlify construye solo `main`: otras
+   ramas se pueden subir a GitHub gratis. Verificar lo publicado con el `published_deploy` de
+   Netlify, no con git.
 3. Functions, reglas e índices se despliegan aparte con el CLI de Firebase.
 4. El Admin SDK se saltea reglas y política de contraseñas: repetir chequeos a mano.
 5. Toda lógica que mueve plata o estados vive en Cloud Functions.
