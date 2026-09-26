@@ -54,9 +54,7 @@ const TABLE = {
 
 describe('escapeXml', () => {
   it('escapes the five XML metacharacters', () => {
-    expect(escapeXml('a & b < c > d " e \' f')).toBe(
-      'a &amp; b &lt; c &gt; d &quot; e &apos; f',
-    );
+    expect(escapeXml('a & b < c > d " e \' f')).toBe('a &amp; b &lt; c &gt; d &quot; e &apos; f');
   });
 
   it('drops control characters XML 1.0 forbids but keeps tab/newline/return', () => {
@@ -129,9 +127,9 @@ describe('buildXlsx', () => {
   });
 
   it('writes blank cells rather than empty strings for missing values', () => {
-    const sheet = readZip(
-      buildXlsx({ ...TABLE, rows: [['', 'solo@example.com']] }),
-    ).find((e) => e.name.endsWith('sheet1.xml'))!.text;
+    const sheet = readZip(buildXlsx({ ...TABLE, rows: [['', 'solo@example.com']] })).find((e) =>
+      e.name.endsWith('sheet1.xml'),
+    )!.text;
     expect(sheet).toContain('<c r="A2" s="0"/>');
   });
 
