@@ -28,6 +28,23 @@ create table if not exists legacy.auth_users (
   last_sign_in_at timestamptz
 );
 
+-- Paso intermedio de import-auth.sh: una fila por cuenta de Firebase Auth, con
+-- el hash de la contraseña ya en formato $fbscrypt$ (firebase-auth-to-csv.mjs).
+-- 200_import_auth.sql la vacía al terminar: los hashes quedan solo en auth.users.
+create table if not exists legacy.auth_import (
+  firebase_uid text primary key,
+  email text,
+  email_verified boolean,
+  encrypted_password text,
+  google_sub text,
+  google_email text,
+  display_name text,
+  photo_url text,
+  disabled boolean,
+  created_at timestamptz,
+  last_sign_in_at timestamptz
+);
+
 -- UUID determinista a partir del id de Firebase: la misma fila tiene el mismo
 -- id en cada corrida (la carga es repetible y el orden no importa), y las
 -- cuentas se importan a auth.users con el mismo UUID que su perfil.
