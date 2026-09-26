@@ -1,59 +1,58 @@
-# CARBID
+# CARBID — Renew Subastas
 
-App multiplataforma (iOS, Android, Web) con frontend y backend.
+Plataforma web de subastas de vehículos usados de Santa Rosa Paraguay S.A.
+Producción: **https://renewsubastas.com.py**.
 
-## Stack elegido
+**Arquitectura completa y verificada: [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).**
+Leé su sección 0 antes de tocar nada.
 
-- **Mobile + Web**: React Native + React Native Web (codebase compartido)
-- **Backend**: Node.js
-- **Monorepo recomendado**: `apps/mobile`, `apps/web`, `apps/api`, `packages/shared`
+## Stack real
 
-## Agentes instalados (project-scoped en `.claude/agents/`)
+Monorepo pnpm + Turborepo: `apps/web` (Next.js 14 App Router, Tailwind, next-intl es/en),
+`functions` (Firebase Cloud Functions 2ª gen, Node 20), `packages/shared-types` (Zod),
+`packages/firebase-client`, `apps/mirror` (espejo de Firestore a Postgres en SRPY186).
+Firebase: Auth, Firestore, Storage, Functions, FCM, App Check. Correo con Resend. Sentry.
 
-### Engineering
+`infra/supabase-renew/` es una **copia de pruebas** de toda la base en un Supabase autoalojado en
+SRPY186. **No es producción**. Tiene datos personales reales, así que no se publica en internet sin
+Cloudflare Access (ver su README).
 
-- engineering-mobile-app-builder — iOS/Android, React Native, Flutter
-- engineering-frontend-developer — React/Vue, UI, performance
-- engineering-backend-architect — APIs, DB, microservicios
-- engineering-database-optimizer — schema, queries, índices
-- engineering-software-architect — system design, DDD
-- engineering-devops-automator — CI/CD, cloud
-- engineering-security-engineer — threat modeling, secure code
-- engineering-rapid-prototyper — POCs, MVPs
-- engineering-senior-developer — implementación premium
-- engineering-code-reviewer — PR reviews
-- engineering-technical-writer — docs, READMEs, API refs
-- engineering-git-workflow-master — branching, conventional commits
-- engineering-minimal-change-engineer — diffs mínimos sin scope creep
-- engineering-ai-engineer — ML/AI features
-- engineering-data-engineer — pipelines, ETL
-- engineering-codebase-onboarding-engineer — entender repos rápido
-- engineering-sre — SLOs, observabilidad
+## Reglas que no se negocian
 
-### Design
+1. `carbid-staging` **es producción**. No hay staging. `firebase deploy --project carbid-staging`
+   llega a usuarios reales al instante.
+2. `git push origin main` publica la web (Netlify, ~2 min). Verificar lo publicado con el
+   `published_deploy` de Netlify, no con git.
+3. Functions, reglas e índices se despliegan aparte con el CLI de Firebase.
+4. El Admin SDK se saltea reglas y política de contraseñas: repetir chequeos a mano.
+5. Toda lógica que mueve plata o estados vive en Cloud Functions.
+6. Pablo empuja a GitHub; el deploy a producción lo controla Croman.
 
-- design-ui-designer, design-ux-architect, design-ux-researcher, design-brand-guardian
+## Comandos
 
-### Testing
+```bash
+pnpm install
+pnpm emulators                 # Auth, Firestore, Functions, Storage
+pnpm seed && pnpm seed:demo    # admin + datos de ejemplo en el emulador
+pnpm dev:web                   # http://localhost:3100
+pnpm --filter @carbid/web test
+firebase emulators:exec --only auth,firestore,storage --project carbid-test 'pnpm --filter @carbid/functions test'
+pnpm typecheck && pnpm lint
+```
 
-- testing-api-tester, testing-accessibility-auditor, testing-performance-benchmarker
-- testing-test-results-analyzer, testing-evidence-collector, testing-reality-checker
+Con emuladores, correr las funciones con `ENFORCE_APP_CHECK=false`.
 
-### Product / PM
+## Convenciones
 
-- product-manager, product-sprint-prioritizer, product-feedback-synthesizer, product-trend-researcher
-- project-manager-senior, project-management-project-shepherd
-- agents-orchestrator (coordina pipelines multi-agente)
+- Comentarios nuevos en español; explicar el porqué, con fecha si nace de un incidente.
+- Tests junto al código (`*.test.ts`); los de `functions` corren contra emuladores.
+- Dependencias inyectables para testear sin red (patrón `fetchImpl`, `deps`).
+- Montos y cantidades solo con `lib/format/money.ts` (`formatUsd`, `formatAmount`,
+  `formatNumber`); fechas de tablas con `formatDateTimePy`. Nunca `toLocaleString()` sin idioma:
+  el servidor corre en inglés y UTC, y el texto distinto rompe la hidratación.
+- Diseño: `DESIGN.md` ("tinta y papel"), aplicado con los tokens de `globals.css`. Las clases
+  `glass-*`, `ink-mesh` y `sheen` ya son sólidas: no volver a meter desenfoques ni brillos.
+- `sendEmail()` nunca lanza: mirar `status`.
+- Commits convencionales en español (`fix(push): …`, `docs: …`).
 
-> Hay 184 agentes adicionales instalados globalmente en `~/.claude/agents/` (de `agency-agents`).
-
-## Cómo usar los agentes
-
-Lanzar un agente con la herramienta `Agent` indicando `subagent_type` (p. ej. `Mobile App Builder`, `Backend Architect`). Para pipelines complejos, usar `Agents Orchestrator`.
-
-## Próximos pasos sugeridos
-
-1. Definir requisitos de CARBID (qué hace la app, usuarios, features clave) → usar skill `superpowers:brainstorming`
-2. Diseñar arquitectura → agente `Software Architect`
-3. Crear scaffolding monorepo (Turborepo o Nx) → agente `Rapid Prototyper`
-4. Setup CI/CD → agente `DevOps Automator`
+Agentes de proyecto instalados en `.claude/agents/` (engineering, design, testing, product).
