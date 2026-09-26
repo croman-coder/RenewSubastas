@@ -915,7 +915,7 @@ export function vehicleJsonLd(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `cd apps/web && npx vitest run src/lib/seo/auction-seo.test.ts`
-Expected: PASS (9 tests).
+Expected: PASS (8 tests).
 
 - [ ] **Step 5: Commit**
 
