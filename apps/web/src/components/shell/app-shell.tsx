@@ -4,6 +4,7 @@ import { Topbar } from './topbar';
 import { SidebarNav } from './sidebar-nav';
 import { RouteProgress } from './route-progress';
 import { PushPermissionPrompt } from './push-permission-prompt';
+import { SessionBridge } from './session-bridge';
 import { getNavItems, type Role } from './nav-config';
 
 interface Props {
@@ -52,6 +53,7 @@ export async function AppShell({ locale, children }: Props) {
 
   return (
     <div className="min-h-screen bg-bg-base">
+      <SessionBridge uid={user.uid} />
       <RouteProgress />
       <Topbar
         locale={locale}

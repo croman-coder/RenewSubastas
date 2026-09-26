@@ -4,41 +4,9 @@ import { adminAuth } from '@/lib/firebase/admin';
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS } from '@/lib/auth/constants';
 import { mfaGate } from '@/lib/auth/mfa-gate';
 import { loadMfaRequiredRoles } from '@/lib/auth/mfa-policy';
+import { sameOrigin } from '@/lib/auth/same-origin';
 
 export const runtime = 'nodejs';
-
-/**
- * Same-origin guard. Browsers send `Origin` on every state-changing
- * cross-origin POST, so comparing it to the request's own host blocks
- * any third-party page that managed to obtain a Firebase ID token
- * (e.g. via OAuth flow misuse) from minting a session cookie under
- * our domain.
- *
- * We accept the request only when:
- *   - `Origin` header is missing (older browsers / Next.js server-side
- *     rewrites) AND `Sec-Fetch-Site` is missing too (legacy clients),
- *     OR
- *   - the Origin's host matches the request's Host header.
- */
-function sameOrigin(req: NextRequest): boolean {
-  const origin = req.headers.get('origin');
-  const host = req.headers.get('host');
-  if (!origin) {
-    // Modern fetch always sets Origin on POST. If it's missing AND the
-    // browser also didn't send Sec-Fetch-Site, this is likely a
-    // server-side request (e.g. SSR) which we trust. If Sec-Fetch-Site
-    // says cross-site, refuse.
-    const sfs = req.headers.get('sec-fetch-site');
-    return !sfs || sfs === 'same-origin';
-  }
-  if (!host) return false;
-  try {
-    const originUrl = new URL(origin);
-    return originUrl.host === host;
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) {

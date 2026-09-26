@@ -1,6 +1,8 @@
 'use client';
 import { getMessaging, getToken, onMessage, isSupported, type Messaging } from 'firebase/messaging';
 import { httpsCallable } from 'firebase/functions';
+import * as Sentry from '@sentry/nextjs';
+import { ensureClientAuth } from '@/lib/auth/ensure-client-auth';
 import { fb } from './client';
 
 /**
@@ -120,45 +122,73 @@ export function pushPermission(): NotificationPermission | 'unsupported' {
 }
 
 /**
- * Request permission, obtain an FCM token, and persist it server-side
- * so a Cloud Function can later fan a push out to this device. Returns
- * `null` if the user denies permission or the environment doesn't
- * support web push — caller treats that as "no push" and falls back to
- * in-app notifications.
+ * Why enabling push did not work, as far as the buyer needs to know:
+ *   - `unsupported` — this browser can't do web push at all.
+ *   - `denied`      — the site is blocked in the browser settings.
+ *   - `dismissed`   — the browser asked and the buyer closed it without allowing.
+ *   - `session`     — no Firebase user in this browser and the server session
+ *                     couldn't restore one (expired / revoked).
+ *   - `failed`      — anything else (service worker, FCM, our backend). Also
+ *                     reported to Sentry with the step that broke.
  */
-export async function enablePush(): Promise<string | null> {
-  if (!isPushSupported()) return null;
+export type EnablePushResult =
+  | { ok: true; token: string }
+  | { ok: false; reason: 'unsupported' | 'denied' | 'dismissed' | 'session' | 'failed' };
+
+function failed(step: string, err?: unknown): EnablePushResult {
+  console.warn(`[messaging] ${step} failed`, err);
+  Sentry.captureException(err ?? new Error(`push: ${step} failed`), {
+    tags: { feature: 'push', step },
+  });
+  return { ok: false, reason: 'failed' };
+}
+
+/**
+ * Request permission, obtain an FCM token, and persist it server-side
+ * so a Cloud Function can later fan a push out to this device.
+ *
+ * Every failure comes back with a reason instead of a bare `null`. Until
+ * 2026-09-26 all of them collapsed into the same "No se pudieron activar"
+ * toast and a console.warn nobody sees in production — which is how a
+ * backend that rejected 100% of tokens went unnoticed.
+ */
+export async function enablePush(): Promise<EnablePushResult> {
+  if (!isPushSupported()) return { ok: false, reason: 'unsupported' };
   const messaging = await getClient();
-  if (!messaging) return null;
+  if (!messaging) return { ok: false, reason: 'unsupported' };
 
   const vapidKey = process.env['NEXT_PUBLIC_FIREBASE_VAPID_KEY'];
-  if (!vapidKey) {
-    console.warn('[messaging] NEXT_PUBLIC_FIREBASE_VAPID_KEY is not set');
-    return null;
-  }
+  if (!vapidKey) return failed('vapid-key-missing');
 
+  // Nothing awaits the network before this line on purpose: Safari only
+  // shows the permission dialog while the tap that triggered it is fresh.
   const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return null;
+  if (permission === 'denied') return { ok: false, reason: 'denied' };
+  if (permission !== 'granted') return { ok: false, reason: 'dismissed' };
 
   const sw = await registerSw();
-  if (!sw) return null;
+  if (!sw) return failed('service-worker');
+
+  let token: string;
+  try {
+    token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: sw });
+  } catch (err) {
+    return failed('get-token', err);
+  }
+  if (!token) return failed('get-token');
+
+  // The callable reads the caller from the browser's Firebase session, which
+  // can be missing while the server session is fine (home-screen web app on
+  // iPhone). Restore it first — see lib/auth/client-token.ts.
+  if (!(await ensureClientAuth())) return { ok: false, reason: 'session' };
 
   try {
-    const token = await getToken(messaging, {
-      vapidKey,
-      serviceWorkerRegistration: sw,
-    });
-    if (!token) return null;
-
-    // Persist the token so the backend can fan out push messages. The
-    // callable enforces auth + dedupes; we don't keep a local registry.
+    // The callable enforces auth + dedupes; we don't keep a local registry.
     await httpsCallable<{ token: string }, { ok: true }>(fb.functions, 'savePushToken')({ token });
-
-    return token;
   } catch (err) {
-    console.warn('[messaging] getToken failed', err);
-    return null;
+    return failed('save-token', err);
   }
+  return { ok: true, token };
 }
 
 /**

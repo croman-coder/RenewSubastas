@@ -7,6 +7,7 @@ import {
   isPushSupported,
   onForegroundPush,
   pushPermission,
+  type EnablePushResult,
 } from '@/lib/firebase/messaging';
 
 interface Props {
@@ -15,6 +16,17 @@ interface Props {
 
 const DISMISS_KEY = 'renew:push:promptDismissedAt';
 const DISMISS_TTL_MS = 7 * 24 * 3600_000;
+
+// One message per cause, so a buyer (or whoever takes their screenshot) can
+// tell a blocked browser from an expired session from our own failure.
+const FAILURE_MESSAGE: Record<Exclude<EnablePushResult, { ok: true }>['reason'], string> = {
+  unsupported: 'Este navegador no permite notificaciones.',
+  denied:
+    'Las notificaciones están bloqueadas para este sitio. Habilitalas en la configuración del navegador.',
+  dismissed: 'No se activaron: el navegador preguntó y no se dio permiso.',
+  session: 'Tu sesión venció. Volvé a iniciar sesión y probá de nuevo.',
+  failed: 'No se pudieron activar las notificaciones. Probá de nuevo en unos minutos.',
+};
 
 /**
  * Soft permission prompt for FCM web push.
@@ -84,15 +96,15 @@ export function PushPermissionPrompt({ locale }: Props) {
   async function accept() {
     setBusy(true);
     try {
-      const token = await enablePush();
-      if (token) {
+      const result = await enablePush();
+      if (result.ok) {
         toast.success('Notificaciones activadas');
         setState('granted');
-        setVisible(false);
       } else {
-        toast.error('No se pudieron activar las notificaciones');
-        setVisible(false);
+        toast.error(FAILURE_MESSAGE[result.reason]);
+        if (result.reason === 'denied') setState('denied');
       }
+      setVisible(false);
     } finally {
       setBusy(false);
     }

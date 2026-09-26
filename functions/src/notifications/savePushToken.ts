@@ -3,7 +3,7 @@ import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { requireSignedIn } from '../lib/errors.js';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 const InputSchema = z.object({
   // FCM tokens are opaque strings up to ~200 chars. We cap at 4096 to
@@ -37,19 +37,17 @@ export async function savePushTokenHandler(req: CallableRequest): Promise<SavePu
   const ref = adminDb().doc(`users/${uid}`);
   const snap = await ref.get();
   const existing = ((snap.data()?.['fcmTokens'] as Array<{ token: string }> | undefined) ??
-    []) as Array<{ token: string; platform: string; updatedAt: FirebaseFirestore.Timestamp }>;
+    []) as Array<{ token: string; platform: string; updatedAt: Timestamp }>;
 
   // De-dupe: if we already have this token, just refresh its timestamp
   // so the sweeper keeps it alive. Otherwise append.
+  //
+  // `updatedAt` is a concrete Timestamp, not FieldValue.serverTimestamp():
+  // Firestore rejects sentinels inside array elements ("serverTimestamp()
+  // cannot be used inside of an array"), and until 2026-09-26 that made
+  // every call fail with a 500 — no token was ever stored.
   const filtered = existing.filter((t) => t.token !== token);
-  const next = [
-    ...filtered,
-    {
-      token,
-      platform: 'web',
-      updatedAt: FieldValue.serverTimestamp() as unknown as FirebaseFirestore.Timestamp,
-    },
-  ];
+  const next = [...filtered, { token, platform: 'web', updatedAt: Timestamp.now() }];
 
   // Keep at most 10 tokens per user to bound array size — a real human
   // is unlikely to have more than 3-4 devices, and stale tokens get

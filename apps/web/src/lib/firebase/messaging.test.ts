@@ -12,9 +12,16 @@ vi.mock('firebase/messaging', () => ({
   isSupported: isSupportedMock,
 }));
 
+const callableMock = vi.fn(async (_data: unknown) => ({ data: { ok: true } }));
 vi.mock('firebase/functions', () => ({
-  httpsCallable: () => async () => ({ data: { ok: true } }),
+  httpsCallable: () => callableMock,
 }));
+
+const ensureClientAuthMock = vi.fn(async () => true);
+vi.mock('@/lib/auth/ensure-client-auth', () => ({ ensureClientAuth: ensureClientAuthMock }));
+
+const captureExceptionMock = vi.fn();
+vi.mock('@sentry/nextjs', () => ({ captureException: captureExceptionMock }));
 
 vi.mock('./client', () => ({
   fb: { app: {}, functions: {} },
@@ -121,7 +128,81 @@ describe('messaging client gating', () => {
     vi.stubGlobal('navigator', { serviceWorker: {} });
     const mod = await loadModule();
 
-    await expect(mod.enablePush()).resolves.toBeNull();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: false, reason: 'unsupported' });
     expect(getMessagingMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('enablePush outcomes', () => {
+  let permission: NotificationPermission;
+
+  beforeEach(() => {
+    permission = 'granted';
+    isSupportedMock.mockResolvedValue(true);
+    getTokenMock.mockReset();
+    getTokenMock.mockResolvedValue('tok');
+    callableMock.mockReset();
+    callableMock.mockResolvedValue({ data: { ok: true } });
+    ensureClientAuthMock.mockReset();
+    ensureClientAuthMock.mockResolvedValue(true);
+    captureExceptionMock.mockClear();
+    const Notification = { requestPermission: async () => permission };
+    vi.stubGlobal('window', { Notification, PushManager: {} });
+    vi.stubGlobal('Notification', Notification);
+    vi.stubGlobal('navigator', {
+      serviceWorker: { register: async () => ({ active: {} }) },
+    });
+    vi.stubEnv('NEXT_PUBLIC_FIREBASE_VAPID_KEY', 'test-vapid-key');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it('saves the token and reports success', async () => {
+    const mod = await loadModule();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: true, token: 'tok' });
+    expect(callableMock).toHaveBeenCalledWith({ token: 'tok' });
+  });
+
+  it('tells a blocked site apart from a closed dialog', async () => {
+    permission = 'denied';
+    let mod = await loadModule();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: false, reason: 'denied' });
+    permission = 'default';
+    mod = await loadModule();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: false, reason: 'dismissed' });
+    expect(getTokenMock).not.toHaveBeenCalled();
+  });
+
+  // iPhone 2026-09-25: the callable left without a Firebase user and came
+  // back 401. Now the session is restored first, and if that is impossible
+  // the buyer is told their session expired instead of a generic failure.
+  it('restores the browser session before calling the backend', async () => {
+    const mod = await loadModule();
+    await mod.enablePush();
+    expect(ensureClientAuthMock).toHaveBeenCalled();
+    expect(ensureClientAuthMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      callableMock.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('reports an unrecoverable session without calling the backend', async () => {
+    ensureClientAuthMock.mockResolvedValue(false);
+    const mod = await loadModule();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: false, reason: 'session' });
+    expect(callableMock).not.toHaveBeenCalled();
+  });
+
+  // Production 2026-09-25: savePushToken answered 500 for every buyer and the
+  // only trace was a console.warn. A backend failure must reach Sentry.
+  it('reports a backend failure to Sentry with the step that broke', async () => {
+    callableMock.mockRejectedValue(new Error('internal'));
+    const mod = await loadModule();
+    await expect(mod.enablePush()).resolves.toEqual({ ok: false, reason: 'failed' });
+    expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
+      tags: { feature: 'push', step: 'save-token' },
+    });
   });
 });
