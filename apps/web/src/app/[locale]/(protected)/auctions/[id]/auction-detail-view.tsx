@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { collection, doc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Clock, Flame } from 'lucide-react';
+import { ArrowLeft, Flame } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
 import { Separator } from '@/components/ui/separator';
 import { BlurNumber } from '@/components/brand/blur-number';
@@ -11,8 +11,15 @@ import type { AuctionDetail } from '@/lib/buyer/load-auction';
 import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { formatAmount as fmtUsd, formatNumber } from '@/lib/format/money';
 import { vehicleEnumLabelKey, type VehicleEnumField } from '@/lib/format/vehicle-labels';
+import { vehicleAlt } from '@/lib/format/vehicle-alt';
+import {
+  AuctionGallery,
+  CountdownCard,
+  SpecTile,
+  StatusChip,
+} from '@/components/auctions/detail-parts';
+import { FinancingCalculator } from '@/components/auctions/financing-calculator';
 import { BidPanel } from './bid-panel';
-import { FinancingCalculator } from './financing-calculator';
 
 interface BidEntry {
   id: string;
@@ -43,7 +50,6 @@ export function AuctionDetailView({
     const key = vehicleEnumLabelKey(field, value);
     return key ? tVehicle(key) : value;
   };
-  const [activeImg, setActiveImg] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [live, setLive] = useState<{
     currentBid: number;
@@ -173,41 +179,10 @@ export function AuctionDetailView({
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:gap-8">
         <div className="space-y-6">
-          {/* Photo gallery */}
-          <div className="space-y-2">
-            <div className="group aspect-[4/3] bg-bg-deep rounded-2xl overflow-hidden ring-1 ring-text-subtle/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.5)]">
-              {initial.images[activeImg] ? (
-                <img
-                  src={initial.images[activeImg].url}
-                  alt=""
-                  className="w-full h-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.03]"
-                />
-              ) : (
-                <div className="w-full h-full grid place-items-center text-text-subtle">
-                  sin fotos
-                </div>
-              )}
-            </div>
-            {initial.images.length > 1 && (
-              <div className="grid grid-cols-6 gap-2">
-                {initial.images.slice(0, 12).map((img, i) => (
-                  <button
-                    key={img.url}
-                    type="button"
-                    onClick={() => setActiveImg(i)}
-                    className={
-                      'aspect-square rounded-lg overflow-hidden ring-2 transition-all duration-200 ' +
-                      (i === activeImg
-                        ? 'ring-text-strong scale-[0.98]'
-                        : 'ring-transparent opacity-60 hover:opacity-100 hover:ring-text-subtle/30')
-                    }
-                  >
-                    <img src={img.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <AuctionGallery
+            images={initial.images}
+            alt={vehicleAlt(initial.make, initial.model, initial.year)}
+          />
 
           <header className="space-y-3">
             <div className="flex items-center gap-2">
@@ -224,18 +199,21 @@ export function AuctionDetailView({
               {t('specs')}
             </h2>
             <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-              <Spec
+              <SpecTile
                 label={t('transmission')}
                 value={vehicleLabel('transmission', initial.transmission)}
               />
-              <Spec label={t('fuelType')} value={vehicleLabel('fuelType', initial.fuelType)} />
+              <SpecTile label={t('fuelType')} value={vehicleLabel('fuelType', initial.fuelType)} />
               {initial.mileage !== null && (
-                <Spec label={t('mileage')} value={`${formatNumber(initial.mileage)} km`} />
+                <SpecTile label={t('mileage')} value={`${formatNumber(initial.mileage)} km`} />
               )}
-              <Spec label={t('condition')} value={vehicleLabel('condition', initial.condition)} />
-              {initial.color && <Spec label={t('color')} value={initial.color} />}
-              {initial.licensePlate && <Spec label="Chapa" value={initial.licensePlate} />}
-              {initial.vin && <Spec label={t('vin')} value={initial.vin} />}
+              <SpecTile
+                label={t('condition')}
+                value={vehicleLabel('condition', initial.condition)}
+              />
+              {initial.color && <SpecTile label={t('color')} value={initial.color} />}
+              {initial.licensePlate && <SpecTile label="Chapa" value={initial.licensePlate} />}
+              {initial.vin && <SpecTile label={t('vin')} value={initial.vin} />}
             </dl>
           </section>
 
@@ -346,144 +324,6 @@ export function AuctionDetailView({
           </section>
         </>
       )}
-    </div>
-  );
-}
-
-function Spec({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="hover-lift rounded-lg border border-text-subtle/10 bg-bg-elev px-3 py-2.5 hover:border-text-subtle/25 hover:bg-bg-elev/50">
-      <dt className="text-text-muted text-[10px] uppercase tracking-[0.1em] font-semibold">
-        {label}
-      </dt>
-      <dd className="text-text-strong text-sm mt-0.5 truncate">{value}</dd>
-    </div>
-  );
-}
-
-function StatusChip({ status, label }: { status: string; label: string }) {
-  const map: Record<string, string> = {
-    live: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30',
-    scheduled: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30',
-    ended: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30',
-    cancelled: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
-  };
-  const cls = map[status] ?? map['ended']!;
-  return (
-    <span
-      className={
-        'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 ' +
-        'text-[11px] uppercase tracking-[0.08em] font-semibold ' +
-        'ring-1 ring-inset ' +
-        cls
-      }
-    >
-      {status === 'live' && (
-        <span className="relative flex w-1.5 h-1.5">
-          <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400/70 animate-ping" />
-          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-emerald-400" />
-        </span>
-      )}
-      {label}
-    </span>
-  );
-}
-
-function CountdownCard({
-  label,
-  remainingMs,
-  urgent,
-  critical,
-  isLive,
-}: {
-  label: string;
-  remainingMs: number;
-  urgent: boolean;
-  critical: boolean;
-  isLive: boolean;
-}) {
-  const ended = remainingMs <= 0;
-  const total = Math.max(0, Math.floor(remainingMs / 1000));
-  const days = Math.floor(total / 86400);
-  const h = Math.floor((total % 86400) / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-
-  // Urgency is carried by the digits' color alone. The halos, the gradient
-  // hairline and the blurred blob behind the clock went with direction A
-  // (DESIGN.md: flat surfaces, one soft shadow, no glows).
-  const tone = ended
-    ? { text: 'text-text-muted' }
-    : critical
-      ? { text: 'text-rose-600 dark:text-rose-400' }
-      : urgent
-        ? { text: 'text-amber-700 dark:text-amber-300' }
-        : { text: 'text-text-strong' };
-
-  const showDays = days > 0 && !ended;
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev p-5 shadow-card">
-      <div className="relative space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Clock
-            className={'w-3.5 h-3.5 ' + tone.text + (critical ? ' animate-pulse' : '')}
-            strokeWidth={2.5}
-          />
-          <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-text-muted">
-            {label}
-          </p>
-        </div>
-
-        {ended ? (
-          <p className="text-2xl font-bold tracking-tight text-text-muted num-tab">Finalizada</p>
-        ) : (
-          <div className="flex items-end gap-3 flex-wrap">
-            {showDays && <DigitGroup value={days} unit="d" tone={tone.text} small />}
-            <DigitGroup value={h} unit="h" tone={tone.text} />
-            <DigitGroup value={m} unit="m" tone={tone.text} />
-            <DigitGroup value={s} unit="s" tone={tone.text} pulsing={isLive && critical} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function DigitGroup({
-  value,
-  unit,
-  tone,
-  small,
-  pulsing,
-}: {
-  value: number;
-  unit: string;
-  tone: string;
-  small?: boolean;
-  pulsing?: boolean;
-}) {
-  const padded = String(value).padStart(2, '0');
-  return (
-    <div className="flex items-baseline gap-0.5">
-      <span
-        // On this element, not an ancestor (it doesn't cascade): the server
-        // and the browser read the clock a moment apart, so the seconds
-        // differ on hydration. Same fix as BatchCountdown's Unit.
-        suppressHydrationWarning
-        className={
-          'font-extrabold num-tab tracking-tight tabular-nums ' +
-          (small ? 'text-3xl' : 'text-5xl sm:text-[3.5rem] sm:leading-[1]') +
-          ' ' +
-          tone +
-          (pulsing ? ' animate-pulse' : '')
-        }
-      >
-        {padded}
-      </span>
-      <span className={'text-xs font-semibold uppercase tracking-wider ' + tone + '/70'}>
-        {unit}
-      </span>
     </div>
   );
 }
