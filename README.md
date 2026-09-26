@@ -2,6 +2,10 @@
 
 Plataforma de subastas asincrónicas de vehículos.
 
+**Cómo está armada: [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).** Leé su sección 0 antes de
+tocar nada: el proyecto de Firebase `carbid-staging` es producción y un push a `main` publica la
+web.
+
 ## Setup
 
 ```bash
@@ -15,7 +19,7 @@ Ver `docs/superpowers/specs/` para el diseño y `docs/superpowers/plans/` para l
 
 ## Bootstrap first admin (one-time)
 
-Against staging:
+Contra producción (el proyecto `carbid-staging` **es** producción):
 
 ```bash
 cd functions
