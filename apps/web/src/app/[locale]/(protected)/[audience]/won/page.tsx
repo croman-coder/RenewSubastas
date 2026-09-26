@@ -3,9 +3,7 @@ import { BadgeCheck, CircleAlert, Hourglass, Trophy } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/server';
 import { listMyWon } from '@/lib/buyer/list-my-won';
 import { getTranslations } from 'next-intl/server';
-
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+import { formatAmount as fmtUsd } from '@/lib/format/money';
 
 interface PageProps {
   params: { locale: string; audience: 'retail' | 'wholesale' };

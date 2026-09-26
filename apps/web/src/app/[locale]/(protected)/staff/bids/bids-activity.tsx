@@ -5,6 +5,7 @@ import { collection, collectionGroup, limit, onSnapshot, orderBy, query } from '
 import { httpsCallable } from 'firebase/functions';
 import { Gavel, AlertTriangle, Mail, MailX, MailCheck } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
 
 interface BidRow {
   id: string;
@@ -24,9 +25,6 @@ interface BidderContact {
   email: string;
   phone: string;
 }
-
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function ago(ms: number): string {
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000));

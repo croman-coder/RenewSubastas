@@ -33,15 +33,8 @@ export const AUCTION_OUTCOME_LABEL: Record<string, string> = {
   sold_offline: 'vendida en salón',
 };
 
-const usdFormatter = new Intl.NumberFormat('es-PY', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
-
-export function fmtUsd(n: number): string {
-  return usdFormatter.format(n);
-}
+// Same "USD 29.000" as the rest of the app (it used to read "US$ 29.000").
+export { formatUsd as fmtUsd } from '@/lib/format/money';
 
 // Traffic counter (docs/superpowers/specs/2026-08-08-trafico-web-design.md).
 // FunnelStage/Source are the closed sets the server classifies into —

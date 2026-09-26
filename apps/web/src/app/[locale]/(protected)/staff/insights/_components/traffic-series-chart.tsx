@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { LineChart as LineIcon } from 'lucide-react';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   /** Oldest first — one point per rolled-up day. */
@@ -45,8 +46,7 @@ export function TrafficSeriesChart({ data, totalViews, totalSessions }: Props) {
           </h2>
         </div>
         <span className="text-xs text-text-muted num-tab">
-          {totalViews.toLocaleString('es-PY')} vistas · {totalSessions.toLocaleString('es-PY')}{' '}
-          sesiones
+          {formatNumber(totalViews)} vistas · {formatNumber(totalSessions)} sesiones
         </span>
       </header>
 

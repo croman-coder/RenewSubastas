@@ -6,13 +6,11 @@ import { loadWonAuction } from '@/lib/buyer/load-won-auction';
 import { CopyableField } from './copyable-field';
 import { Countdown } from './countdown';
 import { PaymentProofUpload } from './payment-proof-upload';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
 
 interface PageProps {
   params: { locale: string; audience: 'retail' | 'wholesale'; auctionId: string };
 }
-
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default async function WonDetailPage({
   params: { locale, audience, auctionId },

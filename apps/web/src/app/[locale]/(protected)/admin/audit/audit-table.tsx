@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { AuditEntry } from '@/lib/admin/list-audit';
+import { formatDateTimePy } from '@/lib/format/date';
 
 interface Props {
   locale: string;
@@ -96,7 +97,7 @@ export function AuditTable({ locale, items, nextCursor, currentAction }: Props) 
             {items.map((e) => (
               <TableRow key={e.id}>
                 <TableCell className="text-text-muted text-sm num-tab">
-                  {new Date(e.createdAt).toLocaleString(locale)}
+                  {formatDateTimePy(locale, new Date(e.createdAt))}
                 </TableCell>
                 <TableCell className="font-mono text-xs">{e.actorUid}</TableCell>
                 <TableCell>

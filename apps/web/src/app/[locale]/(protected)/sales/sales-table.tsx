@@ -5,6 +5,7 @@ import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/f
 import { httpsCallable } from 'firebase/functions';
 import { Trophy, BadgeCheck, CircleAlert, Hourglass } from 'lucide-react';
 import { fb } from '@/lib/firebase/client';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
 
 interface WinnerContact {
   displayName: string;
@@ -24,9 +25,6 @@ interface SaleRow {
   winnerUid: string;
   endedAtMs: number;
 }
-
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /**
  * Realtime admin sales table. Lists every ended+sold auction with the

@@ -9,14 +9,10 @@ import { BlurNumber } from '@/components/brand/blur-number';
 import { trackViewContent } from '@/lib/analytics/meta-events';
 import type { AuctionDetail } from '@/lib/buyer/load-auction';
 import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
+import { formatAmount as fmtUsd, formatNumber } from '@/lib/format/money';
+import { vehicleEnumLabelKey, type VehicleEnumField } from '@/lib/format/vehicle-labels';
 import { BidPanel } from './bid-panel';
 import { FinancingCalculator } from './financing-calculator';
-
-// Money is denominated in USD with 2-decimal precision. Formatting it
-// consistently here avoids the "USD 16.502,556" surface bug where a stray
-// 8-decimal currentBid leaked into the big price number.
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface BidEntry {
   id: string;
@@ -42,6 +38,11 @@ export function AuctionDetailView({
 }) {
   const t = useTranslations('buyer.auctions.detail');
   const tStatus = useTranslations('buyer.auctions.status');
+  const tVehicle = useTranslations('staff.vehicles.form');
+  const vehicleLabel = (field: VehicleEnumField, value: string) => {
+    const key = vehicleEnumLabelKey(field, value);
+    return key ? tVehicle(key) : value;
+  };
   const [activeImg, setActiveImg] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [live, setLive] = useState<{
@@ -223,12 +224,15 @@ export function AuctionDetailView({
               {t('specs')}
             </h2>
             <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-              <Spec label={t('transmission')} value={initial.transmission} />
-              <Spec label={t('fuelType')} value={initial.fuelType} />
+              <Spec
+                label={t('transmission')}
+                value={vehicleLabel('transmission', initial.transmission)}
+              />
+              <Spec label={t('fuelType')} value={vehicleLabel('fuelType', initial.fuelType)} />
               {initial.mileage !== null && (
-                <Spec label={t('mileage')} value={`${initial.mileage.toLocaleString()} km`} />
+                <Spec label={t('mileage')} value={`${formatNumber(initial.mileage)} km`} />
               )}
-              <Spec label={t('condition')} value={initial.condition} />
+              <Spec label={t('condition')} value={vehicleLabel('condition', initial.condition)} />
               {initial.color && <Spec label={t('color')} value={initial.color} />}
               {initial.licensePlate && <Spec label="Chapa" value={initial.licensePlate} />}
               {initial.vin && <Spec label={t('vin')} value={initial.vin} />}
@@ -496,6 +500,10 @@ function DigitGroup({
   return (
     <div className="flex items-baseline gap-0.5">
       <span
+        // On this element, not an ancestor (it doesn't cascade): the server
+        // and the browser read the clock a moment apart, so the seconds
+        // differ on hydration. Same fix as BatchCountdown's Unit.
+        suppressHydrationWarning
         className={
           'font-bold num-tab tracking-tight tabular-nums ' +
           (small ? 'text-3xl' : 'text-5xl sm:text-[3.5rem] sm:leading-[1]') +

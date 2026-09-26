@@ -9,6 +9,7 @@ import { fb } from '@/lib/firebase/client';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
 import { SoldBanner } from '@/components/auctions/sold-banner';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
+import { formatAmount } from '@/lib/format/money';
 
 interface Props {
   locale: string;
@@ -130,6 +131,10 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
           <StatusBadge status={auction.status} label={tStatus(auction.status)} />
         </div>
         <div
+          // The remaining time is this div's own text, so the suppression
+          // belongs here: server and browser read the clock a moment apart and
+          // every card on the page used to raise a hydration error.
+          suppressHydrationWarning
           className={
             'absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 ' +
             'rounded-md px-2 py-1 text-xs font-medium num-tab backdrop-blur-md ' +
@@ -158,7 +163,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
                 (isLive ? 'text-text-strong' : 'text-text-muted')
               }
             >
-              USD {displayPrice.toLocaleString()}
+              USD {formatAmount(displayPrice)}
             </p>
           </div>
           {/* Hidden at zero on purpose. "Precio inicial" already says there is

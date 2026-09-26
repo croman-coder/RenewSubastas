@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, CalendarRange, Minus, TriangleAlert } from 'lucide-react';
 import type { PeriodComparison, PeriodDailyRow } from '@/lib/insights/load-period-comparison';
+import { formatNumber } from '@/lib/format/money';
 import {
   buildComparisonRows,
   comparisonGroups,
@@ -21,7 +22,7 @@ interface Props {
   preset: PresetKey | null;
 }
 
-const num = (n: number) => n.toLocaleString('es-PY');
+const num = formatNumber;
 
 /** `2026-09-09` -> `09/09`. Day and month only: every range shown here is
  *  bounded by the header, so the year would be noise in every cell. */

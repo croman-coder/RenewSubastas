@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { MyBidEntry } from '@/lib/buyer/list-my-bids';
+import { formatAmount } from '@/lib/format/money';
+import { formatDateTimePy } from '@/lib/format/date';
 
 interface Props {
   locale: string;
@@ -85,13 +87,13 @@ export function MyBidsTable({ locale, audience, items, currentTab }: Props) {
                       </span>
                     </Link>
                   </TableCell>
-                  <TableCell className="num-tab">USD {b.myBid.toLocaleString()}</TableCell>
-                  <TableCell className="num-tab">USD {b.currentBid.toLocaleString()}</TableCell>
+                  <TableCell className="num-tab">USD {formatAmount(b.myBid)}</TableCell>
+                  <TableCell className="num-tab">USD {formatAmount(b.currentBid)}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{tStatus(b.auctionStatus)}</Badge>
                   </TableCell>
                   <TableCell className="text-text-muted text-sm num-tab">
-                    {new Date(b.endsAtMs).toLocaleString(locale)}
+                    {formatDateTimePy(locale, b.endsAtMs)}
                   </TableCell>
                 </TableRow>
               ))}

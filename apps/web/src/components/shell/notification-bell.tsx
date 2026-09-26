@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { RenewMark } from '@/components/brand/renew-mark';
 import type { Role } from './nav-config';
+import { formatAmount } from '@/lib/format/money';
 
 interface Props {
   locale: string;
@@ -159,7 +160,7 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
             href: `/${locale}/${buyerAudience}/won/${docId}`,
             title: '¡Ganaste la subasta!',
             subtitle:
-              `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · USD ${finalPrice.toLocaleString()}`.trim(),
+              `${(v['make'] as string) ?? ''} ${(v['model'] as string) ?? ''} · USD ${formatAmount(finalPrice)}`.trim(),
           };
         },
       );
@@ -180,7 +181,7 @@ export function NotificationBell({ locale, role, uid, audience }: Props) {
             href: `/${locale}/staff/auctions/${auctionId}`,
             title: 'Nueva puja',
             subtitle:
-              `USD ${amount.toLocaleString()} · ${buyer.firstName ?? 'Buyer'} ${(buyer.lastInitial ?? '').toString()}.`.trim(),
+              `USD ${formatAmount(amount)} ·${buyer.firstName ?? 'Buyer'} ${(buyer.lastInitial ?? '').toString()}.`.trim(),
           };
         },
       );

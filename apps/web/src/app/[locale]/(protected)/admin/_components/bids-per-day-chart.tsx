@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { useTranslations } from 'next-intl';
 import { LineChart as LineIcon } from 'lucide-react';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   data: Array<{ date: string; count: number }>;
@@ -48,7 +49,7 @@ export function BidsPerDayChart({ data }: Props) {
           </h2>
         </div>
         <span className="text-xs text-text-muted num-tab">
-          {totalBids.toLocaleString()} en 30d · pico {maxCount}
+          {formatNumber(totalBids)} en 30d · pico {maxCount}
         </span>
       </header>
       {totalBids === 0 ? (

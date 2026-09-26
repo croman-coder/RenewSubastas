@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   priceUsd: number;
@@ -41,10 +42,10 @@ function amortize(principal: number, termMonths: number, annualRate: number): nu
   return (principal * r) / (1 - Math.pow(1 + r, -termMonths));
 }
 
-const fmtPyg = (n: number) =>
-  new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 }).format(Math.round(n));
-const fmtUsd = (n: number) =>
-  new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.round(n));
+// Whole units on both currencies. USD used to go through 'en-US' ("29,000")
+// while every other price in the app reads "29.000".
+const fmtPyg = formatNumber;
+const fmtUsd = formatNumber;
 
 export function FinancingCalculator({ priceUsd, config, currency, locale }: Props) {
   const t = useTranslations('buyer.auctions.detail.financing');
@@ -76,7 +77,7 @@ export function FinancingCalculator({ priceUsd, config, currency, locale }: Prop
       <div className="rounded-2xl border border-text-subtle/15 bg-bg-elev/50 p-5 space-y-2">
         <Header />
         <p className="text-sm text-text-muted">
-          {t('minNotReached', { amount: config.minFinanceableUsd.toLocaleString() })}
+          {t('minNotReached', { amount: fmtUsd(config.minFinanceableUsd) })}
         </p>
       </div>
     );

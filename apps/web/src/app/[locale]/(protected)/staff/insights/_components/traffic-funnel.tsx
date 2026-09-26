@@ -1,5 +1,6 @@
 import { Filter } from 'lucide-react';
 import { FUNNEL_STAGE_LABEL } from '@/lib/insights/format';
+import { formatNumber } from '@/lib/format/money';
 import {
   buildFunnelSteps,
   funnelBarWidthsPct,
@@ -87,7 +88,7 @@ export function TrafficFunnel({ funnel, stages, title, description }: Props) {
                   </span>
                   <span className="flex items-baseline gap-2">
                     <span className="num-tab text-sm text-text-strong">
-                      {step.count.toLocaleString('es-PY')}
+                      {formatNumber(step.count)}
                     </span>
                     {previousStage && delta !== null && (
                       <span

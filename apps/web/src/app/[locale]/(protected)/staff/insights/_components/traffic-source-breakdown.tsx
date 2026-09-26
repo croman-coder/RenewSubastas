@@ -1,6 +1,7 @@
 import { Share2 } from 'lucide-react';
 import { SOURCE_LABEL } from '@/lib/insights/format';
 import type { Source } from '@/lib/insights/traffic-summary';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   bySource: Record<Source, number>;
@@ -55,7 +56,7 @@ export function TrafficSourceBreakdown({ bySource, days }: Props) {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-text-strong">{SOURCE_LABEL[s]}</span>
                   <span className="num-tab text-text-muted">
-                    {value.toLocaleString('es-PY')} · {sharePct}%
+                    {formatNumber(value)} · {sharePct}%
                   </span>
                 </div>
                 <div className="h-1.5 rounded-full bg-bg-deep/60 overflow-hidden">

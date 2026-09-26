@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 import { isBuyNowBelowReserve } from '@/lib/auctions/buy-now-floor';
 import { MarkSoldDialog } from './mark-sold-dialog';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
+import { formatDateTimePy } from '@/lib/format/date';
 
 interface BidEntry {
   id: string;
@@ -45,9 +47,6 @@ interface InitialAuction {
     note: string | null;
   };
 }
-
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function AuctionDetailView({
   locale,
@@ -502,7 +501,7 @@ export function AuctionDetailView({
         <p className="text-text-muted text-sm">{t('currentBid')}</p>
         <p className="text-3xl font-semibold num-tab">USD {fmtUsd(displayPrice)}</p>
         <p className="text-text-muted text-sm">
-          {t('ends')}: {new Date(endsAtMs).toLocaleString(locale)}
+          {t('ends')}: {formatDateTimePy(locale, endsAtMs)}
         </p>
       </section>
 
@@ -539,11 +538,7 @@ export function AuctionDetailView({
             <div>
               <p className="text-xs uppercase tracking-[0.08em] text-text-muted">Plazo</p>
               <p className="text-text-strong num-tab">
-                {payment.deadlineMs
-                  ? new Date(payment.deadlineMs).toLocaleString(locale, {
-                      timeZone: 'America/Asuncion',
-                    })
-                  : '—'}
+                {payment.deadlineMs ? formatDateTimePy(locale, payment.deadlineMs) : '—'}
               </p>
             </div>
           </div>
@@ -591,7 +586,7 @@ export function AuctionDetailView({
                   {b.buyerSnapshot.firstName} {b.buyerSnapshot.lastInitial}.
                 </span>
                 <span className="num-tab">
-                  USD {b.amount.toLocaleString()}
+                  USD {fmtUsd(b.amount)}
                   <span className="text-text-muted text-xs ml-2">
                     {new Date(b.createdAt).toLocaleTimeString(locale)}
                   </span>

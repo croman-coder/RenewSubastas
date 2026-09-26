@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { collectionGroup, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { fb } from '@/lib/firebase/client';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
+import { formatDateTimePy } from '@/lib/format/date';
 
 interface Bid {
   id: string;
@@ -16,8 +18,6 @@ interface Contact {
   email: string;
   phone: string;
 }
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function BidderDetail({ uid, locale }: { uid: string; locale: string }) {
   const [bids, setBids] = useState<Bid[]>([]);
@@ -84,7 +84,7 @@ export function BidderDetail({ uid, locale }: { uid: string; locale: string }) {
             <span className="num-tab font-semibold text-text-strong">USD {fmtUsd(b.amount)}</span>
             <span className="text-text-muted text-xs">{b.status}</span>
             <span className="ml-auto text-text-muted text-xs">
-              {new Date(b.createdAtMs).toLocaleString('es-PY')}
+              {formatDateTimePy('es', b.createdAtMs)}
             </span>
           </li>
         ))}

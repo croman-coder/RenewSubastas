@@ -3,6 +3,7 @@
 import { animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   value: number;
@@ -28,7 +29,7 @@ export function BlurNumber({
   duration = 0.7,
   animateOnMount = false,
 }: Props) {
-  const fmt = format ?? ((n: number) => Math.round(n).toLocaleString('es-PY'));
+  const fmt = format ?? formatNumber;
   const mv = useMotionValue(animateOnMount ? 0 : value);
   const text = useTransform(mv, (n) => fmt(n));
   const [blur, setBlur] = useState(false);

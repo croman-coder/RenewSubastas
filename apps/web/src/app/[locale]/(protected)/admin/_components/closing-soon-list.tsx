@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Clock, Timer } from 'lucide-react';
+import { formatAmount } from '@/lib/format/money';
 
 interface Props {
   locale: string;
@@ -68,7 +69,7 @@ export function ClosingSoonList({ locale, items }: Props) {
                   </span>
                   <span className="flex items-center gap-3 shrink-0">
                     <span className="num-tab text-xs text-text-muted">
-                      USD {a.currentBid.toLocaleString()}
+                      USD {formatAmount(a.currentBid)}
                     </span>
                     <span
                       className={

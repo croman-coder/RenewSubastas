@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { AuctionListItem } from '@/lib/staff/list-auctions';
+import { formatAmount } from '@/lib/format/money';
+import { formatDateTimePy } from '@/lib/format/date';
 
 interface Props {
   locale: string;
@@ -110,14 +112,14 @@ export function AuctionsTable({ locale, items, nextCursor, currentStatus }: Prop
                   </Link>
                 </TableCell>
                 <TableCell className="num-tab">
-                  USD {(a.currentBid > 0 ? a.currentBid : a.startingPrice).toLocaleString()}
+                  USD {formatAmount(a.currentBid > 0 ? a.currentBid : a.startingPrice)}
                 </TableCell>
                 <TableCell className="num-tab">{a.bidCount}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">{t(`status.${a.status}`)}</Badge>
                 </TableCell>
                 <TableCell className="text-text-muted text-sm num-tab">
-                  {new Date(a.endsAt).toLocaleString(locale)}
+                  {formatDateTimePy(locale, new Date(a.endsAt))}
                 </TableCell>
               </TableRow>
             ))}

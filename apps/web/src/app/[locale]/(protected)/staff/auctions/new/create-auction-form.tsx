@@ -21,6 +21,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FormField, FormSection } from '@/components/forms/form-section';
 import type { ReadyVehicleOption } from '@/lib/staff/list-ready-vehicles';
+import { formatAmount } from '@/lib/format/money';
 
 // Mirrors the cap enforced server-side in createAuction. Surfaces immediate
 // validation messages instead of letting users hit a Cloud Functions error.
@@ -35,12 +36,12 @@ const Schema = z
     startingPrice: z.coerce
       .number()
       .positive()
-      .max(MAX_PRICE_USD, `El máximo permitido es USD ${MAX_PRICE_USD.toLocaleString()}`),
+      .max(MAX_PRICE_USD, `El máximo permitido es USD ${formatAmount(MAX_PRICE_USD)}`),
     reservePrice: z.coerce.number().max(MAX_PRICE_USD).optional(),
     bidIncrement: z.coerce
       .number()
       .positive()
-      .max(MAX_INCREMENT_USD, `Incremento máximo USD ${MAX_INCREMENT_USD.toLocaleString()}`),
+      .max(MAX_INCREMENT_USD, `Incremento máximo USD ${formatAmount(MAX_INCREMENT_USD)}`),
     startsAt: z.string().min(1),
     endsAt: z.string().min(1),
   })
@@ -190,7 +191,7 @@ export function CreateAuctionForm({ locale, vehicles }: Props) {
               htmlFor="startingPrice"
               required
               error={errors.startingPrice?.message}
-              hint={`Máximo USD ${MAX_PRICE_USD.toLocaleString()}`}
+              hint={`Máximo USD ${formatAmount(MAX_PRICE_USD)}`}
             >
               <Input
                 id="startingPrice"

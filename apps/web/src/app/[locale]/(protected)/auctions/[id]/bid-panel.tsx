@@ -24,6 +24,7 @@ import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 import { minimumBid } from '@/lib/auctions/minimum-bid';
 import { trackAddToCart, trackPurchase } from '@/lib/analytics/meta-events';
+import { formatAmount as fmtUsd } from '@/lib/format/money';
 
 // Mirrors the cap enforced server-side in placeBid. Anything above this is a
 // typo or abuse; we surface the validation client-side too so the user gets
@@ -34,8 +35,6 @@ const MAX_BID_USD = 200_000;
 // 16002.55555555 from a previous bug) would otherwise propagate into the
 // next minRequired and into the quick-bid buttons.
 const toCents = (n: number) => Math.round(n * 100) / 100;
-const fmtUsd = (n: number) =>
-  n.toLocaleString('es-PY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 interface Props {
   auctionId: string;
@@ -117,7 +116,7 @@ export function BidPanel({
   // Shared by the Compra ya card and the confirmation dialog so both always
   // show the exact same figure. '' only when canBuyNow is false, in which
   // case nothing that reads it is rendered.
-  const buyNowPriceLabel = buyNowPrice !== null ? buyNowPrice.toLocaleString('es-PY') : '';
+  const buyNowPriceLabel = buyNowPrice !== null ? fmtUsd(buyNowPrice) : '';
 
   // Meta's Purchase for the other way a unit is taken: the auction ran to the
   // end and this buyer was adjudicated it. Unlike buy-now there is no moment
@@ -554,7 +553,11 @@ function StatTile({
       <p className="text-[9px] uppercase tracking-[0.08em] text-text-muted font-semibold">
         {label}
       </p>
-      <p className="num-tab text-xs font-semibold text-text-strong mt-0.5 truncate">{value}</p>
+      {/* Wraps instead of truncating: an ellipsis here hid the digits of the
+          minimum and maximum bid ("USD 200.00…") on narrow panels. */}
+      <p className="num-tab text-xs font-semibold text-text-strong mt-0.5 break-words leading-tight">
+        {value}
+      </p>
     </div>
   );
 }

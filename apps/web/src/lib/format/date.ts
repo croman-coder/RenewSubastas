@@ -38,6 +38,34 @@ export function formatShortDatePy(locale: string, date: Date | number): string {
   });
 }
 
+const DATE_TIME_PARTS = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: PY_TIMEZONE,
+});
+
+/**
+ * Date and time for tables: "26/09/2026 13:23", Paraguay time, no seconds.
+ *
+ * Replaces `new Date(x).toLocaleString(locale)`, which rendered in UTC on the
+ * server (three hours off), showed seconds nobody reads, and then disagreed
+ * with the browser during hydration. Assembled from formatToParts so the
+ * separators don't depend on each engine's ICU data (Safari vs V8): the same
+ * string comes out on the server and in every browser. `locale` is accepted
+ * for symmetry with the other helpers; the numeric layout is the same in es
+ * and en for this app's users.
+ */
+export function formatDateTimePy(_locale: string, date: Date | number): string {
+  const d = typeof date === 'number' ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return '—';
+  const p = Object.fromEntries(DATE_TIME_PARTS.formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p['day']}/${p['month']}/${p['year']} ${p['hour']}:${p['minute']}`;
+}
+
 /**
  * Time only: "21:07". Used in audit log and notification timestamps.
  */

@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { BlurNumber } from '@/components/brand/blur-number';
 import { SparkLine } from '@/components/brand/spark-line';
 import { cn } from '@/lib/utils';
+import { formatNumber } from '@/lib/format/money';
 
 interface Props {
   label: string;
@@ -54,12 +55,7 @@ export function KpiCard({
           </p>
           <p className="text-3xl font-semibold tracking-tight text-text-strong num-tab">
             {prefix}
-            <BlurNumber
-              value={value}
-              animateOnMount
-              duration={1.1}
-              format={(n) => Math.round(n).toLocaleString('es-PY')}
-            />
+            <BlurNumber value={value} animateOnMount duration={1.1} format={formatNumber} />
           </p>
         </div>
         <div
