@@ -128,6 +128,7 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
         allowManualIncrement={config.bid.allowManualIncrement}
         financingConfig={config.financing}
         currencyConfig={config.currency}
+        isBuyer={user.role === 'buyer'}
       />
     </>
   );

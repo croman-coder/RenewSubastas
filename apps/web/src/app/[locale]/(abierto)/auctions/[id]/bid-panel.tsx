@@ -58,6 +58,12 @@ interface Props {
   year: number;
   myUid: string;
   allowManualIncrement: boolean;
+  /**
+   * Avisa que la puja o la compra quedó confirmada por el servidor. La usa la
+   * hoja del celular (BidDock) para cerrarse sola (spec 2026-09-27 §5.4). No
+   * cambia nada de la puja: se llama recién cuando el callable respondió bien.
+   */
+  onBidPlaced?: (() => void) | undefined;
 }
 
 export function BidPanel({
@@ -77,6 +83,7 @@ export function BidPanel({
   year,
   myUid,
   allowManualIncrement,
+  onBidPlaced,
 }: Props) {
   const t = useTranslations('buyer.auctions.detail.bidPanel');
   const router = useRouter();
@@ -143,6 +150,7 @@ export function BidPanel({
     // sending expectedPrice: 0 keeps a future wiring mistake from ever
     // sending a value that could match a real stored price.
     if (buyNowPrice === null) return;
+    let bought = false;
     setBusy(true);
     try {
       // expectedPrice is the exact figure shown in the confirm dialog
@@ -158,6 +166,7 @@ export function BidPanel({
       trackPurchase({ auctionId, make, model, year, value: buyNowPrice }, myUid);
       toast.success('¡Compra confirmada! Revisá tu correo para abonar la seña.');
       router.refresh();
+      bought = true;
     } catch (e) {
       const classification = classifyBuyNowError(e as { code?: string; message?: string });
       if (classification.kind === 'profile_incomplete') {
@@ -174,12 +183,15 @@ export function BidPanel({
       setBusy(false);
       setConfirmBuyNow(false);
     }
+    if (bought) onBidPlaced?.();
   }
 
   // The actual network call, extracted out of the old placeBid so the
   // confirmation dialog's confirm button can invoke it directly. Error
   // handling, the busy state and the toasts are unchanged from before.
-  async function submitBid(amount: number) {
+  // Devuelve si la puja entró, para que la hoja del celular sepa cuándo
+  // cerrarse. Los errores se siguen mostrando acá mismo, como antes.
+  async function submitBid(amount: number): Promise<boolean> {
     setBusy(true);
     try {
       await httpsCallable(fb.functions, 'placeBid')({ auctionId, amount });
@@ -195,6 +207,7 @@ export function BidPanel({
       // stream in on their own. Forcing an RSC refetch added a full
       // server round-trip that kept the button in "Pujando…" long after the
       // bid had already landed.
+      return true;
     } catch (e) {
       const msg = (e as { message?: string }).message ?? '';
       const code = (e as { code?: string }).code ?? '';
@@ -216,6 +229,7 @@ export function BidPanel({
       } else {
         toast.error(t('errors.generic'));
       }
+      return false;
     } finally {
       setBusy(false);
     }
@@ -242,8 +256,9 @@ export function BidPanel({
 
   async function confirmPendingBid() {
     if (pendingBid === null) return;
-    await submitBid(pendingBid);
+    const placed = await submitBid(pendingBid);
     setPendingBid(null);
+    if (placed) onBidPlaced?.();
   }
 
   if (!isLive) {
