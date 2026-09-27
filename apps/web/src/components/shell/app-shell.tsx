@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/auth/server';
+import { getCurrentUser, type CurrentUser } from '@/lib/auth/server';
 import { getTranslations } from 'next-intl/server';
 import { Topbar } from './topbar';
 import { SidebarNav } from './sidebar-nav';
@@ -10,10 +10,18 @@ import { getNavItems, type Role } from './nav-config';
 interface Props {
   locale: string;
   children: React.ReactNode;
+  /**
+   * Cuando quien llama ya verificó la sesión con getOptionalUser (como el
+   * layout de (abierto)), se pasa acá para que el request verifique la
+   * sesión una sola vez en vez de dos. Sin este prop, AppShell verifica con
+   * getCurrentUser y aplica sus redirects, igual que hoy en (protected).
+   */
+  user?: CurrentUser;
 }
 
-export async function AppShell({ locale, children }: Props) {
-  const user = await getCurrentUser(locale);
+export async function AppShell(props: Props) {
+  const { locale, children } = props;
+  const user = props.user ?? (await getCurrentUser(locale));
   const tCommon = await getTranslations('common');
   const tAdmin = await getTranslations('admin.nav');
   const tStaff = await getTranslations('staff.nav');
