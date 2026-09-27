@@ -9,12 +9,12 @@ function languages(path: string) {
 }
 
 /**
- * Pure half of the sitemap, so it is testable without Firestore
- * (app/sitemap.ts imports a server-only loader).
+ * La mitad pura del sitemap, para poder testearla sin Firestore
+ * (app/sitemap.ts importa un cargador server-only).
  *
- * Auctions enter only while open (scheduled or live) and leave when they
- * close (spec 2026-09-26 §7); no lastModified for them, since a bid changes
- * the page and the sitemap is regenerated at most hourly.
+ * Las subastas entran solo mientras están abiertas (programadas o en vivo) y
+ * salen al cerrar (spec 2026-09-26 §7). No llevan lastModified: una puja
+ * cambia la página y el sitemap se regenera como mucho cada hora.
  */
 export function buildSitemap(auctionIds: string[], now: Date): MetadataRoute.Sitemap {
   const pages = INDEXABLE_PATHS.flatMap((path) =>
