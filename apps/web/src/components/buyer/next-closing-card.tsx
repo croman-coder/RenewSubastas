@@ -9,6 +9,8 @@ import { formatClock, remainingLabel } from '@/lib/format/remaining';
 
 interface Props extends HomeStats {
   locale: string;
+  /** Para ubicarla en la grilla de dos columnas del Inicio en escritorio (B7). */
+  className?: string | undefined;
 }
 
 /**
@@ -18,7 +20,13 @@ interface Props extends HomeStats {
  * para que una que cierra salga sola y entre la siguiente. Sin ninguna
  * subasta abierta no se muestra.
  */
-export function NextClosingCard({ locale, myWinning, closingSoon, myBidAuctionIds }: Props) {
+export function NextClosingCard({
+  locale,
+  myWinning,
+  closingSoon,
+  myBidAuctionIds,
+  className,
+}: Props) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -38,7 +46,10 @@ export function NextClosingCard({ locale, myWinning, closingSoon, myBidAuctionId
   return (
     <section
       aria-labelledby="next-closing-heading"
-      className="panel-ink space-y-4 rounded-2xl border p-5 shadow-card"
+      className={
+        'panel-ink space-y-4 rounded-2xl border p-5 shadow-card' +
+        (className ? ` ${className}` : '')
+      }
     >
       <h2
         id="next-closing-heading"
@@ -113,9 +124,11 @@ export function NextClosingCard({ locale, myWinning, closingSoon, myBidAuctionId
         <span suppressHydrationWarning className="num-tab text-xs text-text-muted">
           Cierra {closesAt}
         </span>
+        {/* -my-3 compensa el py-3: el hit area llega a 44 px sin agrandar el
+            texto ni empujar el layout de la fila (C3). */}
         <Link
           href={`/${locale}/auctions/${item.auctionId}` as `/${string}`}
-          className="inline-flex items-center gap-0.5 rounded-md text-sm font-semibold text-text-strong underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"
+          className="-my-3 inline-flex items-center gap-0.5 rounded-md py-3 text-sm font-semibold text-text-strong underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"
         >
           Ir a la subasta
           <ChevronRight className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />

@@ -63,54 +63,59 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
         </h1>
       </header>
 
+      {/* En celular el orden es números → "la próxima que cierra" → "si
+          ganás todo"/"seña" (spec §5.2, punto 3 antes que el 4): por eso
+          NextClosingCard es un ítem de grilla propio, no un hijo del bloque
+          de la izquierda. En escritorio se acomoda en dos columnas con
+          col-start/row-start — la tarjeta ocupa toda la columna derecha,
+          igual que antes de este fix. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-        <div className="space-y-4">
+        <nav aria-label="Tu actividad" className="lg:col-start-1 lg:row-start-1">
           {/* Cada número lleva a la vista que resume: un número con el que no
               se puede hacer nada es decoración. "Activas" pasó a la pestaña
               Subastas. */}
-          <nav aria-label="Tu actividad">
-            <ul className="grid grid-cols-3 divide-x divide-text-subtle/15 overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev shadow-card">
-              <StatLink
-                href={`/${locale}/${audience}/bids`}
-                label="Vas ganando"
-                value={stats.myWinningCount}
-                emphasis={stats.myWinningCount > 0}
-              />
-              <StatLink
-                href={`/${locale}/${audience}/bids`}
-                label="Mis pujas"
-                value={stats.myActiveBidsCount}
-              />
-              <StatLink
-                href={`/${locale}/${audience}/won`}
-                label="Ganadas"
-                value={stats.myWonCount}
-              />
-            </ul>
-          </nav>
-
-          {owed.count > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <MoneyTile
-                label="Si ganás todo"
-                amountUsd={owed.totalUsd}
-                note={`${owed.count} ${owed.count === 1 ? 'subasta que vas ganando' : 'subastas que vas ganando'}`}
-              />
-              <MoneyTile
-                label="Seña a pagar"
-                amountUsd={owed.depositUsd}
-                note={`${depositPct} % en ${config.payment.deadlineHours} h al ganar`}
-              />
-            </div>
-          )}
-        </div>
+          <ul className="grid grid-cols-3 divide-x divide-text-subtle/15 overflow-hidden rounded-2xl border border-text-subtle/15 bg-bg-elev shadow-card">
+            <StatLink
+              href={`/${locale}/${audience}/bids`}
+              label="Vas ganando"
+              value={stats.myWinningCount}
+              emphasis={stats.myWinningCount > 0}
+            />
+            <StatLink
+              href={`/${locale}/${audience}/bids`}
+              label="Mis pujas"
+              value={stats.myActiveBidsCount}
+            />
+            <StatLink
+              href={`/${locale}/${audience}/won`}
+              label="Ganadas"
+              value={stats.myWonCount}
+            />
+          </ul>
+        </nav>
 
         <NextClosingCard
           locale={locale}
           myWinning={stats.myWinning}
           closingSoon={stats.closingSoon}
           myBidAuctionIds={stats.myBidAuctionIds}
+          className="lg:col-start-2 lg:row-start-1 lg:row-span-2"
         />
+
+        {owed.count > 0 && (
+          <div className="grid grid-cols-2 gap-3 lg:col-start-1 lg:row-start-2">
+            <MoneyTile
+              label="Si ganás todo"
+              amountUsd={owed.totalUsd}
+              note={`${owed.count} ${owed.count === 1 ? 'subasta que vas ganando' : 'subastas que vas ganando'}`}
+            />
+            <MoneyTile
+              label="Seña a pagar"
+              amountUsd={owed.depositUsd}
+              note={`${depositPct} % en ${config.payment.deadlineHours} h al ganar`}
+            />
+          </div>
+        )}
       </div>
 
       {stats.closingSoon.length > 0 && (
@@ -260,9 +265,11 @@ function ClosingSoonStrip({ locale, items }: { locale: string; items: BuyerStats
         <h2 id="closing-heading" className="text-lg font-bold tracking-tight text-text-strong">
           Cierran pronto
         </h2>
+        {/* -my-3 compensa el py-3: el hit area llega a 44 px sin agrandar el
+            texto ni empujar el layout de la fila (C3). */}
         <Link
           href={`/${locale}/auctions?tab=closing` as `/${string}`}
-          className="inline-flex items-center gap-1 rounded-md text-sm font-semibold text-text-strong underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"
+          className="-my-3 inline-flex items-center gap-1 rounded-md py-3 text-sm font-semibold text-text-strong underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-text-strong/40"
         >
           Ver todas
           <ArrowRight className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
