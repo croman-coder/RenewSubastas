@@ -1,6 +1,7 @@
 import 'server-only';
 import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { soonestFirst } from '@/lib/buyer/mobile-home';
 
 export interface BuyerStats {
   /** Number of auctions currently `live` (everyone sees the same number; it's the catalog size). */
@@ -206,7 +207,12 @@ export async function loadBuyerStats(
   // Auctions the buyer is currently winning, scoped to their audience. Tope
   // 20 y no 5: "Si ganás todo" suma todas (spec 2026-09-27 §5.2). Reuses
   // myWinningDocs so the count and the visible list stay in sync.
-  const myWinning: BuyerStats['myWinning'] = myWinningDocs.slice(0, 20).map((d) => {
+  // La query no tiene orderBy: mapear TODAS antes de ordenar y recortar (con
+  // el soonestFirst puro y testeado de mobile-home.ts) evita que "la próxima
+  // que cierra" (pickNextClosing) se pierda una subasta que cierra antes solo
+  // porque el recorte de 20 se hacía en el orden que devolvió Firestore, no
+  // por fecha de cierre (B4).
+  const myWinningAll: BuyerStats['myWinning'] = myWinningDocs.map((d) => {
     const data = d.data();
     const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
     return {
@@ -219,6 +225,7 @@ export async function loadBuyerStats(
       endsAtMs: (data['endsAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,
     };
   });
+  const myWinning = soonestFirst(myWinningAll, 20);
 
   return {
     liveAuctions,

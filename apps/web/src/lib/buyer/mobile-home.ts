@@ -101,6 +101,22 @@ export function pickNextClosing(stats: HomeStats, nowMs: number): NextClosing | 
 }
 
 /**
+ * "Si ganás todo" (§5.2 punto 4) necesita TODAS las que vas ganando, así que
+ * `myWinning` sube a 20 — pero la consulta de load-buyer-stats.ts no tiene
+ * orderBy: recortar a 20 en el orden que devolvió Firestore, antes de
+ * ordenar, podía dejar afuera justo la que cierra antes (la que
+ * pickNextClosing más necesita). B4: ordenar por endsAtMs ascendente ANTES
+ * del slice, no después. Genérico (no importa load-buyer-stats.ts, que es
+ * server-only) para poder testearlo.
+ */
+export function soonestFirst<T extends { endsAtMs: number }>(
+  items: readonly T[],
+  limit: number,
+): T[] {
+  return [...items].sort((a, b) => a.endsAtMs - b.endsAtMs).slice(0, limit);
+}
+
+/**
  * Barra de progreso de la tarjeta: cuánto pasó de las últimas 24 h antes del
  * cierre. Ventana fija de 24 h porque es la de "Cierran pronto": con más
  * tiempo la barra queda vacía, y llena al cerrar.

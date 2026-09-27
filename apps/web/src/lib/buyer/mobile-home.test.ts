@@ -3,6 +3,7 @@ import {
   closeProgress,
   commitment,
   pickNextClosing,
+  soonestFirst,
   type HomeClosingItem,
   type HomeWinningItem,
 } from './mobile-home';
@@ -101,6 +102,27 @@ describe('closeProgress', () => {
   it('is full at or after the close', () => {
     expect(closeProgress(NOW, NOW)).toBe(1);
     expect(closeProgress(NOW - H, NOW)).toBe(1);
+  });
+});
+
+describe('soonestFirst', () => {
+  it('sorts by endsAtMs ascending before slicing (B4)', () => {
+    // Firestore no devuelve orden garantizado: si el corte pasara ANTES de
+    // ordenar, "b" (la que cierra antes) podía quedar afuera del límite.
+    const items = [win('a', 5, 1), win('b', 1, 2), win('c', 3, 3)];
+    expect(soonestFirst(items, 2).map((i) => i.auctionId)).toEqual(['b', 'c']);
+  });
+
+  it('does not mutate the input array', () => {
+    const items = [win('a', 5, 1), win('b', 1, 2)];
+    const copy = [...items];
+    soonestFirst(items, 10);
+    expect(items).toEqual(copy);
+  });
+
+  it('keeps everything when the limit is larger than the list', () => {
+    const items = [win('a', 2, 1), win('b', 1, 2)];
+    expect(soonestFirst(items, 20).map((i) => i.auctionId)).toEqual(['b', 'a']);
   });
 });
 
