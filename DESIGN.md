@@ -7,7 +7,8 @@ tokens in `apps/web/src/app/globals.css` (tinted paper `bg-base`, white opaque c
 ink `text-strong`; a tinted charcoal "tinta" dark version), radii and `shadow-card` in
 `apps/web/tailwind.config.ts`, status tones as `Badge` variants (`success`, `warning`, `danger`,
 `info`, `neutral`), and the ink bid panel as `.panel-ink`, which redefines the tokens inside it
-instead of restyling each child. Light is the default theme. The old `glass-*`, `ink-mesh` and
+instead of restyling each child. The theme follows the phone/OS (`defaultTheme="system"` since
+2026-09-27); a theme picked by hand is kept. The old `glass-*`, `ink-mesh` and
 `sheen` class names still exist but are solid now — don't reintroduce blur or glow under them.
 
 ## Color (OKLCH, tinted neutrals — never pure #000/#fff)
