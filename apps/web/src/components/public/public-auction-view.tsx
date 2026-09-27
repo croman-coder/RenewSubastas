@@ -92,8 +92,15 @@ export function PublicAuctionView({
         <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Ver todas las subastas
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:gap-8">
-        <div className="space-y-6 min-w-0">
+      {/* En celular el orden es fotos → título → precio y botón → datos: casi
+          todos llegan por un link de WhatsApp en el teléfono y, al final de la
+          ficha, el precio y "Creá tu cuenta" quedaban a dos pantallas de
+          distancia (pedido de Croman, 26/9/2026). En escritorio la columna
+          derecha sigue fija al lado de fotos y datos; la segunda fila es 1fr
+          para que, si esa columna es más alta, el espacio sobrante quede
+          debajo de los datos y no entre el título y las especificaciones. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] lg:grid-rows-[auto_1fr] gap-6 lg:gap-x-8">
+        <div className="space-y-6 min-w-0 lg:col-start-1 lg:row-start-1">
           <AuctionGallery images={detail.images} alt={title} />
           <header className="space-y-3">
             <StatusChip status={chipStatus} label={tStatus(chipStatus)} />
@@ -102,36 +109,9 @@ export function PublicAuctionView({
               <span className="num-tab text-text-muted font-light">{detail.year}</span>
             </h1>
           </header>
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
-              {t('specs')}
-            </h2>
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-              <SpecTile
-                label={t('transmission')}
-                value={label('transmission', detail.transmission)}
-              />
-              <SpecTile label={t('fuelType')} value={label('fuelType', detail.fuelType)} />
-              {detail.mileage !== null && (
-                <SpecTile label={t('mileage')} value={`${formatNumber(detail.mileage)} km`} />
-              )}
-              <SpecTile label={t('condition')} value={label('condition', detail.condition)} />
-              {detail.color && <SpecTile label={t('color')} value={detail.color} />}
-            </dl>
-          </section>
-          {description && (
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-2">
-                {t('description')}
-              </h2>
-              <p className="whitespace-pre-line text-text-strong text-base leading-relaxed">
-                {description}
-              </p>
-            </section>
-          )}
         </div>
 
-        <aside className="lg:sticky lg:top-20 self-start space-y-4">
+        <aside className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-20 self-start space-y-4">
           {shown === 'sold-visible' ? (
             <SoldBanner variant="detail" />
           ) : (
@@ -170,6 +150,36 @@ export function PublicAuctionView({
             />
           )}
         </aside>
+
+        <div className="space-y-6 min-w-0 lg:col-start-1 lg:row-start-2">
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-3">
+              {t('specs')}
+            </h2>
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+              <SpecTile
+                label={t('transmission')}
+                value={label('transmission', detail.transmission)}
+              />
+              <SpecTile label={t('fuelType')} value={label('fuelType', detail.fuelType)} />
+              {detail.mileage !== null && (
+                <SpecTile label={t('mileage')} value={`${formatNumber(detail.mileage)} km`} />
+              )}
+              <SpecTile label={t('condition')} value={label('condition', detail.condition)} />
+              {detail.color && <SpecTile label={t('color')} value={detail.color} />}
+            </dl>
+          </section>
+          {description && (
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted mb-2">
+                {t('description')}
+              </h2>
+              <p className="whitespace-pre-line text-text-strong text-base leading-relaxed">
+                {description}
+              </p>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );
