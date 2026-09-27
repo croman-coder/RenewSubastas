@@ -119,9 +119,9 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
   if (user.role === 'buyer' && auction.audience !== (user.audience ?? 'retail')) notFound();
 
   // Semilla del dock para que no diga "Pujar" un instante antes de que llegue
-  // el primer snapshot de Firestore cuando el comprador ya iba ganando. Se
-  // manda solo el booleano: el uid de `auction.currentBidderUid` nunca sale
-  // de este server component.
+  // el primer snapshot de Firestore cuando el comprador ya iba ganando. Este
+  // booleano viaja al cliente, pero `auction.currentBidderUid` (podría ser el
+  // uid de otro comprador) no: se lo borra abajo antes de pasar `initial`.
   const initialIAmLeading = auction.currentBidderUid === user.uid && auction.currentBid > 0;
 
   return (
@@ -129,7 +129,7 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
       <ViewTracker auctionId={id} />
       <AuctionDetailView
         locale={locale}
-        initial={auction}
+        initial={{ ...auction, currentBidderUid: null }}
         myUid={user.uid}
         allowManualIncrement={config.bid.allowManualIncrement}
         financingConfig={config.financing}

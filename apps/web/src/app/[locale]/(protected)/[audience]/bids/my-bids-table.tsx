@@ -75,7 +75,7 @@ export function MyBidsTable({ locale, audience, items, outbid, currentTab }: Pro
           {t('title')}
         </h1>
       </header>
-      <Tabs value={currentTab} onValueChange={setTab} className="space-y-5">
+      <Tabs value={currentTab} onValueChange={setTab}>
         <TabsList className="overflow-x-auto scrollbar-none">
           <TabsTrigger value="winning">{t('tabs.winning')}</TabsTrigger>
           <TabsTrigger value="outbid">{t('tabs.outbid')}</TabsTrigger>
@@ -87,8 +87,14 @@ export function MyBidsTable({ locale, audience, items, outbid, currentTab }: Pro
             TabsTrigger apuntaba con aria-controls a un panel que no existía
             en el DOM (C2). El filtrado real lo sigue haciendo el estado de
             React (currentTab viene de la URL), no Radix — por eso alcanza
-            con un único TabsContent, sin forceMount. */}
-        <TabsContent value={currentTab} className="mt-0 space-y-5">
+            con un único TabsContent, sin forceMount.
+            mt-5 reproduce los 20px que había entre las pestañas y la tabla
+            antes del rediseño (git show 8a7bb57), ahora que vive dentro de
+            <Tabs> y ya no llega por el space-y-5 del contenedor de afuera.
+            Sin space-y-* acá: las dos vistas de abajo (celular/desktop) nunca
+            se muestran juntas, y ese margen se lo agregaba de más a la vista
+            de escritorio aunque la del celular estuviera oculta. */}
+        <TabsContent value={currentTab} className="mt-5">
           {/* Teléfono (< sm): tarjetas de "Te superaron" y el historial. */}
           <div className="space-y-5 sm:hidden">
             {visibleOutbid.length > 0 && (

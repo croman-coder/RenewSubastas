@@ -86,15 +86,19 @@ export function AuctionsGrid({
         </div>
       </header>
 
-      <Tabs value={currentTab} onValueChange={setTab} className="space-y-3">
+      <Tabs value={currentTab} onValueChange={setTab}>
         {/* Comprador, por debajo de lg: control segmentado de tres que ocupa
             el ancho, ≥44 px de alto (C3), con íconos escondidos en el
             teléfono para que "Cierran pronto" entre. Staff/admin conservan
-            el catálogo de siempre en todos los anchos (spec §2, B6). */}
+            el catálogo de siempre en todos los anchos (spec §2, B6).
+            La lista usa h-auto: con h-11 fijo más el p-1 por defecto y
+            triggers de h-11, el trigger activo desbordaba ~4px (C-alto). Con
+            h-auto la lista crece para contener el padding y los 44 px del
+            trigger, sin perder el toque mínimo. */}
         <TabsList
           className={
             isBuyer
-              ? 'grid h-11 w-full grid-cols-3 scrollbar-none lg:h-10 lg:inline-flex lg:w-auto lg:justify-start lg:overflow-x-auto'
+              ? 'grid h-auto w-full grid-cols-3 scrollbar-none lg:h-10 lg:inline-flex lg:w-auto lg:justify-start lg:overflow-x-auto'
               : 'w-full sm:w-auto justify-start overflow-x-auto scrollbar-none'
           }
         >
@@ -128,7 +132,7 @@ export function AuctionsGrid({
         </TabsList>
 
         {isBuyer && (
-          <div className="relative lg:hidden">
+          <div className="relative mt-3 lg:hidden">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
               aria-hidden="true"
@@ -149,8 +153,14 @@ export function AuctionsGrid({
         {/* Antes este panel quedaba fuera de <Tabs>: cada TabsTrigger apuntaba
             con aria-controls a un id que no existía en el DOM (C2). El
             filtrado real lo sigue haciendo el estado de React (currentTab
-            viene de la URL), no Radix — alcanza con un único TabsContent. */}
-        <TabsContent value={currentTab} className="mt-3 space-y-6">
+            viene de la URL), no Radix — alcanza con un único TabsContent.
+            mt-6 reproduce los 24px que había entre las pestañas y la grilla
+            antes del rediseño (git show 8a7bb57), ahora que la grilla vive
+            dentro de <Tabs> y ya no llega por el space-y-6 del contenedor de
+            afuera. Sin space-y-* acá: con las dos vistas del celular/desktop
+            de abajo (que nunca se muestran juntas) ese margen se lo agregaba
+            de más a la grilla oculta bajo `sm` (24→36px, C-ancho). */}
+        <TabsContent value={currentTab} className="mt-6">
           {empty ? (
             <EmptyState tab={currentTab} />
           ) : visible.length === 0 ? (

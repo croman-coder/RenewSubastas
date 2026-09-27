@@ -23,9 +23,9 @@ export interface AuctionDetail {
   bidCount: number;
   bidIncrement: number;
   /**
-   * Solo para computar `initialIAmLeading` en el server component (page.tsx):
-   * nunca se lo pasa tal cual a un componente cliente, para no exponer el uid
-   * de otro comprador antes de que llegue el primer snapshot.
+   * Solo para computar `initialIAmLeading` en el server component (page.tsx).
+   * page.tsx lo borra antes de pasar `initial` al componente cliente
+   * (AuctionDetailView): así nunca sale del server el uid de otro comprador.
    */
   currentBidderUid: string | null;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
