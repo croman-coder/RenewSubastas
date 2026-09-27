@@ -33,8 +33,19 @@ export function auctionDescription(
       : state.kind === 'live'
         ? ` Cierra el ${formatDateTimePy('es', d.endsAtMs)}.`
         : ' Subasta finalizada.';
-  return `${d.make} ${d.model} ${d.year}${km}, ${labels.fuel.toLowerCase()}, ${labels.transmission.toLowerCase()}. ${price}.${when} Vehículo usado certificado por Santa Rosa.`;
+  // "Certificado" solo se puede afirmar de un usado: dicho de un 0 km o de un
+  // vehículo con daños sería una afirmación falsa (riesgo legal señalado en la
+  // revisión del 26/9/2026).
+  const certified = d.condition === 'used' ? ' Vehículo usado certificado por Santa Rosa.' : '';
+  return `${d.make} ${d.model} ${d.year}${km}, ${labels.fuel.toLowerCase()}, ${labels.transmission.toLowerCase()}. ${price}.${when}${certified}`;
 }
+
+/** La condición real del vehículo en schema.org, no siempre "usado". */
+const ITEM_CONDITION: Record<PublicAuctionDetail['condition'], string> = {
+  new: 'https://schema.org/NewCondition',
+  used: 'https://schema.org/UsedCondition',
+  damaged: 'https://schema.org/DamagedCondition',
+};
 
 export function auctionMetadata(
   d: PublicAuctionDetail,
@@ -76,6 +87,11 @@ export function vehicleJsonLd(
 ): Record<string, unknown> {
   const sold =
     state.kind === 'sold-visible' || (state.kind === 'finished' && state.result === 'sold');
+  // Terminada sin venta (sin vender, cancelada o con el resultado por
+  // confirmar): no hay nada en oferta, así que no va `offers`. Antes decía
+  // InStock con precio en una página que avisa que la subasta terminó. La
+  // vendida conserva su SoldOut.
+  const hasOffer = sold || state.kind !== 'finished';
   const availability = sold
     ? 'https://schema.org/SoldOut'
     : state.kind === 'scheduled'
@@ -94,17 +110,21 @@ export function vehicleJsonLd(
     fuelType: labels.fuel,
     vehicleTransmission: labels.transmission,
     ...(d.color ? { color: d.color } : {}),
-    itemCondition: 'https://schema.org/UsedCondition',
+    itemCondition: ITEM_CONDITION[d.condition],
     image: d.images.slice(0, 5).map((img) => img.url),
     url: url(locale, d.id),
-    offers: {
-      '@type': 'Offer',
-      price: d.currentBid > 0 ? d.currentBid : d.startingPrice,
-      priceCurrency: 'USD',
-      availability,
-      priceValidUntil: new Date(d.endsAtMs).toISOString().slice(0, 10),
-      url: url(locale, d.id),
-      seller: { '@type': 'Organization', name: 'Renew Subastas' },
-    },
+    ...(hasOffer
+      ? {
+          offers: {
+            '@type': 'Offer',
+            price: d.currentBid > 0 ? d.currentBid : d.startingPrice,
+            priceCurrency: 'USD',
+            availability,
+            priceValidUntil: new Date(d.endsAtMs).toISOString().slice(0, 10),
+            url: url(locale, d.id),
+            seller: { '@type': 'Organization', name: 'Renew Subastas' },
+          },
+        }
+      : {}),
   };
 }

@@ -5,6 +5,10 @@ const intlMiddleware = createMiddleware({
   locales: ['es', 'en'],
   defaultLocale: 'es',
   localeDetection: true,
+  // Sin la cabecera `Link` de hreflang: el hreflang vive en la metadata de
+  // cada página. La cabecera anunciaba /en, que no se indexa, y un x-default
+  // que redirige, en contra de lo que dice el HTML (2026-09-26).
+  alternateLinks: false,
 });
 
 /**

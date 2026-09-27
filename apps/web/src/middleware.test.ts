@@ -50,4 +50,11 @@ describe('middleware', () => {
     expect(run('/es/auctions/auc-1').status).not.toBe(404);
     expect(run('/es/auctions/auc-1/opengraph-image').status).not.toBe(404);
   });
+
+  it('sends no hreflang Link header (the hreflang lives in each page metadata)', () => {
+    // next-intl lo agrega por defecto y anunciaba /en (sin indexar) y un
+    // x-default que redirige, en contra del hreflang del HTML.
+    expect(run('/es').headers.get('link')).toBeNull();
+    expect(run('/es/auctions/auc-1').headers.get('link')).toBeNull();
+  });
 });

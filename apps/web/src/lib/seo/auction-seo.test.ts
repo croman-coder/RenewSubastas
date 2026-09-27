@@ -124,6 +124,55 @@ describe('vehicleJsonLd', () => {
       'https://schema.org/SoldOut',
     );
   });
+
+  // La página dice "Subasta finalizada": no puede haber una oferta InStock con precio.
+  it.each(['unsold', 'cancelled', 'pending'] as const)(
+    'publishes no offer once the auction is over without a sale (%s)',
+    (result) => {
+      const j = vehicleJsonLd(d, labels, { kind: 'finished', result, indexable: false }, 'es');
+      expect(j['@type']).toBe('Car');
+      expect(j).not.toHaveProperty('offers');
+    },
+  );
+
+  it('states the condition of a used vehicle', () => {
+    expect(vehicleJsonLd(d, labels, live, 'es')['itemCondition']).toBe(
+      'https://schema.org/UsedCondition',
+    );
+  });
+
+  it('states the condition of a new vehicle', () => {
+    expect(vehicleJsonLd({ ...d, condition: 'new' }, labels, live, 'es')['itemCondition']).toBe(
+      'https://schema.org/NewCondition',
+    );
+  });
+
+  it('states the condition of a damaged vehicle', () => {
+    expect(vehicleJsonLd({ ...d, condition: 'damaged' }, labels, live, 'es')['itemCondition']).toBe(
+      'https://schema.org/DamagedCondition',
+    );
+  });
+});
+
+// "Certificado" es una afirmación que solo vale para un usado (exposición legal).
+describe('auctionDescription (condition)', () => {
+  it('keeps the certified-used sentence for a used vehicle', () => {
+    expect(auctionDescription(d, labels, live)).toMatch(
+      / Vehículo usado certificado por Santa Rosa\.$/,
+    );
+  });
+
+  it('makes no certification claim for a new vehicle', () => {
+    expect(auctionDescription({ ...d, condition: 'new' }, labels, live)).toBe(
+      'Toyota Hilux 2019, 85.000 km, diésel, automática. Puja actual USD 18.500. Cierra el 03/10/2026 18:00.',
+    );
+  });
+
+  it('makes no certification claim for a damaged vehicle', () => {
+    expect(auctionDescription({ ...d, condition: 'damaged' }, labels, live)).toBe(
+      'Toyota Hilux 2019, 85.000 km, diésel, automática. Puja actual USD 18.500. Cierra el 03/10/2026 18:00.',
+    );
+  });
 });
 
 describe('auctionDescription (null fields)', () => {
