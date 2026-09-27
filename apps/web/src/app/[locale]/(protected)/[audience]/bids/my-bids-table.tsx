@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Gavel } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -62,6 +62,11 @@ export function MyBidsTable({ locale, audience, items, outbid, currentTab }: Pro
   // las repite (spec 2026-09-27 §5.5).
   const outbidIds = new Set(outbid.map((b) => b.auctionId));
   const history = items.filter((b) => !outbidIds.has(b.auctionId));
+  // El status en Firestore lo actualiza un tick que corre ~1/min: sin este
+  // filtro, una tarjeta de "Te superaron" podía seguir viva mostrando "cierra
+  // en 0 min" varios segundos después de que el reloj del cliente ya la dio
+  // por terminada (B5).
+  const visibleOutbid = outbid.filter((b) => b.endsAtMs > now);
 
   return (
     <div className="space-y-5">
@@ -70,108 +75,125 @@ export function MyBidsTable({ locale, audience, items, outbid, currentTab }: Pro
           {t('title')}
         </h1>
       </header>
-      <Tabs value={currentTab} onValueChange={setTab}>
+      <Tabs value={currentTab} onValueChange={setTab} className="space-y-5">
         <TabsList className="overflow-x-auto scrollbar-none">
           <TabsTrigger value="winning">{t('tabs.winning')}</TabsTrigger>
           <TabsTrigger value="outbid">{t('tabs.outbid')}</TabsTrigger>
           <TabsTrigger value="won">{t('tabs.won')}</TabsTrigger>
           <TabsTrigger value="lost">{t('tabs.lost')}</TabsTrigger>
         </TabsList>
-      </Tabs>
 
-      {/* Teléfono (< sm): tarjetas de "Te superaron" y el historial. */}
-      <div className="space-y-5 sm:hidden">
-        {outbid.length > 0 && (
-          <ul className="space-y-3">
-            {outbid.map((b) => (
-              <li key={b.auctionId}>
-                <OutbidCard locale={locale} entry={b} nowMs={now} />
-              </li>
-            ))}
-          </ul>
-        )}
-        {history.length > 0 ? (
-          <section aria-labelledby="history-heading" className="space-y-2">
-            <h2
-              id="history-heading"
-              className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted"
-            >
-              Historial
-            </h2>
-            <ul className="divide-y divide-text-subtle/15 overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev">
-              {history.map((b) => (
-                <li key={b.bidId}>
-                  <HistoryRow locale={locale} entry={b} statusLabel={tStatus(b.auctionStatus)} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : (
-          outbid.length === 0 && (
-            <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center text-sm text-text-muted">
-              {t('empty')}
-            </div>
-          )
-        )}
-      </div>
-
-      {/* Desde sm, la tabla de siempre. */}
-      <div className="hidden sm:block">
-        {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center text-sm text-text-muted">
-            {t('empty')}
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('columns.vehicle')}</TableHead>
-                  <TableHead>{t('columns.myBid')}</TableHead>
-                  <TableHead>{t('columns.currentBid')}</TableHead>
-                  <TableHead>{t('columns.status')}</TableHead>
-                  <TableHead>{t('columns.endsAt')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((b) => (
-                  <TableRow key={b.bidId}>
-                    <TableCell>
-                      <Link
-                        href={`/${locale}/auctions/${b.auctionId}` as `/${string}`}
-                        className="flex items-center gap-3 hover:underline"
-                      >
-                        {b.thumbnailUrl ? (
-                          <img
-                            src={b.thumbnailUrl}
-                            alt=""
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-bg-deep rounded" />
-                        )}
-                        <span>
-                          {b.make} {b.model} {b.year}
-                        </span>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="num-tab">USD {formatAmount(b.myBid)}</TableCell>
-                    <TableCell className="num-tab">USD {formatAmount(b.currentBid)}</TableCell>
-                    <TableCell>
-                      <Badge variant={auctionStatusVariant(b.auctionStatus)}>
-                        {tStatus(b.auctionStatus)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-text-muted text-sm num-tab">
-                      {formatDateTimePy(locale, b.endsAtMs)}
-                    </TableCell>
-                  </TableRow>
+        {/* Antes estas dos vistas quedaban sueltas fuera de <Tabs>: cada
+            TabsTrigger apuntaba con aria-controls a un panel que no existía
+            en el DOM (C2). El filtrado real lo sigue haciendo el estado de
+            React (currentTab viene de la URL), no Radix — por eso alcanza
+            con un único TabsContent, sin forceMount. */}
+        <TabsContent value={currentTab} className="mt-0 space-y-5">
+          {/* Teléfono (< sm): tarjetas de "Te superaron" y el historial. */}
+          <div className="space-y-5 sm:hidden">
+            {visibleOutbid.length > 0 && (
+              <ul className="space-y-3">
+                {visibleOutbid.map((b) => (
+                  <li key={b.auctionId}>
+                    <OutbidCard locale={locale} entry={b} nowMs={now} />
+                  </li>
                 ))}
-              </TableBody>
-            </Table>
+              </ul>
+            )}
+            {history.length > 0 ? (
+              <section aria-labelledby="history-heading" className="space-y-2">
+                <h2
+                  id="history-heading"
+                  className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted"
+                >
+                  Historial
+                </h2>
+                <ul className="divide-y divide-text-subtle/15 overflow-hidden rounded-xl border border-text-subtle/15 bg-bg-elev">
+                  {history.map((b) => (
+                    <li key={b.bidId}>
+                      <HistoryRow
+                        locale={locale}
+                        entry={b}
+                        statusLabel={tStatus(b.auctionStatus)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              // Las tarjetas de "Te superaron" son de OTRAS subastas (viven
+              // fuera de la pestaña activa): si el historial de ESTA pestaña
+              // está vacío, hay que decirlo igual, aunque arriba se vean esas
+              // tarjetas (B3). En la pestaña "outbid" el historial vacío es
+              // lo normal (todo ya se ve como tarjeta), así que ahí no se
+              // repite el aviso.
+              currentTab !== 'outbid' && (
+                <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center text-sm text-text-muted">
+                  {t('empty')}
+                </div>
+              )
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Desde sm, la tabla de siempre. */}
+          <div className="hidden sm:block">
+            {items.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-16 text-center text-sm text-text-muted">
+                {t('empty')}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-text-subtle/15 bg-bg-elev">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('columns.vehicle')}</TableHead>
+                      <TableHead>{t('columns.myBid')}</TableHead>
+                      <TableHead>{t('columns.currentBid')}</TableHead>
+                      <TableHead>{t('columns.status')}</TableHead>
+                      <TableHead>{t('columns.endsAt')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((b) => (
+                      <TableRow key={b.bidId}>
+                        <TableCell>
+                          <Link
+                            href={`/${locale}/auctions/${b.auctionId}` as `/${string}`}
+                            className="flex items-center gap-3 hover:underline"
+                          >
+                            {b.thumbnailUrl ? (
+                              <img
+                                src={b.thumbnailUrl}
+                                alt=""
+                                className="w-12 h-12 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-bg-deep rounded" />
+                            )}
+                            <span>
+                              {b.make} {b.model} {b.year}
+                            </span>
+                          </Link>
+                        </TableCell>
+                        <TableCell className="num-tab">USD {formatAmount(b.myBid)}</TableCell>
+                        <TableCell className="num-tab">USD {formatAmount(b.currentBid)}</TableCell>
+                        <TableCell>
+                          <Badge variant={auctionStatusVariant(b.auctionStatus)}>
+                            {tStatus(b.auctionStatus)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-text-muted text-sm num-tab">
+                          {formatDateTimePy(locale, b.endsAtMs)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
