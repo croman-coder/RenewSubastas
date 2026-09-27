@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { getOptionalUser } from '@/lib/auth/server';
+import { getOptionalSession } from '@/lib/auth/server';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/constants';
 import { loadAuction } from '@/lib/buyer/load-auction';
 import { loadAppConfigSnapshot } from '@/lib/admin/load-app-config';
@@ -65,7 +65,16 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
   configLoad.catch(() => undefined);
   auctionLoad?.catch(() => undefined);
 
-  const user = await getOptionalUser();
+  const { user, verificationFailed } = await getOptionalSession();
+  // Hay cookie pero la consulta a Google falló: no es un visitante, es un
+  // comprador al que no pudimos verificar. Mismo destino que las páginas con
+  // sesión (getCurrentUser): el login con el aviso de reintentar, que no borra
+  // la cookie, y `from` para volver a esta subasta.
+  if (verificationFailed) {
+    redirect(
+      `/${locale}/login?error=temporary&from=${encodeURIComponent(auctionPath(locale, id))}`,
+    );
+  }
   if (!user) {
     const detail = await loadPublicAuction(id);
     if (!detail) notFound();

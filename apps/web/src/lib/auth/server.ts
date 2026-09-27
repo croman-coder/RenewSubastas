@@ -102,14 +102,36 @@ export const getCurrentUser = cache(async (locale: string): Promise<CurrentUser>
  * returns null here (rendered as a visitor) rather than being bounced to
  * /login, because a public page has somewhere sensible to put them.
  */
-export const getOptionalUser = cache(async (): Promise<CurrentUser | null> => {
+export const getOptionalUser = cache(
+  async (): Promise<CurrentUser | null> => (await getOptionalSession()).user,
+);
+
+export interface OptionalSession {
+  user: CurrentUser | null;
+  /**
+   * Había cookie pero no se pudo verificar: la consulta a Google falló (red,
+   * arranque en frío), no la sesión. Quien la recibe no es un visitante.
+   */
+  verificationFailed: boolean;
+}
+
+/**
+ * Lo mismo que {@link getOptionalUser}, pero distingue "no hay sesión" de
+ * "no se pudo verificar la sesión" (session-failure.ts). La ficha pública lo
+ * necesita (27/9/2026): sin esa diferencia, un comprador con sesión válida que
+ * justo tropezaba con esa consulta veía "Creá tu cuenta para pujar" en plena
+ * subasta y volvía a escribir la contraseña. La portada sigue usando
+ * getOptionalUser: ahí mostrar la versión pública ante la duda no molesta.
+ */
+export const getOptionalSession = cache(async (): Promise<OptionalSession> => {
+  const visitor: OptionalSession = { user: null, verificationFailed: false };
   const cookie = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!cookie) return null;
+  if (!cookie) return visitor;
   try {
     const decoded = await adminAuth().verifySessionCookie(cookie, true);
     const status = (decoded as { status?: string }).status;
     const role = (decoded as { role?: Role }).role;
-    if (status !== 'active' || !role) return null;
+    if (status !== 'active' || !role) return visitor;
 
     let firstName = '';
     let audience: 'retail' | 'wholesale' | undefined;
@@ -132,10 +154,18 @@ export const getOptionalUser = cache(async (): Promise<CurrentUser | null> => {
     }
     if (!firstName) firstName = friendlyFromEmail(decoded.email ?? '');
     if (role === 'buyer' && !audience) audience = 'retail';
-    return { uid: decoded.uid, role, email: decoded.email ?? '', firstName, audience };
-  } catch {
-    // Expired / revoked / malformed cookie — treat as a visitor.
-    return null;
+    return {
+      user: { uid: decoded.uid, role, email: decoded.email ?? '', firstName, audience },
+      verificationFailed: false,
+    };
+  } catch (err) {
+    // Cookie vencida, revocada o mal formada: es un visitante. Si en cambio
+    // falló la consulta, se avisa para que la página no lo trate como tal.
+    if (classifySessionFailure(err) === 'temporary') {
+      console.error('[getOptionalSession] no se pudo verificar la sesión', err);
+      return { user: null, verificationFailed: true };
+    }
+    return visitor;
   }
 });
 

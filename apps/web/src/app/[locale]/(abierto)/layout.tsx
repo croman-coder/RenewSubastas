@@ -14,6 +14,11 @@ import { loadCompany } from '@/lib/legal/load-company';
  * el soft-delete revoca sus tokens y /api/session rechaza a quien no esté
  * activo. El MFA de staff se exige al emitir la cookie de sesión
  * (/api/session), no acá, así que este layout no lo afecta.
+ *
+ * Si la cookie existe pero no se pudo verificar (falla de red al consultar a
+ * Google), la página no se muestra como pública: la ficha redirige al login
+ * con el aviso de reintentar (getOptionalSession). Este layout solo elige el
+ * marco y no necesita distinguir ese caso.
  */
 export default async function OpenLayout({
   children,
