@@ -25,8 +25,10 @@ export default async function BuyerAuctionsCatalog({
   // "Vas ganando"/"Te superaron" en cada auto sale de las pujas del comprador
   // (spec 2026-09-27 §5.3): una consulta por vista, en paralelo con el resto.
   // Si falla, el catálogo sale igual sin esas etiquetas: son contexto, no el
-  // catálogo.
-  const myBidsLoad = listMyBids(user.uid).catch(() => []);
+  // catálogo. Staff/admin no tienen pujas propias que mostrar — spec §2 dice
+  // que su catálogo no cambia — así que ni se pide (B6).
+  const isBuyer = user.role === 'buyer';
+  const myBidsLoad = isBuyer ? listMyBids(user.uid).catch(() => []) : Promise.resolve([]);
 
   // Favorites and the catalog query are independent on the 'all' / 'closing'
   // tabs; run them in parallel. Only the 'favorites' tab needs to know
@@ -43,7 +45,7 @@ export default async function BuyerAuctionsCatalog({
     ]);
   }
   // Map → objeto: lo que cruza al componente de cliente tiene que ser JSON.
-  const myStates = Object.fromEntries(myAuctionStates(await myBidsLoad));
+  const myStates = isBuyer ? Object.fromEntries(myAuctionStates(await myBidsLoad)) : {};
 
   return (
     <AuctionsGrid
@@ -53,6 +55,7 @@ export default async function BuyerAuctionsCatalog({
       favorites={favorites}
       buyerUid={user.uid}
       myStates={myStates}
+      isBuyer={isBuyer}
     />
   );
 }

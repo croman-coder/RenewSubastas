@@ -43,7 +43,10 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0, 
   // copies of this condition is how one silently drifts from the other.
   const isSold = isSoldOutcome(auction.outcome);
   const cardLabel = `${auction.make} ${auction.model} ${auction.year}${isSold ? ' — vendido' : ''}`;
-  const pill = ownStatePill(myState, auction);
+  // El tick del servidor que pasa el status a 'ended' corre ~1/min: sin este
+  // chequeo del reloj del cliente, la píldora "Vas ganando"/"Te superaron"
+  // podía seguir viva unos segundos después de cerrada (B5).
+  const pill = auction.endsAtMs > now ? ownStatePill(myState, auction) : null;
 
   return (
     // Plain (non-interactive) wrapper — the actual navigation affordance is
