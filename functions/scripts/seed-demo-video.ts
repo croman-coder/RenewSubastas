@@ -126,7 +126,13 @@ async function ensureUser(u: DemoUser): Promise<string> {
           firstName: u.firstName,
           lastName: u.lastName,
           phone: '0981123456',
-          documentId: '1234567',
+          // `documentType`/`documentNumber`, no `documentId`: ese campo no
+          // existe en el modelo actual (placeBid.ts y buyNow.ts exigen los
+          // dos primeros para dejar pujar) y con el viejo nombre la puja real
+          // de la Task 9 del plan del celular rechazaba con
+          // "profile_incomplete" (2026-09-27).
+          documentType: 'CI',
+          documentNumber: '1234567',
           ...(u.audience && { audience: u.audience }),
         },
         preferences: {
