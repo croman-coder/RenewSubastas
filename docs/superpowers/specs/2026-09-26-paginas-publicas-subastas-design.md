@@ -113,10 +113,10 @@ memoria por estado abierto y segmento minorista.
   y `offers` (`Offer`: precio en USD, disponibilidad, `priceValidUntil` = cierre, vendedor
   Renew Subastas).
 - `opengraph-image` por subasta: foto principal, modelo, precio y "cierra el …". Declara
-  `revalidate = 300`, pero en la práctica se regenera como mucho cada 30 s: Next toma el caché más
-  corto que usa la ruta, el de `loadPublicAuction`. Solo se genera cuando un rastreador la pide.
-  A verificar al implementar: si `ImageResponse` no dibuja WebP, usar la foto original (JPEG)
-  para la imagen de redes.
+  `revalidate = 300`, pero en la práctica vale 30 s: Next toma el caché más corto que usa la ruta,
+  el de `loadPublicAuction`. La ruta es dinámica: la imagen se dibuja en cada pedido, con datos de
+  hasta 30 s, y solo cuando un rastreador la pide. A verificar al implementar: si `ImageResponse`
+  no dibuja WebP, usar la foto original (JPEG) para la imagen de redes.
 - Sitemap: suma las subastas minoristas programadas y en vivo, sin `lastModified` (una puja cambia
   la página, y un valor que siempre dice "ahora" es peor que ninguno). Declara
   `revalidate = 3600`, pero se regenera como mucho cada 60 s, el caché de la lista del landing.
@@ -139,8 +139,8 @@ o `/login` con `from=/…/auctions/…`, contra el 13% portada→login de la aud
   cada subasta, el botón de compartir y Lighthouse de la ficha pública.
 - **Despliegue:** un solo push a `main` (15 créditos), junto con los textos legales revisados.
 - **Costo:** cada vista pública es una ejecución del servidor; con la caché de 30 s casi no lee
-  Firestore. ≈ 3 créditos de cómputo cada 3.000 vistas. La imagen para redes se genera como mucho
-  una vez cada 30 s por subasta, y solo cuando un rastreador la pide.
+  Firestore. ≈ 3 créditos de cómputo cada 3.000 vistas. La imagen para redes se dibuja solo cuando
+  un rastreador la pide, con los datos cacheados de la ficha (hasta 30 s).
 
 ## 10. Riesgos
 

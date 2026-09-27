@@ -6,11 +6,13 @@ import { formatDateTimePy } from '@/lib/format/date';
 import { vehicleAlt } from '@/lib/format/vehicle-alt';
 
 export const runtime = 'nodejs';
-// En la práctica se regenera como mucho cada 30 s por subasta, no cada 5
-// minutos: Next 14.2 baja el revalidate de la ruta al del unstable_cache más
-// corto que llama, y loadPublicAuction cachea 30 s. Es aceptable porque solo
-// se regenera cuando un rastreador (WhatsApp, Facebook, Google) pide la
-// imagen, no en cada visita a la ficha. El 300 queda como techo.
+// En la práctica vale 30 s, no 5 minutos: Next 14.2 baja el revalidate de la
+// ruta al del unstable_cache más corto que llama (loadPublicAuction, 30 s), y
+// con ese valor se cachea también la foto que baja fetch. La ruta es dinámica
+// (ƒ en el build): la imagen se dibuja en cada pedido con esos datos, así que
+// muestra datos de hasta 30 s. Es aceptable porque solo la piden los
+// rastreadores (WhatsApp, Facebook, Google) al armar una vista previa, no las
+// visitas a la ficha.
 export const revalidate = 300;
 export const alt = 'Vehículo en subasta · Renew Subastas';
 export const size = { width: 1200, height: 630 };
