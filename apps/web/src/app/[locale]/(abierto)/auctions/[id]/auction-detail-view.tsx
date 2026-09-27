@@ -39,6 +39,7 @@ export function AuctionDetailView({
   financingConfig,
   currencyConfig,
   isBuyer,
+  initialIAmLeading,
 }: {
   locale: string;
   initial: AuctionDetail;
@@ -48,6 +49,13 @@ export function AuctionDetailView({
   currencyConfig: AppConfigSnapshot['currency'];
   /** Solo el comprador tiene barra fija y hoja; staff y admin ven la ficha como hoy. */
   isBuyer: boolean;
+  /**
+   * Server-computed: `auction.currentBidderUid === user.uid && auction.currentBid > 0`.
+   * Sin esto el dock ofrece "Pujar" hasta que llega el primer snapshot, aunque
+   * el comprador ya vaya ganando (B1). Nunca viaja un uid ajeno: solo este
+   * booleano.
+   */
+  initialIAmLeading: boolean;
 }) {
   const t = useTranslations('buyer.auctions.detail');
   const tStatus = useTranslations('buyer.auctions.status');
@@ -77,7 +85,10 @@ export function AuctionDetailView({
     bidCount: initial.bidCount,
     endsAtMs: initial.endsAtMs,
     status: initial.status,
-    currentBidderUid: null,
+    // Semilla de B1: si el server ya sabe que este comprador iba ganando, se
+    // usa su propio uid (ya viajaba en `myUid`) para que dockState() lo trate
+    // como líder desde el primer render, sin esperar el onSnapshot.
+    currentBidderUid: initialIAmLeading ? myUid : null,
     outcome: initial.outcome,
     winnerUid: null,
     buyNowPrice: initial.buyNowPrice,

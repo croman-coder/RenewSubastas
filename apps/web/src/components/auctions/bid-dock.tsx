@@ -53,7 +53,10 @@ export function BidDock({ state, sheetTitle, renderPanel }: Props) {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-text-subtle/15 bg-bg-elev pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
-          <div className="min-w-0">
+          {/* aria-live solo en bid/winning: si te superan mientras estás en la
+              página, lo escuchás sin recargar (C4). En 'scheduled' el texto es
+              un reloj que cambia cada segundo — anunciarlo sería ruido. */}
+          <div className="min-w-0" aria-live={state.kind === 'scheduled' ? undefined : 'polite'}>
             {state.kind === 'bid' && (
               <>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -66,7 +69,9 @@ export function BidDock({ state, sheetTitle, renderPanel }: Props) {
             )}
             {state.kind === 'winning' && (
               <>
-                <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-success">
+                {/* text-success da 4.46:1 en claro (bajo el 4.5:1 de AA):
+                    mismo tono oscuro que usa el Badge success para el texto. */}
+                <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#166534] dark:text-success">
                   <Trophy className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
                   Vas ganando
                 </p>

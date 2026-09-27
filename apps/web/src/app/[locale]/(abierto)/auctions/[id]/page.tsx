@@ -118,6 +118,12 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
   // reglas.
   if (user.role === 'buyer' && auction.audience !== (user.audience ?? 'retail')) notFound();
 
+  // Semilla del dock para que no diga "Pujar" un instante antes de que llegue
+  // el primer snapshot de Firestore cuando el comprador ya iba ganando. Se
+  // manda solo el booleano: el uid de `auction.currentBidderUid` nunca sale
+  // de este server component.
+  const initialIAmLeading = auction.currentBidderUid === user.uid && auction.currentBid > 0;
+
   return (
     <>
       <ViewTracker auctionId={id} />
@@ -129,6 +135,7 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
         financingConfig={config.financing}
         currencyConfig={config.currency}
         isBuyer={user.role === 'buyer'}
+        initialIAmLeading={initialIAmLeading}
       />
     </>
   );

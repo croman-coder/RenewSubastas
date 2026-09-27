@@ -22,6 +22,12 @@ export interface AuctionDetail {
   currentBid: number;
   bidCount: number;
   bidIncrement: number;
+  /**
+   * Solo para computar `initialIAmLeading` en el server component (page.tsx):
+   * nunca se lo pasa tal cual a un componente cliente, para no exponer el uid
+   * de otro comprador antes de que llegue el primer snapshot.
+   */
+  currentBidderUid: string | null;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
   startsAtMs: number;
   endsAtMs: number;
@@ -66,6 +72,7 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
     currentBid: (a['currentBid'] as number) ?? 0,
     bidCount: (a['bidCount'] as number) ?? 0,
     bidIncrement: (a['bidIncrement'] as number) ?? 500,
+    currentBidderUid: (a['currentBidderUid'] as string | undefined) ?? null,
     status: (a['status'] as AuctionDetail['status']) ?? 'scheduled',
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),
