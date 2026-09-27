@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Clock, Gavel, LogIn } from 'lucide-react';
+import { Clock, Gavel, ArrowRight } from 'lucide-react';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { auctionPath } from '@/lib/buyer/public-auction';
 import { SoldBanner } from '@/components/auctions/sold-banner';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 import { formatAmount } from '@/lib/format/money';
@@ -30,15 +31,16 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 const ABOVE_FOLD = 4;
 
 /**
- * Auction card for signed-out visitors.
+ * Tarjeta de subasta para visitantes sin sesión.
  *
- * Mirrors the authenticated `AuctionCard` visually, minus the favorite
- * toggle (writing a favorite needs a uid) and with every affordance routed
- * through `/login?from=…` so the visitor lands on the auction they actually
- * clicked once signed in. Kept as its own component rather than making the
- * authenticated card's props nullable: the two differ in what they *do*, not
- * just in what they show, and threading `buyerUid?: string` through the
- * favorite handler is how you end up shipping a no-op heart button.
+ * Refleja visualmente la tarjeta autenticada (`AuctionCard`), excepto el
+ * botón de favorito (escribir un favorito necesita un uid) y con cada
+ * affordance llevando a la página pública de la subasta (spec 2026-09-26),
+ * que es la que invita al visitante a crear cuenta. Se mantiene como
+ * componente propio en lugar de hacer nullable los props de la tarjeta
+ * autenticada: las dos difieren en lo que *hacen*, no solo en lo que
+ * muestran, y pasar `buyerUid?: string` al handler de favorito es cómo
+ * terminarías desplegando un botón de corazón sin hacer nada.
  */
 export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
   const aboveFold = index < ABOVE_FOLD;
@@ -61,7 +63,7 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
   const status = STATUS[auction.status] ?? STATUS['ended']!;
 
   const title = `${auction.make} ${auction.model} ${auction.year}`;
-  const loginHref = `/${locale}/login?from=${encodeURIComponent(`/${locale}/auctions/${auction.id}`)}`;
+  const href = auctionPath(locale, auction.id);
   // Single source of truth for every sold-state branch on this card (the
   // banner, the CTA swap, and the overlay's accessible name) — three
   // separately-evaluated copies of this condition is how one of them
@@ -69,10 +71,8 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
   const isSold = isSoldOutcome(auction.outcome);
   // The overlay is the only focusable element on a sold card (the CTA below
   // becomes plain text), so its accessible name is the *entire* experience
-  // for keyboard/screen-reader users here. Announcing "iniciar sesión para
-  // pujar" on a unit that's sold told them to go bid on something that no
-  // longer takes bids.
-  const overlayAriaLabel = isSold ? `${title} — vendido` : `${title} — iniciar sesión para pujar`;
+  // for keyboard/screen-reader users here.
+  const overlayAriaLabel = isSold ? `${title} — vendido` : `${title} — ver subasta`;
 
   return (
     <article
@@ -91,12 +91,12 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           : { animationDelay: `${Math.min(index, 11) * 45}ms`, animationFillMode: 'both' }
       }
     >
-      {/* Full-card overlay link. A signed-out visitor has no auction detail to
-          reach, so it goes to login carrying `from` — after signing in they
-          land on the car they clicked, not a generic home. Real <Link>, so
-          Cmd/middle-click still work. */}
+      {/* Enlace superpuesto de toda la tarjeta. Lleva a la página pública de
+          la subasta, donde el visitante sin sesión ve los detalles y recibe
+          la invitación a crear cuenta. Real <Link>, así que Cmd/middle-click
+          sigue funcionando. */}
       <Link
-        href={loginHref as `/${string}`}
+        href={href as `/${string}`}
         aria-label={overlayAriaLabel}
         className={
           'absolute inset-0 z-0 rounded-xl [touch-action:manipulation] ' +
@@ -190,15 +190,15 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
           </div>
         </div>
 
-        {/* Above the overlay link so it's its own tab stop and reads as the
-            primary action. Both lead to login; this one names the intent. */}
+        {/* Enlace principal a la subasta. Tab stop independiente del overlay
+            de toda la tarjeta. */}
         {isSold ? (
           <p className="relative z-[2] mt-auto w-full text-center text-sm text-text-muted">
             Ya no disponible
           </p>
         ) : (
           <Link
-            href={loginHref as `/${string}`}
+            href={href as `/${string}`}
             className={
               'relative z-[2] mt-auto w-full inline-flex items-center justify-center gap-1.5 ' +
               'h-11 rounded-md [touch-action:manipulation] ' +
@@ -208,8 +208,8 @@ export function PublicAuctionCard({ locale, auction, index = 0 }: Props) {
               'focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base'
             }
           >
-            <LogIn className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
-            Pujar
+            <ArrowRight className="w-4 h-4" strokeWidth={2.25} aria-hidden="true" />
+            Ver subasta
           </Link>
         )}
       </div>
