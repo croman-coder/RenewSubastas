@@ -8,7 +8,8 @@ import { pickRelistedAuction, type RelistCandidate } from './relisted';
  * El mismo `where('vehicleId', '==', …)` que la app ya ejecuta en otra parte
  * (insights, dailyUnsoldDigest): índice de un único campo, sin índice compuesto nuevo.
  * Un vehículo tiene un puñado de subastas, así que filtrar en memoria está bien.
- * React's cache() desduplicar la llamada entre generateMetadata y la página.
+ * El cache() de React evita repetir la consulta entre generateMetadata y la
+ * página: una sola por request.
  */
 export const findRelistedAuction = cache(
   async (vehicleId: string, currentId: string): Promise<string | null> => {

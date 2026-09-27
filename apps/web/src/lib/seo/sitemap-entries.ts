@@ -14,7 +14,8 @@ function languages(path: string) {
  *
  * Las subastas entran solo mientras están abiertas (programadas o en vivo) y
  * salen al cerrar (spec 2026-09-26 §7). No llevan lastModified: una puja
- * cambia la página y el sitemap se regenera como mucho cada hora.
+ * cambia la página, y un valor que siempre dice "ahora" es peor que ninguno.
+ * El sitemap se regenera como mucho cada 60 s (ver app/sitemap.ts).
  */
 export function buildSitemap(auctionIds: string[], now: Date): MetadataRoute.Sitemap {
   const pages = INDEXABLE_PATHS.flatMap((path) =>

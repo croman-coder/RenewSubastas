@@ -6,9 +6,10 @@ export interface RelistCandidate {
 }
 
 /**
- * La subasta minorista abierta del mismo vehículo que un enlace viejo, sin vender,
- * debe llevar a (spec §6). Vivo le gana a programado; entre iguales, el que cierra primero.
- * Mayorista nunca es destino: el enlace es público.
+ * A qué subasta lleva el enlace viejo de una subasta sin vender o cancelada: a
+ * la minorista abierta del mismo vehículo (spec §6). En vivo le gana a
+ * programada; entre iguales, la que cierra primero. Una mayorista nunca es
+ * destino, porque el enlace es público.
  */
 export function pickRelistedAuction(
   candidates: RelistCandidate[],

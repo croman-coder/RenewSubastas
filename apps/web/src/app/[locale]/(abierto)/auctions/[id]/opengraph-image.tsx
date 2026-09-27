@@ -6,8 +6,11 @@ import { formatDateTimePy } from '@/lib/format/date';
 import { vehicleAlt } from '@/lib/format/vehicle-alt';
 
 export const runtime = 'nodejs';
-// Se regenera como mucho cada 5 minutos por subasta (spec §7): alcanza para el
-// precio de una vista previa reenviada por WhatsApp y es barato para Netlify.
+// En la práctica se regenera como mucho cada 30 s por subasta, no cada 5
+// minutos: Next 14.2 baja el revalidate de la ruta al del unstable_cache más
+// corto que llama, y loadPublicAuction cachea 30 s. Es aceptable porque solo
+// se regenera cuando un rastreador (WhatsApp, Facebook, Google) pide la
+// imagen, no en cada visita a la ficha. El 300 queda como techo.
 export const revalidate = 300;
 export const alt = 'Vehículo en subasta · Renew Subastas';
 export const size = { width: 1200, height: 630 };

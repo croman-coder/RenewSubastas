@@ -135,6 +135,10 @@ export function CountdownCard({
   const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
+  // La urgencia la lleva solo el color de los dígitos. Los halos, la línea con
+  // degradé y la mancha desenfocada detrás del reloj se fueron con la
+  // dirección A (DESIGN.md: superficies planas, una sola sombra suave, sin
+  // brillos).
   const tone = ended
     ? 'text-text-muted'
     : critical

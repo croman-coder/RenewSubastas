@@ -16,7 +16,7 @@ export async function photoDataUri(
     const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
     if (type !== 'image/jpeg' && type !== 'image/png') return null;
     const bytes = Buffer.from(await res.arrayBuffer());
-    // Pasado los 4 MB la tarjeta tarda demasiado en renderizarse para un despliegue en chat.
+    // Pasados los 4 MB la tarjeta tarda demasiado en generarse para la vista previa de un chat.
     if (bytes.length > 4 * 1024 * 1024) return null;
     return `data:${type};base64,${bytes.toString('base64')}`;
   } catch {

@@ -35,8 +35,8 @@ estilo MotorHub y la traducción de `/en`.
 La ficha sale del grupo `(protected)` (cuyo `AppShell` exige sesión) a un grupo nuevo
 `[locale]/(abierto)/auctions/[id]/`. Su layout mira la sesión con `getOptionalUser()`:
 
-- con sesión: `AppShell` y la ficha actual, sin cambios (incluye el MFA de staff, que vive en
-  `getCurrentUser`);
+- con sesión: `AppShell` y la ficha actual, sin cambios. El MFA de staff no se toca: se exige al
+  emitir la cookie de sesión (`/api/session` con `lib/auth/mfa-gate.ts`), no en `getCurrentUser`;
 - sin sesión, o con una cookie inválida: la barra pública de la portada (`PublicTopbar`) y la
   versión pública.
 
@@ -80,7 +80,8 @@ Mismo orden que la ficha de hoy, primero para celular:
    y "Ya tengo cuenta" → login con el mismo `from` (el flujo actual ya devuelve a esa página).
 6. **Compartir**: en el celular, el menú de compartir del teléfono (`navigator.share`); si no hay,
    `wa.me` con "Mirá este {marca modelo año} en subasta: {link}" y un botón de copiar link.
-7. **Otras subastas en vivo**: hasta 4 tarjetas de la lista de la portada (ya en caché), sin la actual.
+7. **Otras subastas**: hasta 4 tarjetas en vivo o programadas de la lista de la portada (ya en
+   caché), sin la actual.
 
 Las tarjetas de la portada (`PublicAuctionCard`) llevan directo a la ficha en lugar de al login.
 
@@ -88,16 +89,19 @@ Las tarjetas de la portada (`PublicAuctionCard`) llevan directo a la ficha en lu
 
 Regla pura en `lib/auctions/public-state.ts` (testeable sin Firestore):
 
-| Estado                                                                 | Muestra                                                                        | Indexable / sitemap |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------- |
-| Programada                                                             | Ficha con "Abre el …" y la tarjeta de cuenta                                   | Sí                  |
-| En vivo                                                                | Ficha con cuenta regresiva                                                     | Sí                  |
-| Vendida con el lote abierto (`isVisibleInCatalog`)                     | Ficha con franja VENDIDO                                                       | No                  |
-| Sin vender y el vehículo tiene otra subasta minorista abierta          | Redirección **temporal** a esa subasta                                         | —                   |
-| Cualquier otro final (vendida con lote cerrado, sin vender, cancelada) | "Subasta finalizada" con el resultado ("Se vendió" / "No se vendió") y en vivo | No                  |
+| Estado                                                                     | Muestra                                                                        | Indexable / sitemap |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------- |
+| Programada                                                                 | Ficha con "Abre el …" y la tarjeta de cuenta                                   | Sí                  |
+| En vivo                                                                    | Ficha con cuenta regresiva                                                     | Sí                  |
+| Vendida con el lote abierto (`isVisibleInCatalog`)                         | Ficha con franja VENDIDO                                                       | No                  |
+| Sin vender o cancelada, y el vehículo tiene otra subasta minorista abierta | Redirección **temporal** a esa subasta                                         | —                   |
+| Terminó la hora pero el tick todavía no la cerró (`pending`)               | "La subasta acaba de cerrar; el resultado se confirma en unos minutos."        | No                  |
+| Cualquier otro final (vendida con lote cerrado, sin vender, cancelada)     | "Subasta finalizada" con el resultado ("Se vendió" / "No se vendió") y en vivo | No                  |
 
-La subasta nueva se busca con `where('vehicleId', '==', …)` (consulta que ya usa la app, sin
-índices nuevos) y se filtra en memoria por estado abierto y segmento minorista.
+Una subasta cancelada sigue la misma regla que una sin vender: si el vehículo tiene una subasta
+minorista abierta más nueva, el link viejo lleva a ella (temporal). La subasta nueva se busca con
+`where('vehicleId', '==', …)` (consulta que ya usa la app, sin índices nuevos) y se filtra en
+memoria por estado abierto y segmento minorista.
 
 ## 7. SEO y vista previa
 
@@ -108,11 +112,14 @@ La subasta nueva se busca con `where('vehicleId', '==', …)` (consulta que ya u
 - Datos estructurados: `Car` con marca, modelo, año, km, combustible, transmisión, color y fotos,
   y `offers` (`Offer`: precio en USD, disponibilidad, `priceValidUntil` = cierre, vendedor
   Renew Subastas).
-- `opengraph-image` por subasta: foto principal, modelo, precio y "cierra el …", en caché unos
-  minutos (`revalidate`). A verificar al implementar: si `ImageResponse` no dibuja WebP, usar la
-  foto original (JPEG) para la imagen de redes.
-- Sitemap: suma las subastas minoristas programadas y en vivo (con `lastModified`), regenerado
-  como mucho una vez por hora.
+- `opengraph-image` por subasta: foto principal, modelo, precio y "cierra el …". Declara
+  `revalidate = 300`, pero en la práctica se regenera como mucho cada 30 s: Next toma el caché más
+  corto que usa la ruta, el de `loadPublicAuction`. Solo se genera cuando un rastreador la pide.
+  A verificar al implementar: si `ImageResponse` no dibuja WebP, usar la foto original (JPEG)
+  para la imagen de redes.
+- Sitemap: suma las subastas minoristas programadas y en vivo, sin `lastModified` (una puja cambia
+  la página, y un valor que siempre dice "ahora" es peor que ninguno). Declara
+  `revalidate = 3600`, pero se regenera como mucho cada 60 s, el caché de la lista del landing.
 
 ## 8. Medición
 
@@ -133,7 +140,7 @@ o `/login` con `from=/…/auctions/…`, contra el 13% portada→login de la aud
 - **Despliegue:** un solo push a `main` (15 créditos), junto con los textos legales revisados.
 - **Costo:** cada vista pública es una ejecución del servidor; con la caché de 30 s casi no lee
   Firestore. ≈ 3 créditos de cómputo cada 3.000 vistas. La imagen para redes se genera como mucho
-  una vez cada pocos minutos por subasta.
+  una vez cada 30 s por subasta, y solo cuando un rastreador la pide.
 
 ## 10. Riesgos
 
