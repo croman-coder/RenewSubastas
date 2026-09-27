@@ -22,6 +22,9 @@ export interface MyBidEntry {
    */
   iAmLeading: boolean;
   currentBid: number;
+  /** Con currentBid, para calcular la próxima puja válida (minimumBid). */
+  startingPrice: number;
+  bidIncrement: number;
   endsAtMs: number;
   bidCreatedAtMs: number;
 }
@@ -68,6 +71,8 @@ export async function listMyBids(uid: string): Promise<MyBidEntry[]> {
       iAmWinner: (a['winnerUid'] as string | undefined) === uid,
       iAmLeading: (a['currentBidderUid'] as string | undefined) === uid,
       currentBid: (a['currentBid'] as number) ?? 0,
+      startingPrice: (a['startingPrice'] as number) ?? 0,
+      bidIncrement: (a['bidIncrement'] as number) ?? 0,
       endsAtMs: ms('endsAt'),
       bidCreatedAtMs:
         (bid['createdAt'] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0,

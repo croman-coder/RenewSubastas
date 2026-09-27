@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/auth/server';
 import { listMyBids } from '@/lib/buyer/list-my-bids';
+import { bidOutcome } from '@/lib/buyer/my-auction-states';
 import { MyBidsTable } from './my-bids-table';
 
 interface Props {
@@ -23,13 +24,22 @@ export default async function MyBidsPage({ params: { locale, audience }, searchP
   }
   const dedup = Array.from(byAuction.values());
 
-  const filtered = dedup.filter((b) => {
-    if (tab === 'winning') return b.auctionStatus === 'live' && b.status === 'winning';
-    if (tab === 'outbid') return b.auctionStatus === 'live' && b.status === 'outbid';
-    if (tab === 'won') return b.auctionStatus === 'ended' && b.iAmWinner;
-    if (tab === 'lost') return b.auctionStatus === 'ended' && !b.iAmWinner;
-    return false;
-  });
+  // Pestañas y tarjetas de "Te superaron" con la misma regla (bidOutcome),
+  // que mira quién va primero en la subasta y no el `status` de la puja: las
+  // pujas viejas y las del seed no lo tienen. En producción es lo mismo que
+  // antes, porque placeBid mantiene los dos sincronizados.
+  const filtered = dedup.filter((b) => bidOutcome(b) === tab);
+  const outbid = dedup
+    .filter((b) => bidOutcome(b) === 'outbid')
+    .sort((a, b) => a.endsAtMs - b.endsAtMs);
 
-  return <MyBidsTable locale={locale} audience={audience} items={filtered} currentTab={tab} />;
+  return (
+    <MyBidsTable
+      locale={locale}
+      audience={audience}
+      items={filtered}
+      outbid={outbid}
+      currentTab={tab}
+    />
+  );
 }
