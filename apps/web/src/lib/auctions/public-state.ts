@@ -54,3 +54,28 @@ export function publicAuctionState(
     indexable: false,
   };
 }
+
+/** Los estados que la ficha pública abierta sabe mostrar (los demás van a "finalizada"). */
+export type PublicViewKind = 'scheduled' | 'live' | 'sold-visible';
+
+/**
+ * Qué muestra la ficha pública según el reloj del navegador.
+ *
+ * Los datos pueden tener hasta 30 s y el tick que cambia los estados corre
+ * cada minuto, así que el estado guardado puede ir atrasado: sin esto, una
+ * programada ya abierta decía "Abre en · Finalizada" con la etiqueta
+ * "Programada", y una en curso ya cerrada seguía "En curso". Misma regla que
+ * `effectiveStatus` de la ficha con sesión (auction-detail-view.tsx): desde la
+ * hora de cierre, terminada. Y como acá no hay listener que traiga el cambio
+ * de estado, desde la hora de apertura una programada se muestra en curso.
+ */
+export function effectivePublicKind(
+  kind: PublicViewKind,
+  startsAtMs: number,
+  endsAtMs: number,
+  nowMs: number,
+): PublicViewKind | 'ended' {
+  if (kind === 'sold-visible') return kind;
+  if (kind === 'scheduled' && nowMs < startsAtMs) return 'scheduled';
+  return nowMs >= endsAtMs ? 'ended' : 'live';
+}

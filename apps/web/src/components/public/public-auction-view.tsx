@@ -14,6 +14,7 @@ import { SoldBanner } from '@/components/auctions/sold-banner';
 import { BidCta } from './bid-cta';
 import { ShareAuction } from './share-auction';
 import { trackViewContent } from '@/lib/analytics/meta-events';
+import { effectivePublicKind, type PublicViewKind } from '@/lib/auctions/public-state';
 import { formatAmount, formatNumber } from '@/lib/format/money';
 import { vehicleAlt } from '@/lib/format/vehicle-alt';
 import { vehicleEnumLabelKey, type VehicleEnumField } from '@/lib/format/vehicle-labels';
@@ -23,7 +24,7 @@ import type { AppConfigSnapshot } from '@/lib/admin/load-app-config';
 interface Props {
   locale: string;
   detail: PublicAuctionDetail;
-  kind: 'scheduled' | 'live' | 'sold-visible';
+  kind: PublicViewKind;
   shareUrl: string;
   financingConfig: AppConfigSnapshot['financing'];
   currencyConfig: AppConfigSnapshot['currency'];
@@ -33,7 +34,8 @@ interface Props {
  * La ficha de subasta para visitantes sin cuenta (spec 2026-09-26 §5): todo
  * menos pujar. Sin listeners de Firestore —los navegadores anónimos no
  * pueden leer subastas—, así que los precios vienen del servidor (cacheados
- * 30 s) y acá solo corre la cuenta regresiva.
+ * 30 s) y acá solo corre el reloj: la cuenta regresiva y, con ella, el estado
+ * que se muestra (effectivePublicKind), que puede ir por delante del guardado.
  */
 export function PublicAuctionView({
   locale,
@@ -72,8 +74,11 @@ export function PublicAuctionView({
   }, [detail]);
 
   const title = vehicleAlt(detail.make, detail.model, detail.year);
-  const isLive = kind === 'live';
-  const remainingMs = (kind === 'scheduled' ? detail.startsAtMs : detail.endsAtMs) - now;
+  // Programada ya abierta → en curso; en curso ya cerrada → terminada.
+  const shown = effectivePublicKind(kind, detail.startsAtMs, detail.endsAtMs, now);
+  const chipStatus = shown === 'sold-visible' ? 'ended' : shown;
+  const isLive = shown === 'live';
+  const remainingMs = (shown === 'scheduled' ? detail.startsAtMs : detail.endsAtMs) - now;
   const price = detail.currentBid > 0 ? detail.currentBid : detail.startingPrice;
   const description =
     locale === 'en' && detail.descriptionEn ? detail.descriptionEn : detail.descriptionEs;
@@ -91,10 +96,7 @@ export function PublicAuctionView({
         <div className="space-y-6 min-w-0">
           <AuctionGallery images={detail.images} alt={title} />
           <header className="space-y-3">
-            <StatusChip
-              status={kind === 'sold-visible' ? 'ended' : kind}
-              label={tStatus(kind === 'sold-visible' ? 'ended' : kind)}
-            />
+            <StatusChip status={chipStatus} label={tStatus(chipStatus)} />
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-strong leading-[1.05]">
               {detail.make} {detail.model}{' '}
               <span className="num-tab text-text-muted font-light">{detail.year}</span>
@@ -130,11 +132,11 @@ export function PublicAuctionView({
         </div>
 
         <aside className="lg:sticky lg:top-20 self-start space-y-4">
-          {kind === 'sold-visible' ? (
+          {shown === 'sold-visible' ? (
             <SoldBanner variant="detail" />
           ) : (
             <CountdownCard
-              label={kind === 'scheduled' ? 'Abre en' : t('timeLeft')}
+              label={shown === 'scheduled' ? 'Abre en' : t('timeLeft')}
               remainingMs={remainingMs}
               urgent={isLive && remainingMs < 3_600_000}
               critical={isLive && remainingMs < 60_000}
@@ -154,11 +156,12 @@ export function PublicAuctionView({
               {formatAmount(detail.bidIncrement)}
             </p>
           </div>
-          {kind !== 'sold-visible' && (
-            <BidCta locale={locale} auctionId={detail.id} scheduled={kind === 'scheduled'} />
+          {/* Sin invitación a pujar una vez cerrada: ya no hay nada que pujar. */}
+          {(shown === 'scheduled' || shown === 'live') && (
+            <BidCta locale={locale} auctionId={detail.id} scheduled={shown === 'scheduled'} />
           )}
           <ShareAuction title={title} url={shareUrl} />
-          {kind !== 'sold-visible' && (
+          {shown !== 'sold-visible' && (
             <FinancingCalculator
               priceUsd={price}
               config={financingConfig}

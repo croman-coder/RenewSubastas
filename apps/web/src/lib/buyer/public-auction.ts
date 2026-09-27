@@ -104,3 +104,16 @@ export function toPublicAuctionDetail(id: string, a: Doc, v: Doc): PublicAuction
 export function auctionPath(locale: string, id: string): `/${string}` {
   return `/${locale}/auctions/${id}`;
 }
+
+/**
+ * Si un id puede ser el de una subasta, antes de leer Firestore con él.
+ *
+ * Los parámetros de un route handler (la imagen para redes) llegan
+ * decodificados: `…/x%2Fprivate%2Finternal/opengraph-image-…` daba el id
+ * `x/private/internal`, y el Admin SDK, que se saltea las reglas, leía un
+ * documento de una subcolección. Los ids reales (automáticos de Firestore o
+ * del seed, como `demo-auction-3`) son solo letras, dígitos, `-` y `_`.
+ */
+export function isPublicAuctionId(id: string): boolean {
+  return /^[A-Za-z0-9_-]{1,128}$/.test(id);
+}

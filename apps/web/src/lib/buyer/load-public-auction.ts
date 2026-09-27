@@ -2,7 +2,11 @@ import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAdminApp } from '@/lib/firebase/admin';
-import { toPublicAuctionDetail, type PublicAuctionDetail } from './public-auction';
+import {
+  isPublicAuctionId,
+  toPublicAuctionDetail,
+  type PublicAuctionDetail,
+} from './public-auction';
 
 /**
  * Datos públicos de una subasta, cacheados 30 s por id (spec §4).
@@ -14,6 +18,9 @@ import { toPublicAuctionDetail, type PublicAuctionDetail } from './public-auctio
  * es inofensivo.
  */
 export function loadPublicAuction(id: string): Promise<PublicAuctionDetail | null> {
+  // Un id con `/` (o cualquier cosa que no sea un id) no llega a Firestore ni
+  // al cache: el Admin SDK leería la ruta que arme, sin reglas de por medio.
+  if (!isPublicAuctionId(id)) return Promise.resolve(null);
   return unstable_cache(
     async () => {
       const db = getFirestore(getAdminApp());

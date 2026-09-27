@@ -41,7 +41,7 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
   const vSnap = await db.doc(`vehicles/${a['vehicleId']}`).get();
   const v = vSnap.exists ? vSnap.data()! : {};
   const description = (v['description'] ?? {}) as { es?: string; en?: string };
-  const images = (v['images'] as Array<{ url: string; thumbnailUrl: string }> | undefined) ?? [];
+  const images = (v['images'] as Array<{ url: string; thumbnailUrl?: string }> | undefined) ?? [];
   const ms = (k: string) => (a[k] as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
 
   return {
@@ -59,7 +59,9 @@ export async function loadAuction(id: string): Promise<AuctionDetail | null> {
     condition: (v['condition'] as AuctionDetail['condition']) ?? 'used',
     descriptionEs: description.es ?? '',
     descriptionEn: description.en ?? null,
-    images: images.map((img) => ({ url: img.url, thumbnailUrl: img.thumbnailUrl })),
+    // La galería compartida muestra la miniatura como foto grande: una imagen
+    // guardada sin miniatura usa la original en lugar de quedar en blanco.
+    images: images.map((img) => ({ url: img.url, thumbnailUrl: img.thumbnailUrl ?? img.url })),
     startingPrice: (a['startingPrice'] as number) ?? 0,
     currentBid: (a['currentBid'] as number) ?? 0,
     bidCount: (a['bidCount'] as number) ?? 0,

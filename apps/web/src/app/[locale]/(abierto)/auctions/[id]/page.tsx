@@ -1,7 +1,9 @@
+import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getOptionalUser } from '@/lib/auth/server';
+import { SESSION_COOKIE_NAME } from '@/lib/auth/constants';
 import { loadAuction } from '@/lib/buyer/load-auction';
 import { loadAppConfigSnapshot } from '@/lib/admin/load-app-config';
 import { auctionPath, type PublicAuctionDetail } from '@/lib/buyer/public-auction';
@@ -52,6 +54,17 @@ export async function generateMetadata({ params: { locale, id } }: Props): Promi
 }
 
 export default async function AuctionDetailPage({ params: { locale, id } }: Props) {
+  // Lecturas en paralelo con la verificación de la sesión, como la ficha antes
+  // de ser pública: la configuración la usan las dos ramas, y la subasta
+  // completa solo la usa la rama con sesión, así que se pide solo si llegó la
+  // cookie. La rama que no usa una de estas promesas la descarta; el catch
+  // vacío evita que su rechazo quede sin manejar. La rama que sí la usa la
+  // espera y recibe el error tal cual, igual que antes.
+  const configLoad = loadAppConfigSnapshot();
+  const auctionLoad = cookies().get(SESSION_COOKIE_NAME)?.value ? loadAuction(id) : null;
+  configLoad.catch(() => undefined);
+  auctionLoad?.catch(() => undefined);
+
   const user = await getOptionalUser();
   if (!user) {
     const detail = await loadPublicAuction(id);
@@ -60,10 +73,7 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
     // A propósito temporal: si la subasta nueva también termina sin vender,
     // este link tiene que seguir la misma regla otra vez (spec §6).
     if (state.kind === 'redirect') redirect(auctionPath(locale, state.toAuctionId));
-    const [config, labels] = await Promise.all([
-      loadAppConfigSnapshot(),
-      vehicleLabels(locale, detail),
-    ]);
+    const [config, labels] = await Promise.all([configLoad, vehicleLabels(locale, detail)]);
     const jsonLd = JSON.stringify(vehicleJsonLd(detail, labels, state, locale)).replace(
       /</g,
       '\\u003c',
@@ -88,7 +98,9 @@ export default async function AuctionDetailPage({ params: { locale, id } }: Prop
     );
   }
 
-  const [auction, config] = await Promise.all([loadAuction(id), loadAppConfigSnapshot()]);
+  // Con usuario siempre hubo cookie, así que `auctionLoad` ya está en camino;
+  // el `??` solo le da a TypeScript el caso que no puede ocurrir.
+  const [auction, config] = await Promise.all([auctionLoad ?? loadAuction(id), configLoad]);
   if (!auction) notFound();
   // loadAuction lee con el Admin SDK, que se saltea firestore.rules —
   // replicamos el mismo gate de audience que imponen las reglas para que un

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { needsRelistLookup, publicAuctionState } from './public-state';
+import { effectivePublicKind, needsRelistLookup, publicAuctionState } from './public-state';
 
 const NOW = Date.parse('2026-10-02T12:00:00Z');
 const FUTURE = NOW + 3_600_000;
@@ -91,6 +91,37 @@ describe('publicAuctionState (spec §6)', () => {
       result: 'cancelled',
       indexable: false,
     });
+  });
+});
+
+// La página pública trae datos de hasta 30 s y el tick que cambia estados corre
+// cada minuto: en el navegador manda el reloj, como en la ficha con sesión.
+describe('effectivePublicKind', () => {
+  const STARTS = NOW;
+  const ENDS = NOW + 3_600_000;
+
+  it('a scheduled auction stays scheduled until it opens', () => {
+    expect(effectivePublicKind('scheduled', STARTS, ENDS, STARTS - 1)).toBe('scheduled');
+  });
+
+  it('a scheduled auction whose opening time passed behaves as live', () => {
+    expect(effectivePublicKind('scheduled', STARTS, ENDS, STARTS)).toBe('live');
+  });
+
+  it('a scheduled auction whose close also passed shows as ended', () => {
+    expect(effectivePublicKind('scheduled', STARTS, ENDS, ENDS)).toBe('ended');
+  });
+
+  it('a live auction stays live until its close', () => {
+    expect(effectivePublicKind('live', STARTS, ENDS, ENDS - 1)).toBe('live');
+  });
+
+  it('a live auction shows as ended from its closing time on, like the signed-in page', () => {
+    expect(effectivePublicKind('live', STARTS, ENDS, ENDS)).toBe('ended');
+  });
+
+  it('a sale stays a sale whatever the clock says', () => {
+    expect(effectivePublicKind('sold-visible', STARTS, ENDS, ENDS + 1)).toBe('sold-visible');
   });
 });
 

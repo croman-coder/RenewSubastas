@@ -82,11 +82,18 @@ export function SpecTile({ label, value }: { label: string; value: string | numb
 }
 
 export function StatusChip({ status, label }: { status: string; label: string }) {
+  // Tinte y borde con los tokens de estado de globals.css. El texto usa el
+  // tono de DESIGN.md de cada estado (el mismo de los Badge): los tokens
+  // success/warning/danger son tonos medios y sobre su propio tinte quedan
+  // entre 2,5 y 3,8:1, poco para letra de 11 px. "Finalizada" va solo con
+  // tokens neutros; antes era zinc-300 sobre papel (1,1:1) y ahora se ve en
+  // las fichas públicas de autos vendidos. Todas las variantes quedan en
+  // 5,2:1 o más, en claro y en oscuro (2026-09-26).
   const map: Record<string, string> = {
-    live: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30',
-    scheduled: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-amber-500/30',
-    ended: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30',
-    cancelled: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+    live: 'bg-success/15 text-[#166534] ring-success/30 dark:text-[#bbf7d0]',
+    scheduled: 'bg-warning/15 text-[#92400e] ring-warning/30 dark:text-[#fde68a]',
+    ended: 'bg-text-subtle/15 text-text-muted ring-text-subtle/30',
+    cancelled: 'bg-danger/15 text-[#991b1b] ring-danger/30 dark:text-[#fecaca]',
   };
   const cls = map[status] ?? map['ended']!;
   return (
@@ -100,8 +107,8 @@ export function StatusChip({ status, label }: { status: string; label: string })
     >
       {status === 'live' && (
         <span className="relative flex w-1.5 h-1.5">
-          <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400/70 animate-ping" />
-          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-emerald-400" />
+          <span className="absolute inline-flex w-full h-full rounded-full bg-success/70 animate-ping" />
+          <span className="relative inline-flex rounded-full w-1.5 h-1.5 bg-success" />
         </span>
       )}
       {label}

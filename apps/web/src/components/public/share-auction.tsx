@@ -4,8 +4,9 @@ import { Link2, Share2 } from 'lucide-react';
 import { shareText, whatsappShareUrl } from '@/lib/share/whatsapp';
 
 /**
- * En celulares, la hoja de compartir del sistema (WhatsApp a un toque);
- * en el resto, wa.me en una pestaña nueva. Copiar el link cubre todo lo demás.
+ * Donde existe `navigator.share` (celulares y también algunas computadoras),
+ * la hoja de compartir del sistema; donde no, wa.me en una pestaña nueva.
+ * Copiar el link cubre todo lo demás.
  */
 export function ShareAuction({ title, url }: { title: string; url: string }) {
   const [copied, setCopied] = useState(false);
@@ -13,8 +14,10 @@ export function ShareAuction({ title, url }: { title: string; url: string }) {
 
   async function share() {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      // `text` además de `title`: WhatsApp ignora el título y, sin texto, el
+      // link llegaba solo, sin el "Mirá este … en subasta".
       // Una hoja cerrada sin elegir nada rechaza la promesa; no hay nada que recuperar.
-      await navigator.share({ title: text, url }).catch(() => undefined);
+      await navigator.share({ title: text, text, url }).catch(() => undefined);
       return;
     }
     window.open(whatsappShareUrl(text, url), '_blank', 'noopener,noreferrer');

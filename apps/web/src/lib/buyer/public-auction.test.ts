@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { auctionPath, PUBLIC_AUCTION_KEYS, toPublicAuctionDetail } from './public-auction';
+import {
+  auctionPath,
+  isPublicAuctionId,
+  PUBLIC_AUCTION_KEYS,
+  toPublicAuctionDetail,
+} from './public-auction';
 
 const ts = (iso: string) => ({ toMillis: () => Date.parse(iso) });
 
@@ -93,5 +98,34 @@ describe('toPublicAuctionDetail', () => {
 describe('auctionPath', () => {
   it('builds the single public link of an auction', () => {
     expect(auctionPath('es', 'auc-1')).toBe('/es/auctions/auc-1');
+  });
+});
+
+describe('isPublicAuctionId', () => {
+  it('accepts a Firestore auto-id', () => {
+    expect(isPublicAuctionId('Xk3ZpQ9rTbV2mN7wLc1d')).toBe(true);
+  });
+
+  it('accepts a seed id with hyphens and underscores', () => {
+    expect(isPublicAuctionId('demo-auction-3')).toBe(true);
+    expect(isPublicAuctionId('verify_relist')).toBe(true);
+  });
+
+  it('rejects a slash, which would turn the id into a subcollection path', () => {
+    expect(isPublicAuctionId('auc-1/bids')).toBe(false);
+  });
+
+  it('rejects the slash a route handler gets after decoding %2F', () => {
+    // `…/x%2Fprivate%2Finternal/opengraph-image-…` llega decodificado al handler.
+    expect(isPublicAuctionId(decodeURIComponent('x%2Fprivate%2Finternal'))).toBe(false);
+  });
+
+  it('rejects an empty id', () => {
+    expect(isPublicAuctionId('')).toBe(false);
+  });
+
+  it('accepts up to 128 characters and rejects 129', () => {
+    expect(isPublicAuctionId('a'.repeat(128))).toBe(true);
+    expect(isPublicAuctionId('a'.repeat(129))).toBe(false);
   });
 });
