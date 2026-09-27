@@ -5,6 +5,7 @@ import { SidebarNav } from './sidebar-nav';
 import { RouteProgress } from './route-progress';
 import { PushPermissionPrompt } from './push-permission-prompt';
 import { SessionBridge } from './session-bridge';
+import { BottomTabBar } from './bottom-tab-bar';
 import { getNavItems, type Role } from './nav-config';
 
 interface Props {
@@ -29,6 +30,7 @@ export async function AppShell(props: Props) {
   const tBuyerAuctions = await getTranslations('buyer.auctions');
 
   const role = user.role as Role;
+  const isBuyer = role === 'buyer';
 
   const navItems = getNavItems(
     role,
@@ -92,11 +94,23 @@ export async function AppShell(props: Props) {
           <SidebarNav items={navItems} />
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0 px-4 py-5 md:px-8 md:py-7">
+        {/* Main content. Con la barra de pestañas del comprador (< lg) el
+            contenido deja abajo el alto de la barra más el área segura del
+            iPhone, para que nada quede tapado (spec 2026-09-27 §4). La barra
+            de puja de la ficha mide lo mismo, así que este lugar le sirve
+            también. El md: repetido es a propósito: md:py-7 pisaría el pb. */}
+        <main
+          className={
+            'flex-1 min-w-0 px-4 py-5 md:px-8 md:py-7' +
+            (isBuyer
+              ? ' pb-[calc(64px_+_env(safe-area-inset-bottom)_+_1rem)] md:pb-[calc(64px_+_env(safe-area-inset-bottom)_+_1rem)] lg:pb-7'
+              : '')
+          }
+        >
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
+      {isBuyer && <BottomTabBar items={navItems} />}
     </div>
   );
 }

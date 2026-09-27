@@ -121,18 +121,22 @@ export function Topbar({
         }
       >
         <div className="flex items-center gap-3 min-w-0">
-          <button
-            ref={menuButtonRef}
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Abrir menú"
-            className={
-              'lg:hidden -ml-1.5 w-9 h-9 grid place-items-center rounded-lg ' +
-              'text-text-muted hover:text-text-strong hover:bg-bg-deep/60 transition-colors'
-            }
-          >
-            <Menu className="w-5 h-5" strokeWidth={2.25} />
-          </button>
+          {/* El comprador navega con la barra de pestañas de abajo (spec
+              2026-09-27 §4); staff, admin y finanzas siguen con el cajón. */}
+          {role !== 'buyer' && (
+            <button
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Abrir menú"
+              className={
+                'lg:hidden -ml-1.5 w-9 h-9 grid place-items-center rounded-lg ' +
+                'text-text-muted hover:text-text-strong hover:bg-bg-deep/60 transition-colors'
+              }
+            >
+              <Menu className="w-5 h-5" strokeWidth={2.25} />
+            </button>
+          )}
           <Link
             href={`/${locale}` as `/${string}`}
             className="flex items-center"
@@ -208,17 +212,19 @@ export function Topbar({
         </div>
       </header>
 
-      {/* Mobile drawer */}
-      <MobileDrawer
-        open={mobileOpen}
-        onClose={closeMobileMenu}
-        triggerRef={menuButtonRef}
-        navItems={navItems}
-        firstName={firstName}
-        email={email}
-        role={role}
-        {...(audience ? { audience } : {})}
-      />
+      {/* Mobile drawer: no se monta para el comprador (ver arriba). */}
+      {role !== 'buyer' && (
+        <MobileDrawer
+          open={mobileOpen}
+          onClose={closeMobileMenu}
+          triggerRef={menuButtonRef}
+          navItems={navItems}
+          firstName={firstName}
+          email={email}
+          role={role}
+          {...(audience ? { audience } : {})}
+        />
+      )}
     </>
   );
 }

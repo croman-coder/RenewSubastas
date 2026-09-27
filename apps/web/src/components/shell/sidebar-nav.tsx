@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import type { IconKey, NavItem } from './nav-config';
 
-const ICON_MAP: Record<IconKey, LucideIcon> = {
+// Exportado: la barra de pestañas del celular usa los mismos íconos.
+export const ICON_MAP: Record<IconKey, LucideIcon> = {
   home: Home,
   users: Users,
   car: Car,
@@ -113,7 +114,12 @@ export function SidebarNav({ items, onNavigate }: Props) {
   );
 }
 
-function isActive(pathname: string | null, href: string, exact: boolean | undefined): boolean {
+// Exportado: la barra de pestañas del celular marca la activa con la misma regla.
+export function isActive(
+  pathname: string | null,
+  href: string,
+  exact: boolean | undefined,
+): boolean {
   if (!pathname) return false;
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(href + '/');
