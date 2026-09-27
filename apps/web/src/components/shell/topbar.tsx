@@ -164,8 +164,13 @@ export function Topbar({
           />
           <DropdownMenu>
             <DropdownMenuTrigger
+              // Sin aria-label: por debajo de sm el avatar es aria-hidden y el
+              // nombre se esconde (hidden sm:block), así que el botón queda
+              // sin ningún nombre accesible — solo un chevron sin etiqueta
+              // (Concern 1 del Task 9, C1). h-11 asegura el hit area mínimo.
+              aria-label={`${firstName || 'Usuario'}, menú de la cuenta`}
               className={
-                'flex items-center gap-2 rounded-lg pl-1 pr-2 py-1 ' +
+                'flex h-11 items-center gap-2 rounded-lg pl-1 pr-2 ' +
                 'text-sm text-text-muted hover:text-text-strong ' +
                 'hover:bg-bg-deep/60 transition-colors max-w-[260px]'
               }
@@ -177,7 +182,7 @@ export function Topbar({
                 {initial}
               </span>
               <span className="hidden sm:block truncate text-sm font-medium">{firstName}</span>
-              <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-60" />
+              <ChevronDown aria-hidden="true" className="w-3.5 h-3.5 shrink-0 opacity-60" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel className="font-normal">
