@@ -21,11 +21,27 @@ if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_
 }
 
 // puppeteer-core no es dependencia del repo: se toma del lighthouse que ya
-// bajó npx, para no sumar un navegador a pnpm-lock solo por las capturas.
-const require = createRequire(
-  '/home/croman/.npm/_npx/5390d7d89c0de19d/node_modules/lighthouse/package.json',
-);
-const puppeteer = require('puppeteer-core');
+// bajó npx, para no sumar un navegador a pnpm-lock solo por las capturas. La
+// ruta exacta del caché de npx cambia de una máquina a otra (y hasta de una
+// corrida de npx a otra) — PUPPETEER_CORE_PATH permite pisarla sin editar el
+// script, y si ninguna de las dos resuelve, un error claro en vez del
+// MODULE_NOT_FOUND críptico de createRequire (D1).
+const LIGHTHOUSE_PKG_JSON =
+  process.env.PUPPETEER_CORE_PATH ??
+  '/home/croman/.npm/_npx/5390d7d89c0de19d/node_modules/lighthouse/package.json';
+let puppeteer;
+try {
+  const require = createRequire(LIGHTHOUSE_PKG_JSON);
+  puppeteer = require('puppeteer-core');
+} catch (e) {
+  console.error(
+    `REFUSING TO RUN: no se pudo cargar puppeteer-core desde "${LIGHTHOUSE_PKG_JSON}". ` +
+      'Corré "npx -y lighthouse@12 --version" una vez para que npx lo baje, o pasá ' +
+      'PUPPETEER_CORE_PATH=<ruta a un package.json de un módulo que tenga puppeteer-core ' +
+      `como dependencia>. Detalle: ${e.message}`,
+  );
+  process.exit(1);
+}
 
 const BASE = 'http://localhost:3016';
 const OUT = process.env.OUT_DIR ?? '/tmp/capturas-celular';
@@ -281,7 +297,31 @@ async function main() {
       }
     }
 
-    // 4) Una puja real desde la hoja (functions en el emulador).
+    // 4) Visitante sin sesión, en oscuro (D3): el tema ahora sigue al
+    // teléfono en toda la app (defaultTheme="system"), no solo con sesión
+    // iniciada — landing pública y ficha pública incluidas.
+    {
+      const { page, context } = await openPage(browser, { width: 390, scheme: 'dark' });
+      check((await go(page, '/es')) === 200, '[visitante dark] landing abre');
+      const landingDark = await page.evaluate(() =>
+        document.documentElement.classList.contains('dark'),
+      );
+      check(landingDark, '[visitante dark] el tema sigue al teléfono en la landing');
+      await shot(page, 'landing-es-390-dark');
+
+      check(
+        (await go(page, '/es/auctions/demo-auction-1')) === 200,
+        '[visitante dark] ficha pública abre',
+      );
+      const publicDark = await page.evaluate(() =>
+        document.documentElement.classList.contains('dark'),
+      );
+      check(publicDark, '[visitante dark] el tema sigue al teléfono en la ficha pública');
+      await shot(page, 'ficha-publica-390-dark');
+      await context.close();
+    }
+
+    // 5) Una puja real desde la hoja (functions en el emulador).
     {
       const { page, context } = await openPage(browser, {
         width: 390,
@@ -297,12 +337,21 @@ async function main() {
         timeout: 20_000,
       });
       check(true, 'la hoja se cierra sola al confirmar la puja');
-      await page.waitForFunction(
-        (sel) => document.querySelector(sel)?.textContent?.includes('Vas ganando'),
-        { timeout: 20_000 },
-        DOCK,
-      );
-      check(true, 'el dock pasa a "Vas ganando"');
+      // Ver Concern 3 del Task 9: en Puppeteer/CDP el segundo evento de un
+      // canal de streaming largo (el onSnapshot de Firestore que ya estaba
+      // abierto) a veces no llega al JS de la página, aunque la puja se
+      // confirme bien en Firestore. Sin este try/catch, ese timeout mataba el
+      // script entero y las capturas de después nunca corrían (D2).
+      try {
+        await page.waitForFunction(
+          (sel) => document.querySelector(sel)?.textContent?.includes('Vas ganando'),
+          { timeout: 20_000 },
+          DOCK,
+        );
+        check(true, 'el dock pasa a "Vas ganando"');
+      } catch (e) {
+        check(false, 'el dock pasa a "Vas ganando"', e.message);
+      }
       const price = await page.evaluate(() => document.body.innerText);
       check(price.includes('9.500'), 'el precio subió a 9.500');
       const unlocked = await page.evaluate(
