@@ -8,9 +8,12 @@ import { cn } from '@/lib/utils';
 
 /**
  * Hoja desde abajo para el celular (spec 2026-09-27 §3). Es un Dialog de
- * Radix con otra forma: foco atrapado, Escape, scroll de fondo bloqueado y
- * foco devuelto al botón que la abrió vienen gratis, y un Dialog anidado
- * (la confirmación de puja de BidPanel) se apila encima sin trabajo extra.
+ * Radix con otra forma: foco atrapado, Escape, scroll de fondo bloqueado y un
+ * Dialog anidado (la confirmación de puja de BidPanel) apilado encima vienen
+ * gratis. El foco devuelto al cerrar NO viene gratis con cualquier botón:
+ * Radix solo lo guarda y lo restaura si ese botón es un `BottomSheetTrigger`
+ * (o `DialogPrimitive.Trigger`); con un `onClick` suelto que llama a
+ * `onOpenChange(true)`, al cerrar el foco cae en `<body>`.
  *
  * Sólida (bg-elev), sin desenfoque: tinta y papel. Entra desde abajo con
  * ease-out y sin rebote (DESIGN.md: 200–400 ms). Se cierra con la X, tocando

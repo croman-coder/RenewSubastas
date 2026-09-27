@@ -1,8 +1,8 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Gavel, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BottomSheet, BottomSheetContent } from '@/components/ui/bottom-sheet';
+import { BottomSheet, BottomSheetContent, BottomSheetTrigger } from '@/components/ui/bottom-sheet';
 import type { DockState } from '@/lib/auctions/dock-state';
 import { formatAmount } from '@/lib/format/money';
 import { formatClock } from '@/lib/format/remaining';
@@ -30,11 +30,25 @@ interface Props {
  */
 export function BidDock({ state, sheetTitle, renderPanel }: Props) {
   const [open, setOpen] = useState(false);
+  // El botón "Pujar" (y por lo tanto el trigger de la hoja) solo existe con
+  // state.kind === 'bid'. Si una puja entra y el estado pasa a 'winning', o si
+  // el reloj del cliente se adelanta al del servidor y la barra pasa por
+  // 'hidden' y vuelve a 'bid' (extensión anti-sniping), un `open` que había
+  // quedado en true reabriría la hoja sola sin que nadie la haya tocado.
+  useEffect(() => {
+    if (state.kind !== 'bid') setOpen(false);
+  }, [state.kind]);
+  // Foco de respaldo cuando la hoja se cierra sin trigger vivo al que volver
+  // (ver onCloseAutoFocus más abajo).
+  const sectionRef = useRef<HTMLElement>(null);
+
   if (state.kind === 'hidden') return null;
 
   return (
-    <>
+    <BottomSheet open={open && state.kind === 'bid'} onOpenChange={setOpen}>
       <section
+        ref={sectionRef}
+        tabIndex={-1}
         aria-label="Barra de puja"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-text-subtle/15 bg-bg-elev pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
@@ -76,23 +90,34 @@ export function BidDock({ state, sheetTitle, renderPanel }: Props) {
             )}
           </div>
           {state.kind === 'bid' && (
-            <Button
-              type="button"
-              size="lg"
-              className="h-12 shrink-0 px-6 text-base"
-              onClick={() => setOpen(true)}
-            >
-              <Gavel strokeWidth={2.5} aria-hidden="true" /> Pujar
-            </Button>
+            // asChild: Radix necesita ESTE botón como su propio trigger para
+            // guardar la referencia y devolverle el foco al cerrar la hoja
+            // (con un onClick suelto, como antes, Radix no sabe a quién
+            // volver y el foco caía en <body>).
+            <BottomSheetTrigger asChild>
+              <Button type="button" size="lg" className="h-12 shrink-0 px-6 text-base">
+                <Gavel strokeWidth={2.5} aria-hidden="true" /> Pujar
+              </Button>
+            </BottomSheetTrigger>
           )}
         </div>
       </section>
 
-      <BottomSheet open={open} onOpenChange={setOpen}>
-        <BottomSheetContent title={sheetTitle}>
-          {renderPanel(() => setOpen(false))}
-        </BottomSheetContent>
-      </BottomSheet>
-    </>
+      <BottomSheetContent
+        title={sheetTitle}
+        onCloseAutoFocus={(e) => {
+          // Si la puja entró mientras la hoja estaba abierta, el estado ya
+          // pasó a 'winning' y el trigger de arriba se desmontó: Radix no
+          // tiene dónde devolver el foco y lo dejaría en <body>. Lo mandamos
+          // a la barra en su lugar.
+          if (state.kind !== 'bid') {
+            e.preventDefault();
+            sectionRef.current?.focus();
+          }
+        }}
+      >
+        {renderPanel(() => setOpen(false))}
+      </BottomSheetContent>
+    </BottomSheet>
   );
 }
