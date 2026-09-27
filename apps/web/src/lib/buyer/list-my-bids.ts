@@ -15,6 +15,12 @@ export interface MyBidEntry {
   auctionStatus: 'scheduled' | 'live' | 'ended' | 'cancelled';
   outcome: 'sold' | 'reserve_not_met' | 'no_bids' | null;
   iAmWinner: boolean;
+  /**
+   * El comprador es hoy el mejor postor (auction.currentBidderUid). Es la
+   * fuente de "Vas ganando"/"Te superaron": el `status` de la puja falta en
+   * las pujas viejas y en las del seed (ver my-auction-states.ts).
+   */
+  iAmLeading: boolean;
   currentBid: number;
   endsAtMs: number;
   bidCreatedAtMs: number;
@@ -60,6 +66,7 @@ export async function listMyBids(uid: string): Promise<MyBidEntry[]> {
       auctionStatus: (a['status'] as MyBidEntry['auctionStatus']) ?? 'ended',
       outcome: (a['outcome'] as MyBidEntry['outcome']) ?? null,
       iAmWinner: (a['winnerUid'] as string | undefined) === uid,
+      iAmLeading: (a['currentBidderUid'] as string | undefined) === uid,
       currentBid: (a['currentBid'] as number) ?? 0,
       endsAtMs: ms('endsAt'),
       bidCreatedAtMs:

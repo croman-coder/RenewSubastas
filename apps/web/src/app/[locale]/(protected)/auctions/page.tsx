@@ -1,6 +1,8 @@
 import { getCurrentUser } from '@/lib/auth/server';
 import { listPublicAuctions, type CatalogTab } from '@/lib/buyer/list-public-auctions';
 import { loadFavorites } from '@/lib/buyer/load-favorites';
+import { listMyBids } from '@/lib/buyer/list-my-bids';
+import { myAuctionStates } from '@/lib/buyer/my-auction-states';
 import { AuctionsGrid } from './auctions-grid';
 
 interface PageProps {
@@ -20,6 +22,12 @@ export default async function BuyerAuctionsCatalog({
   // operator perspective). Buyers always see only their own audience.
   const audience = user.audience ?? 'retail';
 
+  // "Vas ganando"/"Te superaron" en cada auto sale de las pujas del comprador
+  // (spec 2026-09-27 §5.3): una consulta por vista, en paralelo con el resto.
+  // Si falla, el catálogo sale igual sin esas etiquetas: son contexto, no el
+  // catálogo.
+  const myBidsLoad = listMyBids(user.uid).catch(() => []);
+
   // Favorites and the catalog query are independent on the 'all' / 'closing'
   // tabs; run them in parallel. Only the 'favorites' tab needs to know
   // favorites first to filter.
@@ -34,6 +42,8 @@ export default async function BuyerAuctionsCatalog({
       listPublicAuctions({ tab, audience }),
     ]);
   }
+  // Map → objeto: lo que cruza al componente de cliente tiene que ser JSON.
+  const myStates = Object.fromEntries(myAuctionStates(await myBidsLoad));
 
   return (
     <AuctionsGrid
@@ -42,6 +52,7 @@ export default async function BuyerAuctionsCatalog({
       currentTab={tab}
       favorites={favorites}
       buyerUid={user.uid}
+      myStates={myStates}
     />
   );
 }

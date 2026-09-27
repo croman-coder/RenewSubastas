@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Heart, Clock, Gavel } from 'lucide-react';
-import { doc, updateDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
-import { fb } from '@/lib/firebase/client';
 import type { PublicAuction } from '@/lib/buyer/list-public-auctions';
+import { Badge } from '@/components/ui/badge';
+import { ownStatePill, type MyAuctionState } from '@/lib/buyer/my-auction-states';
+import { useFavorite } from './use-favorite';
 import { SoldBanner } from '@/components/auctions/sold-banner';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 import { formatAmount } from '@/lib/format/money';
@@ -17,14 +17,14 @@ interface Props {
   isFavorite: boolean;
   buyerUid: string;
   index?: number;
+  /** "Vas ganando"/"Te superaron" en esta subasta, si el comprador pujó (spec 2026-09-27 §5.3). */
+  myState?: MyAuctionState | undefined;
 }
 
-export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }: Props) {
+export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0, myState }: Props) {
   const t = useTranslations('buyer.auctions');
   const tStatus = useTranslations('buyer.auctions.status');
-  const router = useRouter();
-  const [fav, setFav] = useState(isFavorite);
-  const [favBusy, setFavBusy] = useState(false);
+  const { fav, toggle: toggleFav } = useFavorite(auction.id, buyerUid, isFavorite);
 
   // countdown re-renders every second
   const [now, setNow] = useState(Date.now());
@@ -32,28 +32,6 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  async function toggleFav(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (favBusy) return;
-    setFavBusy(true);
-    const ref = doc(fb.db, 'users', buyerUid);
-    try {
-      if (fav) {
-        await updateDoc(ref, { favorites: arrayRemove(auction.id) });
-        setFav(false);
-      } else {
-        await updateDoc(ref, { favorites: arrayUnion(auction.id) });
-        setFav(true);
-      }
-      router.refresh();
-    } catch {
-      // silent fail; user will see no change
-    } finally {
-      setFavBusy(false);
-    }
-  }
 
   const remainingMs = auction.endsAtMs - now;
   const displayPrice = auction.currentBid > 0 ? auction.currentBid : auction.startingPrice;
@@ -65,6 +43,7 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
   // copies of this condition is how one silently drifts from the other.
   const isSold = isSoldOutcome(auction.outcome);
   const cardLabel = `${auction.make} ${auction.model} ${auction.year}${isSold ? ' — vendido' : ''}`;
+  const pill = ownStatePill(myState, auction);
 
   return (
     // Plain (non-interactive) wrapper — the actual navigation affordance is
@@ -177,6 +156,14 @@ export function AuctionCard({ locale, auction, isFavorite, buyerUid, index = 0 }
             </span>
           )}
         </div>
+        {pill && (
+          <Badge
+            variant={pill.variant}
+            className="px-2 py-0.5 text-[10px] uppercase tracking-[0.06em]"
+          >
+            {pill.label}
+          </Badge>
+        )}
       </div>
     </div>
   );

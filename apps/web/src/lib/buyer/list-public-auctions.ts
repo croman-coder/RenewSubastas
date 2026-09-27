@@ -13,6 +13,11 @@ export interface PublicAuction {
   startingPrice: number;
   currentBid: number;
   bidCount: number;
+  /**
+   * Precio de Compra ya, null si no tiene. Lo muestra la píldora del catálogo
+   * (spec 2026-09-27 §5.3); es publicable: la ficha pública ya lo expone.
+   */
+  buyNowPrice: number | null;
   status: 'scheduled' | 'live' | 'ended' | 'cancelled';
   startsAtMs: number;
   endsAtMs: number;
@@ -121,6 +126,8 @@ function toItem(d: FirebaseFirestore.QueryDocumentSnapshot): PublicAuction {
     startingPrice: (data['startingPrice'] as number) ?? 0,
     currentBid: (data['currentBid'] as number) ?? 0,
     bidCount: (data['bidCount'] as number) ?? 0,
+    // Staff lo borra con FieldValue.delete(): ausente y "nunca tuvo" dan null.
+    buyNowPrice: (data['buyNowPrice'] as number | undefined) ?? null,
     status: (data['status'] as PublicAuction['status']) ?? 'scheduled',
     startsAtMs: ms('startsAt'),
     endsAtMs: ms('endsAt'),

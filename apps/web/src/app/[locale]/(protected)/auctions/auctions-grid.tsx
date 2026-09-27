@@ -1,11 +1,16 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Gavel, Heart, Search } from 'lucide-react';
 import { AuctionCard } from './auction-card';
+import { AuctionRow } from './auction-row';
 import { BatchCountdown } from '@/components/auctions/batch-countdown';
 import { batchClock } from '@/lib/auctions/batch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { matchesSearch } from '@/lib/buyer/search';
+import { ownStatePill, type MyAuctionState } from '@/lib/buyer/my-auction-states';
 import type { PublicAuction, CatalogTab } from '@/lib/buyer/list-public-auctions';
 
 interface Props {
@@ -14,12 +19,19 @@ interface Props {
   currentTab: CatalogTab;
   favorites: string[];
   buyerUid: string;
+  /**
+   * Estado propio por subasta en vivo (myAuctionStates). Objeto y no Map:
+   * cruza del servidor al cliente y tiene que ser JSON.
+   */
+  myStates: Record<string, MyAuctionState>;
 }
 
-export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }: Props) {
+export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid, myStates }: Props) {
   const t = useTranslations('buyer.auctions');
   const router = useRouter();
   const favSet = new Set(favorites);
+  // Búsqueda sobre la lista ya cargada, sin consulta nueva (spec 2026-09-27 §5.3).
+  const [query, setQuery] = useState('');
 
   function setTab(value: string) {
     const next = value === 'all' ? '' : `?tab=${value}`;
@@ -28,6 +40,7 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
 
   const empty = items.length === 0;
   const clock = batchClock(items);
+  const visible = items.filter((a) => matchesSearch(a, query));
 
   return (
     <div className="space-y-6">
@@ -63,38 +76,117 @@ export function AuctionsGrid({ locale, items, currentTab, favorites, buyerUid }:
         </div>
       </header>
 
-      {/* Tabs */}
-      <Tabs value={currentTab} onValueChange={setTab}>
-        <TabsList className="w-full sm:w-auto justify-start overflow-x-auto scrollbar-none">
-          <TabsTrigger value="all" className="gap-1.5">
-            <Gavel className="w-3.5 h-3.5" /> {t('tabs.all')}
-          </TabsTrigger>
-          <TabsTrigger value="closing" className="gap-1.5">
-            <Search className="w-3.5 h-3.5" /> {t('tabs.closing')}
-          </TabsTrigger>
-          <TabsTrigger value="favorites" className="gap-1.5">
-            <Heart className="w-3.5 h-3.5" /> {t('tabs.favorites')}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="space-y-3">
+        {/* Por debajo de lg las pestañas son un control segmentado de tres
+            que ocupa el ancho; desde lg, las mismas pestañas de siempre. Los
+            íconos se esconden en el teléfono para que "Cierran pronto" entre. */}
+        <Tabs value={currentTab} onValueChange={setTab}>
+          <TabsList className="grid w-full grid-cols-3 scrollbar-none lg:inline-flex lg:w-auto lg:justify-start lg:overflow-x-auto">
+            <TabsTrigger value="all" className="gap-1.5 px-1.5 text-[13px] lg:px-3 lg:text-sm">
+              <Gavel className="hidden w-3.5 h-3.5 sm:inline-block" /> {t('tabs.all')}
+            </TabsTrigger>
+            <TabsTrigger value="closing" className="gap-1.5 px-1.5 text-[13px] lg:px-3 lg:text-sm">
+              <Search className="hidden w-3.5 h-3.5 sm:inline-block" /> {t('tabs.closing')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="favorites"
+              className="gap-1.5 px-1.5 text-[13px] lg:px-3 lg:text-sm"
+            >
+              <Heart className="hidden w-3.5 h-3.5 sm:inline-block" /> {t('tabs.favorites')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="relative lg:hidden">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Marca, modelo o año"
+            aria-label="Buscar por marca, modelo o año"
+            className="h-11 pl-9"
+          />
+        </div>
+      </div>
 
       {empty ? (
         <EmptyState tab={currentTab} />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          {items.map((a, i) => (
-            <AuctionCard
-              key={a.id}
-              locale={locale}
-              auction={a}
-              isFavorite={favSet.has(a.id)}
-              buyerUid={buyerUid}
-              index={i}
-            />
-          ))}
+      ) : visible.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-text-subtle/20 bg-bg-elev px-6 py-12 text-center text-sm text-text-muted">
+          Ninguna subasta coincide con “{query.trim()}”.
         </div>
+      ) : (
+        <>
+          <AuctionRowList
+            locale={locale}
+            items={visible}
+            favSet={favSet}
+            buyerUid={buyerUid}
+            myStates={myStates}
+          />
+          {/* Desde sm, la grilla de tarjetas de siempre. */}
+          <div className="hidden gap-4 sm:grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            {visible.map((a, i) => (
+              <AuctionCard
+                key={a.id}
+                locale={locale}
+                auction={a}
+                isFavorite={favSet.has(a.id)}
+                buyerUid={buyerUid}
+                index={i}
+                myState={myStates[a.id]}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+/**
+ * Filas del teléfono (< sm). Tiene su propio reloj para que el tic de cada
+ * segundo re-renderice solo las filas y no toda la grilla.
+ */
+function AuctionRowList({
+  locale,
+  items,
+  favSet,
+  buyerUid,
+  myStates,
+}: {
+  locale: string;
+  items: PublicAuction[];
+  favSet: Set<string>;
+  buyerUid: string;
+  myStates: Record<string, MyAuctionState>;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <ul className="space-y-3 sm:hidden">
+      {items.map((a) => (
+        <li key={a.id}>
+          <AuctionRow
+            locale={locale}
+            auction={a}
+            nowMs={now}
+            pill={ownStatePill(myStates[a.id], a)}
+            isFavorite={favSet.has(a.id)}
+            buyerUid={buyerUid}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 

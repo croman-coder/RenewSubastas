@@ -43,6 +43,9 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
   ]);
 
   const favSet = new Set(favorites);
+  // El Inicio no carga listMyBids: solo sabe dónde vas ganando (myWinning).
+  // "Te superaron" queda para el catálogo, que sí tiene todas tus pujas.
+  const winningIds = new Set(stats.myWinning.map((w) => w.auctionId));
   const shown = items.slice(0, HOME_GRID_LIMIT);
   const hasMore = items.length > shown.length;
   const clock = batchClock(items);
@@ -167,6 +170,7 @@ export default async function BuyerHome({ params: { locale, audience } }: PagePr
                     isFavorite={favSet.has(a.id)}
                     buyerUid={user.uid}
                     index={i}
+                    myState={winningIds.has(a.id) ? 'winning' : undefined}
                   />
                 </li>
               ))}
