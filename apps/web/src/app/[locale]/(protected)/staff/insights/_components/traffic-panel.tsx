@@ -125,7 +125,7 @@ export function TrafficPanel({ insights }: Props) {
               funnel={summary.funnel}
               stages={ANONYMOUS_FUNNEL_STAGES}
               title="Anónimos"
-              description={`Visitantes sin cuenta: cuántos entraron a la home y cuántos de esos llegaron al login. No incluye catálogo ni fichas — esas páginas piden cuenta iniciada. Últimos ${dias}.`}
+              description={`Visitantes sin cuenta: cuántos entraron a la home y cuántos llegaron al login. Desde el 26/9/2026 también pueden abrir fichas sin cuenta; esas vistas se cuentan en el bloque de abajo. Últimos ${dias}.`}
             />
           </div>
 
@@ -136,7 +136,7 @@ export function TrafficPanel({ insights }: Props) {
             funnel={summary.funnel}
             stages={SIGNED_IN_FUNNEL_STAGES}
             title="Con sesión"
-            description={`Compradores con cuenta iniciada: catálogo visto y fichas abiertas. No incluye visitantes anónimos — sin cuenta no se puede ver estas páginas. Últimos ${dias}.`}
+            description={`Catálogo visto (solo con cuenta) y fichas abiertas. Desde el 26/9/2026 las fichas son públicas, así que ese número suma visitas con y sin cuenta. Últimos ${dias}.`}
           />
         </>
       )}

@@ -32,6 +32,14 @@ export const FUNNEL_STAGES: readonly FunnelStage[] = ['home', 'catalog', 'detail
 const SOURCES: readonly Source[] = ['ig', 'fb', 'google', 'direct', 'other'];
 
 /**
+ * ACTUALIZACIÓN 2026-09-26: `/auctions/[id]` pasó al grupo (abierto) y es
+ * pública para subastas retail (docs/superpowers/specs/2026-09-26-paginas-
+ * publicas-subastas-design.md). Desde ese día `detail` cuenta sesiones
+ * anónimas Y con sesión iniciada, y un anuncio que enlaza a un vehículo
+ * produce una vista `detail` en lugar de una `login`. Las listas de etapas
+ * quedan como están porque el agregado no puede distinguir las dos
+ * poblaciones; la copia del panel lo aclara.
+ *
  * The two journeys this app's routing can actually produce — NOT one
  * four-stage funnel. Verified directly against the route code, not assumed:
  *
