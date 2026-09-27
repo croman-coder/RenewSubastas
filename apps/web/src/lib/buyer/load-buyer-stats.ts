@@ -19,7 +19,7 @@ export interface BuyerStats {
   myWonGmvUsd: number;
   /** Auctions favorited by this buyer that are still live. */
   myFavoritesLiveCount: number;
-  /** Closing-soon auctions (live, ends within 24h), sorted asc, max 3. */
+  /** Closing-soon auctions (live, ends within 24h), sorted asc, max 6 (fila "Cierran pronto"). */
   closingSoon: Array<{
     id: string;
     make: string;
@@ -30,7 +30,12 @@ export interface BuyerStats {
     startingPrice: number;
     endsAtMs: number;
   }>;
-  /** Auctions where the buyer is currently winning. */
+  /**
+   * Subastas distintas en las que el comprador pujó alguna vez. El Inicio la
+   * usa para no decir "Todavía no pujaste" en una donde ya lo superaron.
+   */
+  myBidAuctionIds: string[];
+  /** Auctions where the buyer is currently winning, max 20 ("Si ganás todo" las suma). */
   myWinning: Array<{
     auctionId: string;
     make: string;
@@ -123,8 +128,10 @@ export async function loadBuyerStats(
     0,
   );
 
-  // Distinct auctions the buyer has placed any bid on.
-  const myActiveBidsCount = await safe(
+  // Distinct auctions the buyer has placed any bid on. La lista (y no solo el
+  // número) la usa "La próxima que cierra"; sale de la misma consulta, sin
+  // lecturas extra.
+  const myBidAuctionIds = await safe(
     db
       .collectionGroup('bids')
       .where('buyerUid', '==', uid)
@@ -136,10 +143,11 @@ export async function loadBuyerStats(
           const aid = d.data()['auctionId'] as string | undefined;
           if (aid) ids.add(aid);
         });
-        return ids.size;
+        return Array.from(ids);
       }),
-    0,
+    [] as string[],
   );
+  const myActiveBidsCount = myBidAuctionIds.length;
 
   // Favorites still live AND in the buyer's own audience. Bookmarks of
   // auctions that crossed audiences shouldn't keep counting.
@@ -160,7 +168,8 @@ export async function loadBuyerStats(
     0,
   );
 
-  // Closing-soon: live auctions ending in next 24h, max 3 (lighter than admin).
+  // Closing-soon: live auctions ending in next 24h, max 6: la fila deslizable
+  // "Cierran pronto" del Inicio (spec 2026-09-27 §5.2).
   // Filtered to the buyer's audience so wholesale buyers don't see retail
   // closings and vice-versa.
   const now = Date.now();
@@ -172,7 +181,7 @@ export async function loadBuyerStats(
       .where('status', '==', 'live')
       .where('endsAt', '<=', in24h)
       .orderBy('endsAt', 'asc')
-      .limit(3)
+      .limit(6)
       .get()
       .then((s) =>
         s.docs.map((d) => {
@@ -194,10 +203,10 @@ export async function loadBuyerStats(
     [] as BuyerStats['closingSoon'],
   );
 
-  // Auctions the buyer is currently winning, scoped to their audience and
-  // capped at 5 for the dashboard panel. Reuses myWinningDocs so the count
-  // and the visible list stay in sync.
-  const myWinning: BuyerStats['myWinning'] = myWinningDocs.slice(0, 5).map((d) => {
+  // Auctions the buyer is currently winning, scoped to their audience. Tope
+  // 20 y no 5: "Si ganás todo" suma todas (spec 2026-09-27 §5.2). Reuses
+  // myWinningDocs so the count and the visible list stay in sync.
+  const myWinning: BuyerStats['myWinning'] = myWinningDocs.slice(0, 20).map((d) => {
     const data = d.data();
     const v = (data['vehicleSnapshot'] ?? {}) as Record<string, unknown>;
     return {
@@ -221,6 +230,7 @@ export async function loadBuyerStats(
     myWonGmvUsd,
     myFavoritesLiveCount,
     closingSoon,
+    myBidAuctionIds,
     myWinning,
   };
 }
