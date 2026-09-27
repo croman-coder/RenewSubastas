@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { httpsCallable } from 'firebase/functions';
@@ -89,6 +89,11 @@ export function BidPanel({
   const router = useRouter();
   const locale = (useParams().locale as string) ?? 'es';
   const minRequired = minimumBid({ currentBid, startingPrice, bidIncrement });
+  // En celular el aside queda montado (display:none) mientras la hoja abre
+  // otro BidPanel encima: con un id fijo "manual" el Label del oculto
+  // apuntaba al input visible de la hoja. useId() da un id único por
+  // instancia sin tocar la lógica de plata.
+  const manualId = useId();
   const [manual, setManual] = useState(minRequired.toFixed(2));
   const [busy, setBusy] = useState(false);
   // Amount staged for confirmation; null when the confirm dialog is closed.
@@ -424,7 +429,7 @@ export function BidPanel({
 
       {allowManualIncrement && (
         <div className="space-y-2 pt-3 border-t border-text-subtle/15">
-          <Label htmlFor="manual" className="text-xs uppercase tracking-[0.08em] text-text-muted">
+          <Label htmlFor={manualId} className="text-xs uppercase tracking-[0.08em] text-text-muted">
             {t('amount')}
           </Label>
           {/* USD prefix sits inside the field so the input reads as a
@@ -435,7 +440,7 @@ export function BidPanel({
               USD
             </span>
             <Input
-              id="manual"
+              id={manualId}
               type="text"
               inputMode="decimal"
               value={manual}
