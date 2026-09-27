@@ -85,7 +85,11 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AuthProvider>
-            <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            {/* El tema sigue al teléfono (spec 2026-09-27 §2): casi todos los
+                compradores entran desde el celular y muchos lo tienen en
+                oscuro. Quien eligió un tema a mano lo conserva: next-themes
+                lo guarda y solo usa este valor cuando no hay elección. */}
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               {children}
               {/* Global: the choice has to be reachable from every surface,
                   and every consent-gated tracker stays off until it's made. */}
