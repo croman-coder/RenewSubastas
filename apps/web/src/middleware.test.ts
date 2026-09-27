@@ -45,4 +45,9 @@ describe('middleware', () => {
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/en');
   });
+
+  it('lets an auction page and its social image through (both are public now)', () => {
+    expect(run('/es/auctions/auc-1').status).not.toBe(404);
+    expect(run('/es/auctions/auc-1/opengraph-image').status).not.toBe(404);
+  });
 });
