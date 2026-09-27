@@ -1,10 +1,10 @@
 /**
- * The auction photo for the social preview, as a data URI.
+ * La foto de la subasta para la vista previa social, como data URI.
  *
- * The image renderer behind next/og draws JPEG and PNG; thumbnails are WebP
- * since 2026-09-26, so the caller passes the original photo. Anything it
- * cannot draw — WebP, HEIC, a missing file, a network error — returns null
- * and the card goes out text-only instead of failing.
+ * El renderizador de imágenes detrás de next/og dibuja JPEG y PNG; desde el
+ * 2026-09-26 las miniaturas son WebP, así que la llamada pasa la foto original.
+ * Todo lo que no puede dibujar — WebP, HEIC, un archivo faltante, un error de red —
+ * devuelve null y la tarjeta sale solo con texto en lugar de fallar.
  */
 export async function photoDataUri(
   url: string,
@@ -16,7 +16,7 @@ export async function photoDataUri(
     const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
     if (type !== 'image/jpeg' && type !== 'image/png') return null;
     const bytes = Buffer.from(await res.arrayBuffer());
-    // Past 4 MB the card takes too long to render for a chat unfurl.
+    // Pasado los 4 MB la tarjeta tarda demasiado en renderizarse para un despliegue en chat.
     if (bytes.length > 4 * 1024 * 1024) return null;
     return `data:${type};base64,${bytes.toString('base64')}`;
   } catch {

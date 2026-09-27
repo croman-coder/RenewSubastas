@@ -26,4 +26,11 @@ describe('photoDataUri', () => {
     }) as unknown as typeof fetch;
     expect(await photoDataUri('https://img.test/a.jpg', failing)).toBeNull();
   });
+
+  it('gives up when the photo is too heavy for a chat preview', async () => {
+    const big = new Uint8Array(4 * 1024 * 1024 + 1);
+    expect(
+      await photoDataUri('https://img.test/a.jpg', fakeFetch('image/jpeg', 200, big)),
+    ).toBeNull();
+  });
 });

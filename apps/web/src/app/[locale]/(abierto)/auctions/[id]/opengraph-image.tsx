@@ -6,15 +6,15 @@ import { formatDateTimePy } from '@/lib/format/date';
 import { vehicleAlt } from '@/lib/format/vehicle-alt';
 
 export const runtime = 'nodejs';
-// Regenerated at most every 5 minutes per auction (spec §7): enough for the
-// price in a forwarded WhatsApp preview, cheap for Netlify.
+// Se regenera como mucho cada 5 minutos por subasta (spec §7): alcanza para el
+// precio de una vista previa reenviada por WhatsApp y es barato para Netlify.
 export const revalidate = 300;
 export const alt = 'Vehículo en subasta · Renew Subastas';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image({ params: { id } }: { params: { id: string } }) {
-  // Wholesale or unknown ids get the generic card: nothing private leaks.
+  // Una subasta mayorista o un id desconocido reciben la tarjeta genérica: no se filtra nada privado.
   const d = await loadPublicAuction(id);
   const photo = d?.images[0] ? await photoDataUri(d.images[0].url) : null;
   const title = d
