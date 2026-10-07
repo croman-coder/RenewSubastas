@@ -43,7 +43,15 @@ async function seedBuyerNoDoc(uid: string) {
     });
 }
 
-async function seedBuyer(uid: string, firstName = 'Juan', lastName = 'Perez') {
+// Desde 2026-10 pujar exige documento Y teléfono (mín. 8 dígitos): por defecto
+// todo comprador de prueba tiene un celular válido; los casos sin teléfono lo
+// pasan explícito. `phone: null` omite el campo.
+async function seedBuyer(
+  uid: string,
+  firstName = 'Juan',
+  lastName = 'Perez',
+  phone: string | null = '+595981123456',
+) {
   await adminDb()
     .doc(`users/${uid}`)
     .set({
@@ -51,7 +59,13 @@ async function seedBuyer(uid: string, firstName = 'Juan', lastName = 'Perez') {
       role: 'buyer',
       email: `${uid}@example.com`,
       status: 'active',
-      profile: { firstName, lastName, documentType: 'CI', documentNumber: '1234567' },
+      profile: {
+        firstName,
+        lastName,
+        documentType: 'CI',
+        documentNumber: '1234567',
+        ...(phone !== null && { phone }),
+      },
       preferences: { locale: 'es', theme: 'system', notifications: {} },
       createdBy: 'bootstrap',
       createdAt: FieldValue.serverTimestamp(),
@@ -106,7 +120,33 @@ describe('placeBid', () => {
     const auctionId = await seedAuction({ status: 'live' });
     await expect(
       placeBidHandler(asBuyer('nb1', { auctionId, amount: 5000 })),
-    ).rejects.toMatchObject({ code: 'failed-precondition' });
+    ).rejects.toMatchObject({ code: 'failed-precondition', message: 'profile_incomplete' });
+  });
+
+  it('rejects a bid when the buyer has a document but no phone', async () => {
+    await seedBuyer('np1', 'Juan', 'Perez', null);
+    const auctionId = await seedAuction({ status: 'live' });
+    await expect(
+      placeBidHandler(asBuyer('np1', { auctionId, amount: 5000 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition', message: 'profile_incomplete' });
+    const a = (await adminDb().doc(`auctions/${auctionId}`).get()).data()!;
+    expect(a['bidCount']).toBe(0);
+  });
+
+  it('rejects a bid when the phone has fewer than 8 digits', async () => {
+    await seedBuyer('np2', 'Juan', 'Perez', '+595 12');
+    const auctionId = await seedAuction({ status: 'live' });
+    await expect(
+      placeBidHandler(asBuyer('np2', { auctionId, amount: 5000 })),
+    ).rejects.toMatchObject({ code: 'failed-precondition', message: 'profile_incomplete' });
+  });
+
+  it('accepts a bid when the buyer has document and a valid phone', async () => {
+    await seedBuyer('np3', 'Juan', 'Perez', '0981 123 456');
+    const auctionId = await seedAuction({ status: 'live' });
+    // El mínimo de la primera puja es el precio base más un incremento (5500).
+    const result = await placeBidHandler(asBuyer('np3', { auctionId, amount: 5500 }));
+    expect(result.newCurrentBid).toBe(5500);
   });
 
   it('rejects unauthenticated', async () => {

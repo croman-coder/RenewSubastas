@@ -178,7 +178,7 @@ export function BidPanel({
         toast.error(t('errors.profileIncomplete'), {
           action: {
             label: t('errors.profileIncompleteCta'),
-            onClick: () => router.push(`/${locale}/settings/profile`),
+            onClick: () => router.push(`/${locale}/settings/profile?completar=1`),
           },
         });
       } else {
@@ -228,7 +228,7 @@ export function BidPanel({
         toast.error(t('errors.profileIncomplete'), {
           action: {
             label: t('errors.profileIncompleteCta'),
-            onClick: () => router.push(`/${locale}/settings/profile`),
+            onClick: () => router.push(`/${locale}/settings/profile?completar=1`),
           },
         });
       } else {

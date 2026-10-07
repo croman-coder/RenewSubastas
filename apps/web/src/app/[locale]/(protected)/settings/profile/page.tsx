@@ -3,7 +3,13 @@ import { getAdminApp } from '@/lib/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { ProfileForm } from './profile-form';
 
-export default async function ProfilePage({ params: { locale } }: { params: { locale: string } }) {
+export default async function ProfilePage({
+  params: { locale },
+  searchParams,
+}: {
+  params: { locale: string };
+  searchParams?: { completar?: string };
+}) {
   const user = await getCurrentUser(locale);
   const snap = await getFirestore(getAdminApp()).doc(`users/${user.uid}`).get();
   const data = (snap.data() ?? {}) as Record<string, unknown>;
@@ -11,6 +17,9 @@ export default async function ProfilePage({ params: { locale } }: { params: { lo
   const address = (profile['address'] ?? {}) as Record<string, unknown>;
   return (
     <ProfileForm
+      isBuyer={user.role === 'buyer'}
+      // El aviso de "perfil incompleto" al pujar enlaza acá con ?completar=1.
+      completar={searchParams?.completar === '1'}
       initial={{
         firstName: (profile['firstName'] as string) ?? '',
         lastName: (profile['lastName'] as string) ?? '',

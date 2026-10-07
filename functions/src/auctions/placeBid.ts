@@ -3,6 +3,7 @@ import type { CallableRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { adminDb } from '../lib/admin.js';
 import { requireSignedIn } from '../lib/errors.js';
+import { hasUsablePhone } from '../lib/phone.js';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 /**
  * Piso que la PRIMERA puja tiene que superar sobre el precio base, en USD.
@@ -108,7 +109,10 @@ export async function placeBidHandler(req: CallableRequest): Promise<PlaceBidRes
   // move without one, so the bid is blocked until the profile is completed
   // at /settings/profile. Enforced here (server-authoritative), surfaced in
   // the client as a friendly toast with a link.
-  if (!profile['documentType'] || !profile['documentNumber']) {
+  // Desde 2026-10 también se exige un teléfono usable: si el comprador gana,
+  // el equipo tiene que poder llamarlo o escribirle por WhatsApp. Mismo error
+  // (`profile_incomplete`) para que el cliente no necesite un caso nuevo.
+  if (!profile['documentType'] || !profile['documentNumber'] || !hasUsablePhone(profile['phone'])) {
     throw new HttpsError('failed-precondition', 'profile_incomplete');
   }
 

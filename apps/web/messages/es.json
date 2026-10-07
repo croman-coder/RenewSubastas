@@ -353,7 +353,7 @@
             "selfOutbid": "Ya tienes la puja ganadora.",
             "rateLimit": "Demasiadas pujas. Espera un momento.",
             "generic": "No se pudo registrar la puja.",
-            "profileIncomplete": "Completá tu perfil (documento) para poder pujar.",
+            "profileIncomplete": "Completá tu perfil (documento y teléfono) para poder pujar.",
             "profileIncompleteCta": "Completar perfil"
           }
         },

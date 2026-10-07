@@ -75,9 +75,29 @@ async function seed(overrides: Record<string, unknown> = {}) {
           audience: 'retail',
           documentType: 'CI',
           documentNumber: '1234567',
+          // Comprar exige documento Y teléfono (mín. 8 dígitos) desde 2026-10.
+          phone: '+595981123456',
         },
       }),
   ]);
+}
+
+// Reemplaza el perfil del comprador de seed() para probar el bloqueo por
+// perfil incompleto. `phone: undefined` deja el documento y quita el teléfono.
+async function setBuyerPhone(phone: string | undefined) {
+  await adminDb()
+    .doc(`users/${BUYER}`)
+    .set({
+      email: 'b@example.com',
+      profile: {
+        firstName: 'Juan',
+        lastName: 'Pérez',
+        audience: 'retail',
+        documentType: 'CI',
+        documentNumber: '1234567',
+        ...(phone !== undefined && { phone }),
+      },
+    });
 }
 
 describe('buyNow', () => {
@@ -115,6 +135,29 @@ describe('buyNow', () => {
       status: 'winning',
       source: 'buy_now',
     });
+  });
+
+  it('rechaza con profile_incomplete si el comprador no tiene teléfono', async () => {
+    await setBuyerPhone(undefined);
+    await expect(buyNowHandler(asBuyer())).rejects.toMatchObject({
+      code: 'failed-precondition',
+      message: 'profile_incomplete',
+    });
+    const a = (await adminDb().doc(`auctions/${AUCTION}`).get()).data()!;
+    expect(a['status']).toBe('live');
+  });
+
+  it('rechaza con profile_incomplete si el teléfono tiene menos de 8 dígitos', async () => {
+    await setBuyerPhone('+595 12');
+    await expect(buyNowHandler(asBuyer())).rejects.toMatchObject({
+      code: 'failed-precondition',
+      message: 'profile_incomplete',
+    });
+  });
+
+  it('acepta la compra con documento y un teléfono local válido', async () => {
+    await setBuyerPhone('0981 123 456');
+    await expect(buyNowHandler(asBuyer())).resolves.toEqual({ ok: true, finalPrice: 34000 });
   });
 
   it('rechaza cuando ya hay pujas', async () => {
@@ -243,6 +286,7 @@ describe('buyNow', () => {
             audience: 'retail',
             documentType: 'CI',
             documentNumber: '1234567',
+            phone: '+595981123456',
           },
         }),
       adminDb()
@@ -255,6 +299,7 @@ describe('buyNow', () => {
             audience: 'retail',
             documentType: 'CI',
             documentNumber: '7654321',
+            phone: '0981 765 432',
           },
         }),
     ]);

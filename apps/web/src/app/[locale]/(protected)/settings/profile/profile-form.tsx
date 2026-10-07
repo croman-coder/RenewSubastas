@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,60 +23,72 @@ import { updateProfileAction } from '@/lib/settings/update-profile';
 //   CI       -> Paraguayan cédula, numeric, up to 7 digits
 //   RUC      -> Paraguayan RUC, numeric, 7-12 chars (the dash is optional)
 //   PASSPORT -> alphanumeric, 5–15 chars (covers most foreign passports)
-const Schema = z
-  .object({
-    // Real human names rarely exceed 40 chars even with multiple given names
-    // or compound surnames. The cap also prevents the "Carlos00000000…" abuse
-    // pattern where a user pastes garbage to break dashboard layouts.
-    firstName: z
-      .string()
-      .min(1, 'Requerido')
-      .max(40, 'Máximo 40 caracteres')
-      .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
-    lastName: z
-      .string()
-      .min(1, 'Requerido')
-      .max(40, 'Máximo 40 caracteres')
-      .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
-    documentType: z.enum(['CI', 'RUC', 'PASSPORT']),
-    documentNumber: z.string().min(1, 'Requerido').max(15),
-    phone: z.string().max(20).optional(),
-    addressStreet: z
-      .string()
-      .max(130, 'La dirección no puede tener más de 130 caracteres')
-      .optional(),
-    addressDepartment: z.string().max(80).optional(),
-    addressCity: z.string().max(80).optional(),
-    addressBarrio: z.string().max(80).optional(),
-    addressPostalCode: z
-      .string()
-      .regex(/^\d{4}$|^$/, 'Código postal: 4 dígitos')
-      .optional(),
-  })
-  .superRefine((v, ctx) => {
-    if (v.documentType === 'CI' && !/^\d{1,7}$/.test(v.documentNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['documentNumber'],
-        message: 'CI: hasta 7 dígitos numéricos',
-      });
-    }
-    if (v.documentType === 'RUC' && !/^\d{7,12}-?\d?$/.test(v.documentNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['documentNumber'],
-        message: 'RUC inválido',
-      });
-    }
-    if (v.documentType === 'PASSPORT' && !/^[A-Za-z0-9]{5,15}$/.test(v.documentNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['documentNumber'],
-        message: 'Pasaporte: 5–15 caracteres alfanuméricos',
-      });
-    }
-  });
-type FormValues = z.infer<typeof Schema>;
+const buildSchema = (requirePhone: boolean) =>
+  z
+    .object({
+      // Real human names rarely exceed 40 chars even with multiple given names
+      // or compound surnames. The cap also prevents the "Carlos00000000…" abuse
+      // pattern where a user pastes garbage to break dashboard layouts.
+      firstName: z
+        .string()
+        .min(1, 'Requerido')
+        .max(40, 'Máximo 40 caracteres')
+        .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
+      lastName: z
+        .string()
+        .min(1, 'Requerido')
+        .max(40, 'Máximo 40 caracteres')
+        .regex(/^[\p{L}\p{M}'’\- .]+$/u, 'Solo letras, espacios, apóstrofes y guiones'),
+      documentType: z.enum(['CI', 'RUC', 'PASSPORT']),
+      documentNumber: z.string().min(1, 'Requerido').max(15),
+      phone: z.string().max(20).optional(),
+      addressStreet: z
+        .string()
+        .max(130, 'La dirección no puede tener más de 130 caracteres')
+        .optional(),
+      addressDepartment: z.string().max(80).optional(),
+      addressCity: z.string().max(80).optional(),
+      addressBarrio: z.string().max(80).optional(),
+      addressPostalCode: z
+        .string()
+        .regex(/^\d{4}$|^$/, 'Código postal: 4 dígitos')
+        .optional(),
+    })
+    .superRefine((v, ctx) => {
+      // Llegar desde el aviso "completá tu perfil para pujar" (?completar=1): el
+      // servidor rechaza pujar sin teléfono de al menos 8 dígitos (placeBid.ts),
+      // así que acá se exige también, con el mismo umbral. Fuera de ese flujo
+      // sigue siendo opcional: lo usan también staff y admin.
+      if (requirePhone && (v.phone ?? '').replace(/\D/g, '').length < 8) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['phone'],
+          message: 'Cargá un teléfono de al menos 8 dígitos para poder pujar',
+        });
+      }
+      if (v.documentType === 'CI' && !/^\d{1,7}$/.test(v.documentNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['documentNumber'],
+          message: 'CI: hasta 7 dígitos numéricos',
+        });
+      }
+      if (v.documentType === 'RUC' && !/^\d{7,12}-?\d?$/.test(v.documentNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['documentNumber'],
+          message: 'RUC inválido',
+        });
+      }
+      if (v.documentType === 'PASSPORT' && !/^[A-Za-z0-9]{5,15}$/.test(v.documentNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['documentNumber'],
+          message: 'Pasaporte: 5–15 caracteres alfanuméricos',
+        });
+      }
+    });
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 interface Initial {
   email: string;
@@ -92,8 +104,19 @@ interface Initial {
   addressPostalCode: string;
 }
 
-export function ProfileForm({ initial }: { initial: Initial }) {
+export function ProfileForm({
+  initial,
+  isBuyer = false,
+  completar = false,
+}: {
+  initial: Initial;
+  /** Muestra la ayuda del teléfono: a los compradores se les pide para pujar. */
+  isBuyer?: boolean;
+  /** Viene de ?completar=1 (aviso de perfil incompleto al pujar): documento y teléfono obligatorios. */
+  completar?: boolean;
+}) {
   const t = useTranslations('settings.profile');
+  const schema = useMemo(() => buildSchema(completar), [completar]);
   const [submitting, setSubmitting] = useState(false);
   const {
     register,
@@ -103,7 +126,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
     control,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(Schema),
+    resolver: zodResolver(schema),
     defaultValues: {
       firstName: initial.firstName,
       lastName: initial.lastName,
@@ -148,6 +171,16 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         <h1 className="text-2xl font-semibold tracking-tight text-text-strong">{t('title')}</h1>
         <p className="text-sm text-text-muted">{t('subtitle')}</p>
       </header>
+
+      {completar && (
+        <p
+          role="status"
+          className="rounded-xl border border-text-subtle/20 bg-bg-elev px-4 py-3 text-sm text-text-strong"
+        >
+          Para pujar necesitamos tu documento y tu teléfono. Completá los campos marcados con * y
+          guardá.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -195,7 +228,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="documentNumber">{t('documentNumber')}</Label>
+          <Label htmlFor="documentNumber">
+            {t('documentNumber')}
+            {completar && <RequiredMark />}
+          </Label>
           <Input
             id="documentNumber"
             placeholder={docPlaceholder}
@@ -210,7 +246,10 @@ export function ProfileForm({ initial }: { initial: Initial }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">{t('phone')}</Label>
+        <Label htmlFor="phone">
+          {t('phone')}
+          {completar && <RequiredMark />}
+        </Label>
         <Controller
           control={control}
           name="phone"
@@ -222,6 +261,12 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           Elegí tu país y escribí tu número sin el prefijo. Para Paraguay: 9 dígitos (ej. 981 123
           456).
         </p>
+        {isBuyer && (
+          <p className="text-xs text-text-muted">
+            Lo necesitás para pujar y para que te contactemos si ganás.
+          </p>
+        )}
+        {errors.phone && <p className="text-sm text-danger">{errors.phone.message}</p>}
       </div>
 
       <fieldset className="space-y-4">
@@ -294,5 +339,15 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         {submitting ? t('saving') : t('save')}
       </Button>
     </form>
+  );
+}
+
+/** Asterisco de campo obligatorio; el texto accesible lo dice con palabras. */
+function RequiredMark() {
+  return (
+    <span className="ml-1 text-danger" title="Obligatorio">
+      <span aria-hidden="true">*</span>
+      <span className="sr-only"> (obligatorio)</span>
+    </span>
   );
 }

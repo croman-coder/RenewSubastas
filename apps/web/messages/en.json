@@ -353,7 +353,7 @@
             "selfOutbid": "You already have the winning bid.",
             "rateLimit": "Too many bids. Please wait a moment.",
             "generic": "Could not place the bid.",
-            "profileIncomplete": "Complete your profile (document) to place a bid.",
+            "profileIncomplete": "Complete your profile (ID document and phone) to place a bid.",
             "profileIncompleteCta": "Complete profile"
           }
         },

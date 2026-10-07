@@ -6,6 +6,7 @@ import { adminDb } from '../lib/admin.js';
 import { writeAuditLog } from '../lib/audit.js';
 import { requireSignedIn } from '../lib/errors.js';
 import { DocId } from '../lib/ids.js';
+import { hasUsablePhone } from '../lib/phone.js';
 import { loadAppConfig } from '../lib/config.js';
 import { closeAuctionAsSold } from '../lib/close-auction.js';
 
@@ -138,7 +139,12 @@ export async function buyNowHandler(req: CallableRequest): Promise<BuyNowResult>
     }
 
     const profile = (uSnap.data()?.['profile'] ?? {}) as Record<string, unknown>;
-    if (!profile['documentType'] || !profile['documentNumber']) {
+    // Documento y teléfono (mín. 8 dígitos): ver el mismo chequeo en placeBid.ts.
+    if (
+      !profile['documentType'] ||
+      !profile['documentNumber'] ||
+      !hasUsablePhone(profile['phone'])
+    ) {
       throw new HttpsError('failed-precondition', 'profile_incomplete');
     }
 
