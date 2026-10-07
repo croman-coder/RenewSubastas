@@ -14,6 +14,8 @@ export interface UserListItem {
   lastName: string;
   documentType: 'CI' | 'RUC';
   documentNumber: string;
+  /** Tal como se guardó; puede estar vacío en cuentas viejas o del equipo. */
+  phone: string;
   createdAt: number;
 }
 
@@ -134,6 +136,7 @@ function toUserListItem(d: FirebaseFirestore.QueryDocumentSnapshot): UserListIte
     lastName: (profile['lastName'] as string) ?? '',
     documentType: (profile['documentType'] as 'CI' | 'RUC') ?? 'CI',
     documentNumber: (profile['documentNumber'] as string) ?? '',
+    phone: (profile['phone'] as string) ?? '',
     createdAt,
   };
 }
