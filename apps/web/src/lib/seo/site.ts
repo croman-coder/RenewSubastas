@@ -43,6 +43,15 @@ export const INDEXABLE_PATHS = ['', '/terminos', '/privacidad', '/cookies'] as c
 
 const NO_INDEX = { index: false, follow: true } as const;
 
+/**
+ * URL canónica absoluta de una ruta con idioma: `${SITE_URL}/es/terminos`.
+ * Las páginas sin canonical propio (legales, login) aparecían en Search Console como "Duplicada: el usuario no ha
+ * indicado ninguna versión canónica"; en login además cada `?from=…` es una URL distinta con el mismo contenido.
+ */
+export function canonicalUrl(locale: string, path = ''): string {
+  return `${SITE_URL}/${locale}${path}`;
+}
+
 /** Robots directive for a whole locale; undefined means "index as usual". */
 export function indexRobots(locale: string): Metadata['robots'] {
   return (INDEXED_LOCALES as readonly string[]).includes(locale) ? undefined : NO_INDEX;
@@ -60,5 +69,10 @@ const AUTH_TITLES = {
  */
 export function authPageMetadata(locale: string, page: keyof typeof AUTH_TITLES): Metadata {
   const lang = locale === 'en' ? 'en' : 'es';
-  return { title: `${AUTH_TITLES[page][lang]} · Renew Subastas`, robots: NO_INDEX };
+  return {
+    title: `${AUTH_TITLES[page][lang]} · Renew Subastas`,
+    robots: NO_INDEX,
+    // Sin esto cada /login?from=<subasta> contaba como una página duplicada distinta.
+    alternates: { canonical: canonicalUrl(locale, `/${page}`) },
+  };
 }
