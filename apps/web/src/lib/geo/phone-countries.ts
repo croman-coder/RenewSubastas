@@ -71,3 +71,16 @@ export function splitStoredPhone(value: string | undefined | null): {
   }
   return { country: found, national: digits.slice(found.dial.length) };
 }
+
+/**
+ * Normaliza lo que el usuario escribe en el campo nacional del teléfono.
+ * Deja solo dígitos y, en Paraguay (595), quita el 0 inicial: acá se escribe
+ * "0981 123 456", pero el número internacional es +595 981 123 456. Sin esto,
+ * el 0 ocupaba uno de los 9 lugares y se guardaba "+595098112345", cortado.
+ * El límite de dígitos se aplica DESPUÉS de quitar el 0.
+ */
+export function normalizeNationalPhone(dial: string, raw: string, max: number): string {
+  let digits = raw.replace(/\D/g, '');
+  if (dial === '595') digits = digits.replace(/^0/, '');
+  return digits.slice(0, max);
+}

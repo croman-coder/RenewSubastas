@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDateTimePy } from './date';
+import { formatDateTimePy, formatDateOnlyPy } from './date';
 
 describe('formatDateTimePy', () => {
   // 2026-09-26 16:23:38 UTC = 13:23 en Paraguay (UTC-3 todo el año).
@@ -28,5 +28,20 @@ describe('formatDateTimePy', () => {
 
   it('fecha inválida', () => {
     expect(formatDateTimePy('es', Number.NaN)).toBe('—');
+  });
+});
+
+describe('formatDateOnlyPy', () => {
+  it('muestra solo dd/mm/aaaa en hora de Paraguay', () => {
+    expect(formatDateOnlyPy('es', Date.UTC(2026, 8, 26, 16, 23, 38))).toBe('26/09/2026');
+  });
+
+  it('pasa la medianoche UTC sin adelantar el día', () => {
+    // 02:30 UTC del 27 = 23:30 del 26 en Paraguay.
+    expect(formatDateOnlyPy('es', Date.UTC(2026, 8, 27, 2, 30))).toBe('26/09/2026');
+  });
+
+  it('devuelve — con una fecha inválida', () => {
+    expect(formatDateOnlyPy('es', Number.NaN)).toBe('—');
   });
 });

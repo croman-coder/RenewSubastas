@@ -22,9 +22,20 @@ describe('phoneDigits', () => {
     expect(phoneDigits('+1 415 555 1234')).toBe('14155551234');
   });
 
-  it('quita paréntesis y guiones de un fijo local con característica', () => {
-    // (021) 123-456: 9 dígitos con el 0 inicial, fijo de Asunción.
-    expect(phoneDigits('(021) 123-456')).toBe('59521123456');
+  it('un fijo local con característica queda con 11 dígitos paraguayos y se rechaza', () => {
+    // (021) 123-456 -> 59521123456: un número 595 debe tener 595 + 9 dígitos.
+    expect(phoneDigits('(021) 123-456')).toBeNull();
+  });
+
+  it('un número paraguayo (595) tiene que tener exactamente 12 dígitos', () => {
+    expect(phoneDigits('+59598112')).toBeNull();
+    expect(phoneDigits('+5959811234567')).toBeNull();
+    expect(phoneDigits('+595981123456')).toBe('595981123456');
+  });
+
+  it('otros países solo piden 8 dígitos o más', () => {
+    expect(phoneDigits('+14155551234')).toBe('14155551234');
+    expect(phoneDigits('+5491112345678')).toBe('5491112345678');
   });
 
   it('acepta el 595 sin el signo +', () => {

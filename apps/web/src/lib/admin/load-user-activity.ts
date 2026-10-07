@@ -22,17 +22,21 @@ async function orNull<T>(p: Promise<T>): Promise<T | null> {
 }
 
 /**
- * Actividad de un comprador para la ficha del admin. Solo usa consultas que la
- * app ya hace, así que no necesita índices nuevos:
- *  - pujas: collectionGroup('bids') por buyerUid (listMyBids / loadBuyerStats);
- *    el conteo es una agregación count(), no lee los documentos.
- *  - última puja: el mismo filtro con orderBy createdAt desc, que es justo el
- *    índice compuesto bids(buyerUid, createdAt desc) de listMyBids; limit(1).
+ * Actividad de un comprador para la ficha del admin. Solo usa consultas que
+ * producción ya sirve, así que no necesita índices nuevos:
+ *  - pujas y última puja: collectionGroup('bids') por buyerUid CON orderBy
+ *    createdAt desc. Ese orderBy no es adorno: el filtro por buyerUid solo
+ *    (sin orden) pide un índice de grupo de colecciones de campo único que
+ *    producción no tiene (falla con FAILED_PRECONDITION, igual que en
+ *    resolveBidders). Con el orderBy la consulta queda cubierta por el
+ *    compuesto bids(buyerUid ASC, createdAt DESC) que ya usa listMyBids, y
+ *    count() funciona sobre esa misma forma. Cuenta solo pujas con createdAt,
+ *    que las escribe placeBid siempre.
  *  - ganadas: auctions por winnerUid + status 'ended' (loadBuyerStats).
  */
 export async function loadUserActivity(uid: string): Promise<UserActivity> {
   const db = getFirestore(getAdminApp());
-  const bids = db.collectionGroup('bids').where('buyerUid', '==', uid);
+  const bids = db.collectionGroup('bids').where('buyerUid', '==', uid).orderBy('createdAt', 'desc');
   const [bidCount, wonCount, lastBid] = await Promise.all([
     orNull(
       bids
@@ -49,7 +53,7 @@ export async function loadUserActivity(uid: string): Promise<UserActivity> {
         .get()
         .then((s) => s.data().count),
     ),
-    orNull(bids.orderBy('createdAt', 'desc').limit(1).get()),
+    orNull(bids.limit(1).get()),
   ]);
   const lastBidAtMs =
     (

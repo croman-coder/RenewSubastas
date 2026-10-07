@@ -67,6 +67,18 @@ export function formatDateTimePy(_locale: string, date: Date | number): string {
 }
 
 /**
+ * Solo la fecha: "26/09/2026", hora de Paraguay. Para exportaciones donde cada
+ * punto de ancho cuenta (el PDF de usuarios). Se arma con las mismas partes
+ * que formatDateTimePy, así que el texto es idéntico en servidor y navegador.
+ */
+export function formatDateOnlyPy(_locale: string, date: Date | number): string {
+  const d = typeof date === 'number' ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return '—';
+  const p = Object.fromEntries(DATE_TIME_PARTS.formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p['day']}/${p['month']}/${p['year']}`;
+}
+
+/**
  * Time only: "21:07". Used in audit log and notification timestamps.
  */
 export function formatTimePy(locale: string, date: Date | number): string {

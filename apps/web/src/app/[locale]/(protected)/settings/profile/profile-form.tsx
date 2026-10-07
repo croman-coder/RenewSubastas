@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { PhoneInput } from '@/components/forms/phone-input';
 import { AddressCascade } from '@/components/forms/address-cascade';
+import { phoneDigits } from '@/lib/admin/contact-links';
 import { updateProfileAction } from '@/lib/settings/update-profile';
 
 // Document number validation depends on type:
@@ -56,14 +57,14 @@ const buildSchema = (requirePhone: boolean) =>
     })
     .superRefine((v, ctx) => {
       // Llegar desde el aviso "completá tu perfil para pujar" (?completar=1): el
-      // servidor rechaza pujar sin teléfono de al menos 8 dígitos (placeBid.ts),
+      // servidor rechaza pujar sin un teléfono válido (placeBid.ts: 8+ dígitos, y 12 si es 595),
       // así que acá se exige también, con el mismo umbral. Fuera de ese flujo
       // sigue siendo opcional: lo usan también staff y admin.
-      if (requirePhone && (v.phone ?? '').replace(/\D/g, '').length < 8) {
+      if (requirePhone && phoneDigits(v.phone) === null) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['phone'],
-          message: 'Cargá un teléfono de al menos 8 dígitos para poder pujar',
+          message: 'Cargá un teléfono completo para poder pujar (Paraguay: 9 dígitos)',
         });
       }
       if (v.documentType === 'CI' && !/^\d{1,7}$/.test(v.documentNumber)) {
@@ -108,16 +109,20 @@ export function ProfileForm({
   initial,
   isBuyer = false,
   completar = false,
+  returnTo = null,
 }: {
   initial: Initial;
   /** Muestra la ayuda del teléfono: a los compradores se les pide para pujar. */
   isBuyer?: boolean;
   /** Viene de ?completar=1 (aviso de perfil incompleto al pujar): documento y teléfono obligatorios. */
   completar?: boolean;
+  /** Ruta de la subasta de la que se vino (ya validada en el servidor), para volver tras guardar. */
+  returnTo?: string | null;
 }) {
   const t = useTranslations('settings.profile');
   const schema = useMemo(() => buildSchema(completar), [completar]);
   const [submitting, setSubmitting] = useState(false);
+  const [saved, setSaved] = useState(false);
   const {
     register,
     handleSubmit,
@@ -148,6 +153,7 @@ export function ProfileForm({
     setSubmitting(false);
     if (res.ok) {
       toast.success(t('saved'));
+      setSaved(true);
       return;
     }
     if (res.error === 'documentInvalid') toast.error(t('errors.documentInvalid'));
@@ -335,9 +341,16 @@ export function ProfileForm({
         </div>
       </fieldset>
 
-      <Button type="submit" disabled={submitting}>
-        {submitting ? t('saving') : t('save')}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={submitting}>
+          {submitting ? t('saving') : t('save')}
+        </Button>
+        {saved && returnTo && (
+          <Button asChild variant="outline">
+            <a href={returnTo}>Volver a la subasta</a>
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

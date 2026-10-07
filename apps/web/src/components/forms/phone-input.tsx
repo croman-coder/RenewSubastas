@@ -13,6 +13,7 @@ import {
   PHONE_COUNTRIES,
   findCountryByIso2,
   splitStoredPhone,
+  normalizeNationalPhone,
   type PhoneCountry,
 } from '@/lib/geo/phone-countries';
 
@@ -72,9 +73,9 @@ export function PhoneInput({ value, onChange, id, disabled, paraguayOnly }: Prop
   }
 
   function handleNational(raw: string) {
-    // Strip everything that isn't a digit to keep the input numeric
-    // regardless of the user's keyboard / paste source.
-    const digits = raw.replace(/\D/g, '').slice(0, country.max);
+    // Solo dígitos, sin el 0 inicial en Paraguay y con el límite del país
+    // (ver normalizeNationalPhone), venga del teclado o de un pegado.
+    const digits = normalizeNationalPhone(country.dial, raw, country.max);
     setNational(digits);
     emit(country, digits);
   }
@@ -122,7 +123,10 @@ export function PhoneInput({ value, onChange, id, disabled, paraguayOnly }: Prop
         placeholder={country.iso2 === 'PY' ? '981 123 456' : `${country.max} dígitos sin prefijo`}
         value={national}
         onChange={(e) => handleNational(e.target.value)}
-        maxLength={country.max}
+        // En Paraguay se admite un dígito más: el 0 inicial que se pega ("0981...")
+        // se descarta al normalizar, y con maxLength = max el navegador cortaba
+        // el pegado antes de que se pudiera quitar.
+        maxLength={country.dial === '595' ? country.max + 1 : country.max}
         className="num-tab"
       />
     </div>

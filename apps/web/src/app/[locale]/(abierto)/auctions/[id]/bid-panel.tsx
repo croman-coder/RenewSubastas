@@ -88,6 +88,9 @@ export function BidPanel({
   const t = useTranslations('buyer.auctions.detail.bidPanel');
   const router = useRouter();
   const locale = (useParams().locale as string) ?? 'es';
+  // Enlace del aviso "completá tu perfil": con `from` el perfil ofrece volver a
+  // esta subasta después de guardar (validado en lib/settings/return-path.ts).
+  const fromParam = encodeURIComponent(`/${locale}/auctions/${auctionId}`);
   const minRequired = minimumBid({ currentBid, startingPrice, bidIncrement });
   // En celular el aside queda montado (display:none) mientras la hoja abre
   // otro BidPanel encima: con un id fijo "manual" el Label del oculto
@@ -178,7 +181,7 @@ export function BidPanel({
         toast.error(t('errors.profileIncomplete'), {
           action: {
             label: t('errors.profileIncompleteCta'),
-            onClick: () => router.push(`/${locale}/settings/profile?completar=1`),
+            onClick: () => router.push(`/${locale}/settings/profile?completar=1&from=${fromParam}`),
           },
         });
       } else {
@@ -228,7 +231,7 @@ export function BidPanel({
         toast.error(t('errors.profileIncomplete'), {
           action: {
             label: t('errors.profileIncompleteCta'),
-            onClick: () => router.push(`/${locale}/settings/profile?completar=1`),
+            onClick: () => router.push(`/${locale}/settings/profile?completar=1&from=${fromParam}`),
           },
         });
       } else {

@@ -15,6 +15,16 @@ describe('hasUsablePhone', () => {
     expect(hasUsablePhone('12345678')).toBe(true);
   });
 
+  it('un número paraguayo (595) tiene que tener exactamente 12 dígitos', () => {
+    expect(hasUsablePhone('+59598112')).toBe(false);
+    expect(hasUsablePhone('+5959811234567')).toBe(false);
+    expect(hasUsablePhone('+595981123456')).toBe(true);
+  });
+
+  it('otros países solo piden 8 dígitos o más', () => {
+    expect(hasUsablePhone('+14155551234')).toBe(true);
+  });
+
   it('rechaza menos de 8 dígitos', () => {
     expect(hasUsablePhone('1234567')).toBe(false);
     expect(hasUsablePhone('+595 12')).toBe(false);

@@ -1,5 +1,5 @@
 import type { UserListItem } from './list-users';
-import { formatDateTimePy } from '@/lib/format/date';
+import { formatDateOnlyPy } from '@/lib/format/date';
 import { formatDocument, phoneDigits } from './contact-links';
 import type { UsersKind, UsersStatus } from './users-filter';
 
@@ -23,16 +23,17 @@ export type UsersExportFormat = 'xlsx' | 'pdf';
  *
  * PDF text is cut by an estimate of 5.5pt per character (10pt body) minus a
  * 10pt gutter: Teléfono (84) fits "+595981123456", Documento (88) fits
- * "RUC 80012345-6" and Alta (98) fits "09/10/2025 05:53". Nombre and Email take
- * what is left and may end in "…" on very long values; the spreadsheet always
- * carries the full text.
+ * "RUC 80012345-6" and Alta (66) fits "09/10/2025" (date only, no time, so the
+ * freed width goes to Email: 157pt fits ~26 characters). Nombre and Email may
+ * still end in "…" on very long values; the spreadsheet always carries the
+ * full text.
  */
 export const USERS_EXPORT_COLUMNS = [
   { header: 'Nombre', xlsxWidth: 28, pdfWidth: 104 },
-  { header: 'Email', xlsxWidth: 36, pdfWidth: 125 },
+  { header: 'Email', xlsxWidth: 36, pdfWidth: 157 },
   { header: 'Teléfono', xlsxWidth: 18, pdfWidth: 84 },
   { header: 'Documento', xlsxWidth: 18, pdfWidth: 88 },
-  { header: 'Alta', xlsxWidth: 18, pdfWidth: 98 },
+  { header: 'Alta', xlsxWidth: 12, pdfWidth: 66 },
 ] as const;
 
 /**
@@ -47,7 +48,7 @@ export function userExportRows(items: UserListItem[]): string[][] {
     exportPhone(user.phone),
     formatDocument(user.documentNumber ? user.documentType : undefined, user.documentNumber) ?? '',
     // createdAt 0 = el usuario no tiene fecha de alta (ver toUserListItem).
-    user.createdAt ? formatDateTimePy('es', user.createdAt) : '',
+    user.createdAt ? formatDateOnlyPy('es', user.createdAt) : '',
   ]);
 }
 

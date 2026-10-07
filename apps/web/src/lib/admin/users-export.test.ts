@@ -70,9 +70,9 @@ describe('userExportRows', () => {
     expect(userExportRows([user({ documentNumber: '' })])[0]![3]).toBe('');
   });
 
-  it('formatea el alta en hora de Paraguay', () => {
+  it('formatea el alta solo con la fecha, en hora de Paraguay', () => {
     // 1_760_000_000_000 ms = 2025-10-09T08:53:20Z = 05:53 en UTC-3.
-    expect(userExportRows([user({})])[0]![4]).toBe('09/10/2025 05:53');
+    expect(userExportRows([user({})])[0]![4]).toBe('09/10/2025');
     expect(userExportRows([user({ createdAt: 0 })])[0]![4]).toBe('');
   });
 

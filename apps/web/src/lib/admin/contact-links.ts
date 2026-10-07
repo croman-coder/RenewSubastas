@@ -9,25 +9,36 @@
  * cada pantalla.
  *
  * Misma regla que `functions/src/lib/phone.ts` (las functions no pueden
- * importar de apps/web): mínimo 8 dígitos para considerar el teléfono usable.
+ * importar de apps/web): mínimo 8 dígitos y, si empieza con 595, exactamente 12.
  */
 
 const MIN_DIGITS = 8;
 const PY_COUNTRY_CODE = '595';
+/** 595 + 9 dígitos del número nacional. */
+const PY_TOTAL_DIGITS = 12;
 
 export function phoneDigits(raw: string | undefined): string | null {
   if (!raw) return null;
   const trimmed = raw.trim();
   const digits = trimmed.replace(/\D/g, '');
   if (digits.length < MIN_DIGITS) return null;
-  // Con "+" el usuario ya dio el código de país: no se toca.
-  if (trimmed.startsWith('+')) return digits;
-  // Número local de Paraguay: el 0 inicial es el prefijo troncal ("0981...",
+  let result = digits;
+  // Con "+" el usuario ya dio el código de país: no se toca. Sin "+", un número
+  // local de Paraguay trae el 0 inicial como prefijo troncal ("0981...",
   // "021..."), que no existe en formato internacional.
-  if (digits.startsWith('0') && digits.length >= 9 && digits.length <= 10) {
-    return `${PY_COUNTRY_CODE}${digits.slice(1)}`;
+  if (
+    !trimmed.startsWith('+') &&
+    digits.startsWith('0') &&
+    digits.length >= 9 &&
+    digits.length <= 10
+  ) {
+    result = `${PY_COUNTRY_CODE}${digits.slice(1)}`;
   }
-  return digits;
+  // Paraguay es el mercado real: 595 + 9 dígitos. Un "+59598112" es un número
+  // cortado, no un teléfono al que se pueda llamar, y con solo "al menos 8
+  // dígitos" pasaba. Otros países conservan el mínimo de 8.
+  if (result.startsWith(PY_COUNTRY_CODE) && result.length !== PY_TOTAL_DIGITS) return null;
+  return result;
 }
 
 export function whatsappUrl(digits: string): string {
