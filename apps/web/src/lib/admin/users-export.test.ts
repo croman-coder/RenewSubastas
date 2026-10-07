@@ -20,6 +20,7 @@ function user(overrides: Partial<UserListItem>): UserListItem {
     lastName: 'Núñez',
     documentType: 'CI',
     documentNumber: '1234567',
+    phone: '+595981123456',
     createdAt: 1_760_000_000_000,
     ...overrides,
   };
@@ -29,8 +30,14 @@ function user(overrides: Partial<UserListItem>): UserListItem {
 const NOW = new Date('2026-08-14T12:00:00.000Z');
 
 describe('USERS_EXPORT_COLUMNS', () => {
-  it('is the Nombre | Email header the operator asked for', () => {
-    expect(USERS_EXPORT_COLUMNS.map((c) => c.header)).toEqual(['Nombre', 'Email']);
+  it('lleva los datos de contacto que el equipo necesita para llamar al cliente', () => {
+    expect(USERS_EXPORT_COLUMNS.map((c) => c.header)).toEqual([
+      'Nombre',
+      'Email',
+      'Teléfono',
+      'Documento',
+      'Alta',
+    ]);
   });
 
   it('fills the A4 content width in the PDF (595pt page, 48pt margins)', () => {
@@ -41,7 +48,32 @@ describe('USERS_EXPORT_COLUMNS', () => {
 
 describe('userExportRows', () => {
   it('joins first and last name into a single Nombre cell', () => {
-    expect(userExportRows([user({})])).toEqual([['Ana Núñez', 'ana@example.com']]);
+    expect(userExportRows([user({})])[0]![0]).toBe('Ana Núñez');
+    expect(userExportRows([user({})])[0]![1]).toBe('ana@example.com');
+  });
+
+  it('exporta el teléfono normalizado con prefijo internacional', () => {
+    expect(userExportRows([user({ phone: '0981 123 456' })])[0]![2]).toBe('+595981123456');
+    expect(userExportRows([user({ phone: '+595981123456' })])[0]![2]).toBe('+595981123456');
+  });
+
+  it('deja vacío el teléfono que falta y conserva tal cual uno que no se puede normalizar', () => {
+    expect(userExportRows([user({ phone: '' })])[0]![2]).toBe('');
+    expect(userExportRows([user({ phone: '12 34' })])[0]![2]).toBe('12 34');
+  });
+
+  it('une tipo y número de documento, y deja vacío si no hay número', () => {
+    expect(userExportRows([user({})])[0]![3]).toBe('CI 1234567');
+    expect(
+      userExportRows([user({ documentType: 'RUC', documentNumber: '80012345-6' })])[0]![3],
+    ).toBe('RUC 80012345-6');
+    expect(userExportRows([user({ documentNumber: '' })])[0]![3]).toBe('');
+  });
+
+  it('formatea el alta en hora de Paraguay', () => {
+    // 1_760_000_000_000 ms = 2025-10-09T08:53:20Z = 05:53 en UTC-3.
+    expect(userExportRows([user({})])[0]![4]).toBe('09/10/2025 05:53');
+    expect(userExportRows([user({ createdAt: 0 })])[0]![4]).toBe('');
   });
 
   it('trims the separator when half the name is missing', () => {

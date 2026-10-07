@@ -1,4 +1,6 @@
 import type { UserListItem } from './list-users';
+import { formatDateTimePy } from '@/lib/format/date';
+import { formatDocument, phoneDigits } from './contact-links';
 import type { UsersKind, UsersStatus } from './users-filter';
 
 /**
@@ -18,10 +20,19 @@ export type UsersExportFormat = 'xlsx' | 'pdf';
  * The exported columns. Widths differ by format because the units do:
  * Excel counts characters, PDF counts points. The PDF widths sum to the A4
  * content width (595 - 2 * 48 margin = 499pt).
+ *
+ * PDF text is cut by an estimate of 5.5pt per character (10pt body) minus a
+ * 10pt gutter: Teléfono (84) fits "+595981123456", Documento (88) fits
+ * "RUC 80012345-6" and Alta (98) fits "09/10/2025 05:53". Nombre and Email take
+ * what is left and may end in "…" on very long values; the spreadsheet always
+ * carries the full text.
  */
 export const USERS_EXPORT_COLUMNS = [
-  { header: 'Nombre', xlsxWidth: 34, pdfWidth: 200 },
-  { header: 'Email', xlsxWidth: 42, pdfWidth: 299 },
+  { header: 'Nombre', xlsxWidth: 28, pdfWidth: 104 },
+  { header: 'Email', xlsxWidth: 36, pdfWidth: 125 },
+  { header: 'Teléfono', xlsxWidth: 18, pdfWidth: 84 },
+  { header: 'Documento', xlsxWidth: 18, pdfWidth: 88 },
+  { header: 'Alta', xlsxWidth: 18, pdfWidth: 98 },
 ] as const;
 
 /**
@@ -30,7 +41,24 @@ export const USERS_EXPORT_COLUMNS = [
  * both yields an empty name cell rather than the string "undefined".
  */
 export function userExportRows(items: UserListItem[]): string[][] {
-  return items.map((user) => [`${user.firstName} ${user.lastName}`.trim(), user.email]);
+  return items.map((user) => [
+    `${user.firstName} ${user.lastName}`.trim(),
+    user.email,
+    exportPhone(user.phone),
+    formatDocument(user.documentNumber ? user.documentType : undefined, user.documentNumber) ?? '',
+    // createdAt 0 = el usuario no tiene fecha de alta (ver toUserListItem).
+    user.createdAt ? formatDateTimePy('es', user.createdAt) : '',
+  ]);
+}
+
+/**
+ * Teléfono listo para marcar: "+595981123456". Lo que no se puede normalizar
+ * (menos de 8 dígitos) se exporta tal cual, para que el equipo vea el dato
+ * mal cargado y lo corrija en vez de que desaparezca del archivo.
+ */
+function exportPhone(raw: string): string {
+  const digits = phoneDigits(raw);
+  return digits ? `+${digits}` : raw.trim();
 }
 
 export function usersExportFilename(format: UsersExportFormat, now: Date): string {
@@ -57,7 +85,7 @@ const STATUS_LABELS: Record<UsersStatus, string> = {
  * is the kind of artifact that gets forwarded and misread.
  *
  * The spreadsheet gets no equivalent line on purpose: row 1 there has to stay
- * the "Nombre | Email" header for the file to be usable as data.
+ * the column header for the file to be usable as data.
  */
 export function usersExportSubtitle(options: {
   count: number;
