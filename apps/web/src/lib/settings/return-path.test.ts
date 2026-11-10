@@ -13,6 +13,10 @@ describe('safeAuctionReturnPath', () => {
     expect(safeAuctionReturnPath(undefined, 'es')).toBeNull();
   });
 
+  it('rechaza un from repetido (Next lo entrega como arreglo) sin romper la página', () => {
+    expect(safeAuctionReturnPath(['/es/auctions/a', '/es/auctions/b'], 'es')).toBeNull();
+  });
+
   it('rechaza URLs absolutas, protocolo relativo y esquemas', () => {
     expect(safeAuctionReturnPath('https://evil.com/es/auctions/a', 'es')).toBeNull();
     expect(safeAuctionReturnPath('//evil.com/es/auctions/a', 'es')).toBeNull();

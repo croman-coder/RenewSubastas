@@ -9,7 +9,8 @@ export default async function ProfilePage({
   searchParams,
 }: {
   params: { locale: string };
-  searchParams?: { completar?: string; from?: string };
+  // Un parámetro repetido en la URL llega como arreglo.
+  searchParams?: { completar?: string | string[]; from?: string | string[] };
 }) {
   const user = await getCurrentUser(locale);
   const snap = await getFirestore(getAdminApp()).doc(`users/${user.uid}`).get();
