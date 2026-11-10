@@ -51,6 +51,9 @@ export function getNavItems(
     return [
       { href: `/${locale}/admin`, label: t.admin.home, icon: 'home', exact: true },
       { href: `/${locale}/admin/users`, label: t.admin.users, icon: 'users' },
+      // Lista de contacto de compradores (teléfono, WhatsApp, buscador), la
+      // misma que usa staff. Pedido de Croman, 10/11/2026.
+      { href: `/${locale}/staff/buyers`, label: 'Compradores', icon: 'users' },
       { href: `/${locale}/staff/vehicles`, label: t.admin.vehicles, icon: 'car' },
       { href: `/${locale}/staff/auctions`, label: t.admin.auctions, icon: 'gavel' },
       { href: `/${locale}/sales`, label: t.admin.sales, icon: 'trophy' },
