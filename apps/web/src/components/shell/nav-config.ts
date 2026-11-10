@@ -68,10 +68,10 @@ export function getNavItems(
       { href: `/${locale}/staff/auctions`, label: t.staff.auctions, icon: 'gavel' },
       { href: `/${locale}/staff/bids`, label: 'Pujas', icon: 'activity' },
       { href: `/${locale}/staff/insights`, label: 'Reporte', icon: 'chart' },
-      // Staff can onboard buyers (retail / wholesale). Route reuses the
-      // admin create-user form in restricted mode; staff cannot reach
-      // /admin/users (admin layout blocks them).
-      { href: `/${locale}/staff/buyers/new`, label: t.staff.buyers, icon: 'users' },
+      // Staff ve la lista de compradores con su teléfono (staff/buyers) y desde
+      // ahí crea uno nuevo (staff/buyers/new, el formulario de admin en modo
+      // restringido). /admin/users sigue cerrado para staff.
+      { href: `/${locale}/staff/buyers`, label: 'Compradores', icon: 'users' },
     ];
   }
   if (role === 'finanzas') {
