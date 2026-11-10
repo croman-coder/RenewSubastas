@@ -23,6 +23,7 @@ import { didBuyerWinAuction } from '@/lib/auctions/win-state';
 import { classifyBuyNowError } from '@/lib/auctions/buy-now-error';
 import { isSoldOutcome } from '@/lib/auctions/sold-outcome';
 import { minimumBid } from '@/lib/auctions/minimum-bid';
+import { isUnusuallyHighBid } from '@/lib/auctions/bid-sanity';
 import { trackAddToCart, trackPurchase } from '@/lib/analytics/meta-events';
 import { formatAmount as fmtUsd } from '@/lib/format/money';
 
@@ -104,6 +105,9 @@ export function BidPanel({
   // quick-bid chips nor the manual submit call the network directly — they
   // stage the amount here and the dialog gates the actual call.
   const [pendingBid, setPendingBid] = useState<number | null>(null);
+  // Dos pasos antes de pujar (pedido de Croman, 10/11/2026, tras la puja de
+  // 110.000 en vez de 11.000): 1 = revisar el monto, 2 = "¿estás seguro?".
+  const [confirmStep, setConfirmStep] = useState<1 | 2>(1);
   // Gates the "Compra ya" confirmation dialog. Separate from pendingBid: a
   // buy-now has no amount to stage (the price is fixed), just a yes/no.
   const [confirmBuyNow, setConfirmBuyNow] = useState(false);
@@ -259,13 +263,20 @@ export function BidPanel({
       toast.error(`El monto máximo permitido es USD ${fmtUsd(MAX_BID_USD)}.`);
       return;
     }
+    setConfirmStep(1);
     setPendingBid(amount);
+  }
+
+  // Cierra el diálogo y lo deja listo para volver a empezar en el paso 1.
+  function cancelPendingBid() {
+    setPendingBid(null);
+    setConfirmStep(1);
   }
 
   async function confirmPendingBid() {
     if (pendingBid === null) return;
     const placed = await submitBid(pendingBid);
-    setPendingBid(null);
+    cancelPendingBid();
     if (placed) onBidPlaced?.();
   }
 
@@ -481,25 +492,58 @@ export function BidPanel({
       <Dialog
         open={pendingBid !== null}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen) setPendingBid(null);
+          if (!nextOpen) cancelPendingBid();
         }}
       >
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar puja</DialogTitle>
-            <DialogDescription>
-              Vas a pujar USD {pendingAmountLabel} por este vehículo. Las pujas son en firme y no se
-              pueden retirar.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setPendingBid(null)}>
-              Cancelar
-            </Button>
-            <Button type="button" disabled={busy} onClick={confirmPendingBid}>
-              {busy ? t('submitting') : 'Confirmar puja'}
-            </Button>
-          </DialogFooter>
+          {confirmStep === 1 ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Confirmar puja</DialogTitle>
+                <DialogDescription>
+                  Vas a pujar USD {pendingAmountLabel} por este vehículo. Las pujas son en firme y
+                  no se pueden retirar.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={cancelPendingBid}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={() => setConfirmStep(2)}>
+                  Continuar
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>¿Estás seguro?</DialogTitle>
+                <DialogDescription>
+                  Revisá el monto antes de pujar. Una vez enviada, la puja no se puede retirar.
+                </DialogDescription>
+              </DialogHeader>
+              <p className="text-3xl font-extrabold tracking-tight text-text-strong num-tab">
+                USD {pendingAmountLabel}
+              </p>
+              {pendingBid !== null && isUnusuallyHighBid(pendingBid, minRequired) && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-[#fecaca] bg-[#fee2e2] p-3 text-sm font-medium text-[#991b1b] dark:border-[rgb(153_27_27/0.6)] dark:bg-[rgb(153_27_27/0.3)] dark:text-[#fecaca]"
+                >
+                  Es mucho más que la puja mínima (USD {fmtUsd(minRequired)}). Revisá que no tenga
+                  un cero de más.
+                </p>
+              )}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={cancelPendingBid}>
+                  No, revisar
+                </Button>
+                <Button type="button" disabled={busy} onClick={confirmPendingBid}>
+                  {busy ? t('submitting') : `Sí, pujar USD ${pendingAmountLabel}`}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
